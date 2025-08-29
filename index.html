@@ -119,10 +119,391 @@
         
         const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        // 계산기 1단계: 기본정보 렌더링
+        const renderStep1BasicInfo = (data, updateFn) => {
+            return React.createElement('div', {
+                className: 'card max-w-2xl mx-auto'
+            }, [
+                React.createElement('h3', {
+                    key: 'title',
+                    className: 'text-2xl font-bold text-gray-800 mb-6 text-center'
+                }, '📋 1단계: 기본 정보'),
+                
+                React.createElement('div', {
+                    key: 'form',
+                    className: 'space-y-4'
+                }, [
+                    // 나이 입력
+                    React.createElement('div', {
+                        key: 'age-group'
+                    }, [
+                        React.createElement('label', {
+                            key: 'age-label',
+                            className: 'block text-sm font-medium text-gray-700 mb-2'
+                        }, '나이'),
+                        React.createElement('input', {
+                            key: 'age-input',
+                            type: 'number',
+                            value: data?.age || '',
+                            onChange: (e) => updateFn(1, 'age', parseInt(e.target.value) || null),
+                            className: 'w-full px-4 py-3 border border-gray-300 rounded-lg text-base',
+                            placeholder: '만 나이를 입력하세요'
+                        })
+                    ]),
+                    
+                    // 학력 선택
+                    React.createElement('div', {
+                        key: 'education-group'
+                    }, [
+                        React.createElement('label', {
+                            key: 'education-label',
+                            className: 'block text-sm font-medium text-gray-700 mb-2'
+                        }, '최종 학력'),
+                        React.createElement('select', {
+                            key: 'education-select',
+                            value: data?.education || '',
+                            onChange: (e) => updateFn(1, 'education', e.target.value),
+                            className: 'w-full px-4 py-3 border border-gray-300 rounded-lg text-base'
+                        }, [
+                            React.createElement('option', { key: 'edu-empty', value: '' }, '선택하세요'),
+                            React.createElement('option', { key: 'edu-high', value: 'high_school' }, '고등학교 졸업'),
+                            React.createElement('option', { key: 'edu-college', value: 'college' }, '전문대 졸업'),
+                            React.createElement('option', { key: 'edu-university', value: 'university' }, '대학교 졸업'),
+                            React.createElement('option', { key: 'edu-graduate', value: 'graduate' }, '대학원 졸업')
+                        ])
+                    ]),
+                    
+                    // 희망 직무
+                    React.createElement('div', {
+                        key: 'target-job-group'
+                    }, [
+                        React.createElement('label', {
+                            key: 'target-job-label',
+                            className: 'block text-sm font-medium text-gray-700 mb-2'
+                        }, '희망 직무'),
+                        React.createElement('select', {
+                            key: 'target-job-select',
+                            value: data?.targetJob || '',
+                            onChange: (e) => updateFn(1, 'targetJob', e.target.value),
+                            className: 'w-full px-4 py-3 border border-gray-300 rounded-lg text-base'
+                        }, [
+                            React.createElement('option', { key: 'job-empty', value: '' }, '선택하세요'),
+                            React.createElement('option', { key: 'job-dev', value: 'developer' }, '개발자'),
+                            React.createElement('option', { key: 'job-designer', value: 'designer' }, '디자이너'),
+                            React.createElement('option', { key: 'job-pm', value: 'product_manager' }, '기획자/PM'),
+                            React.createElement('option', { key: 'job-marketing', value: 'marketing' }, '마케팅'),
+                            React.createElement('option', { key: 'job-sales', value: 'sales' }, '영업'),
+                            React.createElement('option', { key: 'job-finance', value: 'finance' }, '경영/재무'),
+                            React.createElement('option', { key: 'job-hr', value: 'hr' }, '인사'),
+                            React.createElement('option', { key: 'job-other', value: 'other' }, '기타')
+                        ])
+                    ])
+                ])
+            ]);
+        };
+
+        // 계산기 2단계: 스킬/자격증 렌더링
+        const renderStep2Skills = (data, updateFn) => {
+            return React.createElement('div', {
+                className: 'card max-w-2xl mx-auto'
+            }, [
+                React.createElement('h3', {
+                    key: 'title',
+                    className: 'text-2xl font-bold text-gray-800 mb-6 text-center'
+                }, '🛠️ 2단계: 스킬 & 자격증'),
+                
+                React.createElement('div', {
+                    key: 'form',
+                    className: 'space-y-6'
+                }, [
+                    // 기술 스택
+                    React.createElement('div', {
+                        key: 'tech-skills-group'
+                    }, [
+                        React.createElement('label', {
+                            key: 'tech-label',
+                            className: 'block text-sm font-medium text-gray-700 mb-3'
+                        }, '보유 기술 스택 (복수 선택 가능)'),
+                        React.createElement('div', {
+                            key: 'tech-grid',
+                            className: 'grid grid-cols-2 sm:grid-cols-3 gap-2'
+                        }, [
+                            'JavaScript', 'Python', 'Java', 'React', 'Vue.js', 'Node.js', 
+                            'HTML/CSS', 'SQL', 'Git', 'Figma', 'Photoshop', '기타'
+                        ].map((skill, index) => {
+                            const isSelected = (data?.technicalSkills || []).includes(skill);
+                            return React.createElement('button', {
+                                key: `tech-${index}`,
+                                className: `px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                                    isSelected 
+                                    ? 'bg-green-500 text-white' 
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`,
+                                onClick: () => {
+                                    const currentSkills = data?.technicalSkills || [];
+                                    const newSkills = isSelected 
+                                        ? currentSkills.filter(s => s !== skill)
+                                        : [...currentSkills, skill];
+                                    updateFn(2, 'technicalSkills', newSkills);
+                                }
+                            }, skill);
+                        }))
+                    ]),
+                    
+                    // 어학 능력
+                    React.createElement('div', {
+                        key: 'language-group'
+                    }, [
+                        React.createElement('label', {
+                            key: 'lang-label',
+                            className: 'block text-sm font-medium text-gray-700 mb-2'
+                        }, '영어 능력'),
+                        React.createElement('select', {
+                            key: 'language-select',
+                            value: data?.englishLevel || '',
+                            onChange: (e) => updateFn(2, 'englishLevel', e.target.value),
+                            className: 'w-full px-4 py-3 border border-gray-300 rounded-lg text-base'
+                        }, [
+                            React.createElement('option', { key: 'lang-empty', value: '' }, '선택하세요'),
+                            React.createElement('option', { key: 'lang-none', value: 'none' }, '영어 실력 없음'),
+                            React.createElement('option', { key: 'lang-basic', value: 'basic' }, '기초 회화 가능'),
+                            React.createElement('option', { key: 'lang-toeic-low', value: 'toeic_low' }, 'TOEIC 600-750'),
+                            React.createElement('option', { key: 'lang-toeic-mid', value: 'toeic_mid' }, 'TOEIC 750-900'),
+                            React.createElement('option', { key: 'lang-toeic-high', value: 'toeic_high' }, 'TOEIC 900+'),
+                            React.createElement('option', { key: 'lang-opic', value: 'opic' }, 'OPIc IH 이상'),
+                            React.createElement('option', { key: 'lang-native', value: 'native' }, '원어민 수준')
+                        ])
+                    ]),
+                    
+                    // 자격증 개수
+                    React.createElement('div', {
+                        key: 'cert-group'
+                    }, [
+                        React.createElement('label', {
+                            key: 'cert-label',
+                            className: 'block text-sm font-medium text-gray-700 mb-2'
+                        }, '관련 자격증 개수'),
+                        React.createElement('input', {
+                            key: 'cert-input',
+                            type: 'number',
+                            value: data?.certificationCount || '',
+                            onChange: (e) => updateFn(2, 'certificationCount', parseInt(e.target.value) || 0),
+                            className: 'w-full px-4 py-3 border border-gray-300 rounded-lg text-base',
+                            placeholder: '보유한 자격증 개수를 입력하세요',
+                            min: '0'
+                        })
+                    ])
+                ])
+            ]);
+        };
+
+        // 계산기 3단계: 경험 분석 렌더링
+        const renderStep3Experience = (data, updateFn) => {
+            return React.createElement('div', {
+                className: 'card max-w-2xl mx-auto'
+            }, [
+                React.createElement('h3', {
+                    key: 'title',
+                    className: 'text-2xl font-bold text-gray-800 mb-6 text-center'
+                }, '💼 3단계: 경험 분석'),
+                
+                React.createElement('div', {
+                    key: 'form',
+                    className: 'space-y-6'
+                }, [
+                    // 인턴십 경험
+                    React.createElement('div', {
+                        key: 'internship-group'
+                    }, [
+                        React.createElement('label', {
+                            key: 'internship-label',
+                            className: 'block text-sm font-medium text-gray-700 mb-2'
+                        }, '인턴십 경험'),
+                        React.createElement('select', {
+                            key: 'internship-select',
+                            value: data?.internshipExperience || '',
+                            onChange: (e) => updateFn(3, 'internshipExperience', e.target.value),
+                            className: 'w-full px-4 py-3 border border-gray-300 rounded-lg text-base'
+                        }, [
+                            React.createElement('option', { key: 'intern-empty', value: '' }, '선택하세요'),
+                            React.createElement('option', { key: 'intern-none', value: 'none' }, '인턴십 경험 없음'),
+                            React.createElement('option', { key: 'intern-one', value: 'one' }, '1회 (1-3개월)'),
+                            React.createElement('option', { key: 'intern-multiple', value: 'multiple' }, '2회 이상'),
+                            React.createElement('option', { key: 'intern-long', value: 'long_term' }, '장기 인턴 (6개월+)')
+                        ])
+                    ]),
+                    
+                    // 프로젝트 경험
+                    React.createElement('div', {
+                        key: 'project-group'
+                    }, [
+                        React.createElement('label', {
+                            key: 'project-label',
+                            className: 'block text-sm font-medium text-gray-700 mb-2'
+                        }, '개인/팀 프로젝트 수'),
+                        React.createElement('input', {
+                            key: 'project-input',
+                            type: 'number',
+                            value: data?.projectCount || '',
+                            onChange: (e) => updateFn(3, 'projectCount', parseInt(e.target.value) || 0),
+                            className: 'w-full px-4 py-3 border border-gray-300 rounded-lg text-base',
+                            placeholder: '완료한 프로젝트 개수',
+                            min: '0'
+                        })
+                    ]),
+                    
+                    // 아르바이트/실무 경험
+                    React.createElement('div', {
+                        key: 'work-group'
+                    }, [
+                        React.createElement('label', {
+                            key: 'work-label',
+                            className: 'block text-sm font-medium text-gray-700 mb-2'
+                        }, '관련 업무 경험 (개월)'),
+                        React.createElement('input', {
+                            key: 'work-input',
+                            type: 'number',
+                            value: data?.workExperienceMonths || '',
+                            onChange: (e) => updateFn(3, 'workExperienceMonths', parseInt(e.target.value) || 0),
+                            className: 'w-full px-4 py-3 border border-gray-300 rounded-lg text-base',
+                            placeholder: '아르바이트, 프리랜서 등 업무 경험 개월 수',
+                            min: '0'
+                        })
+                    ]),
+                    
+                    // 수상 경력
+                    React.createElement('div', {
+                        key: 'award-group'
+                    }, [
+                        React.createElement('label', {
+                            key: 'award-label',
+                            className: 'block text-sm font-medium text-gray-700 mb-2'
+                        }, '수상 경력'),
+                        React.createElement('select', {
+                            key: 'award-select',
+                            value: data?.awards || '',
+                            onChange: (e) => updateFn(3, 'awards', e.target.value),
+                            className: 'w-full px-4 py-3 border border-gray-300 rounded-lg text-base'
+                        }, [
+                            React.createElement('option', { key: 'award-empty', value: '' }, '선택하세요'),
+                            React.createElement('option', { key: 'award-none', value: 'none' }, '수상 경력 없음'),
+                            React.createElement('option', { key: 'award-school', value: 'school' }, '교내 수상'),
+                            React.createElement('option', { key: 'award-external', value: 'external' }, '교외 대회 입상'),
+                            React.createElement('option', { key: 'award-national', value: 'national' }, '전국 대회 수상'),
+                            React.createElement('option', { key: 'award-international', value: 'international' }, '국제 대회 수상')
+                        ])
+                    ])
+                ])
+            ]);
+        };
+
+        // 계산기 메인 뷰 렌더링
+        const renderCalculatorView = () => {
+            const currentStepData = calculatorData[`step${calculatorStep}`] || {};
+            
+            return React.createElement('div', {
+                className: 'min-h-screen bg-gradient-to-br from-green-50 to-blue-50'
+            }, [
+                // 헤더 with 뒤로가기
+                React.createElement('header', {
+                    key: 'calc-header',
+                    className: 'bg-white shadow-sm border-b'
+                }, React.createElement('div', {
+                    className: 'max-w-7xl mx-auto px-4 py-6'
+                }, [
+                    React.createElement('div', {
+                        key: 'header-content',
+                        className: 'flex items-center justify-between'
+                    }, [
+                        React.createElement('button', {
+                            key: 'back-btn',
+                            className: 'text-gray-600 hover:text-gray-800 text-lg',
+                            onClick: () => setCurrentView('home')
+                        }, '← 홈으로'),
+                        React.createElement('h1', {
+                            key: 'calc-title',
+                            className: 'text-2xl font-bold text-gray-900'
+                        }, '🧮 취업경쟁력 진단'),
+                        React.createElement('div', {
+                            key: 'step-indicator',
+                            className: 'text-sm text-gray-500'
+                        }, `${calculatorStep}/6 단계`)
+                    ])
+                ])),
+                
+                // 메인 계산기 컨텐츠
+                React.createElement('main', {
+                    key: 'calc-main',
+                    className: 'max-w-4xl mx-auto px-4 py-12'
+                }, [
+                    // 진행 바
+                    React.createElement('div', {
+                        key: 'progress',
+                        className: 'mb-8'
+                    }, [
+                        React.createElement('div', {
+                            key: 'progress-bar',
+                            className: 'w-full bg-gray-200 rounded-full h-3'
+                        }, [
+                            React.createElement('div', {
+                                key: 'progress-fill',
+                                className: 'bg-green-500 h-3 rounded-full transition-all duration-500',
+                                style: { width: `${(calculatorStep / 6) * 100}%` }
+                            })
+                        ])
+                    ]),
+                    
+                    // 단계별 폼 렌더링
+                    calculatorStep === 1 ? renderStep1BasicInfo(currentStepData, updateCalculatorData) :
+                    calculatorStep === 2 ? renderStep2Skills(currentStepData, updateCalculatorData) : 
+                    calculatorStep === 3 ? renderStep3Experience(currentStepData, updateCalculatorData) :
+                    React.createElement('div', {
+                        key: 'placeholder',
+                        className: 'card max-w-2xl mx-auto text-center'
+                    }, [
+                        React.createElement('h3', {
+                            key: 'title',
+                            className: 'text-2xl font-bold text-gray-800 mb-4'
+                        }, `${calculatorStep}단계 개발 중...`),
+                        React.createElement('p', {
+                            key: 'desc',
+                            className: 'text-gray-600'
+                        }, '이 단계는 곧 개발될 예정입니다!')
+                    ]),
+                    
+                    // 네비게이션 버튼
+                    React.createElement('div', {
+                        key: 'nav-buttons',
+                        className: 'flex justify-between mt-8 max-w-2xl mx-auto'
+                    }, [
+                        React.createElement('button', {
+                            key: 'prev-btn',
+                            className: calculatorStep === 1 ? 'invisible' : 'btn-secondary px-6 py-3',
+                            onClick: () => setCalculatorStep(prev => Math.max(1, prev - 1))
+                        }, '이전'),
+                        React.createElement('button', {
+                            key: 'next-btn',
+                            className: 'btn-primary px-6 py-3',
+                            onClick: () => {
+                                if (calculatorStep < 6) {
+                                    setCalculatorStep(prev => prev + 1);
+                                } else {
+                                    alert('계산 완료! 결과 화면 개발 예정 🎉');
+                                }
+                            }
+                        }, calculatorStep === 6 ? '진단 완료' : '다음')
+                    ])
+                ])
+            ]);
+        };
+
         // 인사이드잡 메인 앱 컴포넌트
         const InsideJobApp = () => {
             const [isLoading, setIsLoading] = React.useState(true);
             const [connectionStatus, setConnectionStatus] = React.useState('connecting');
+            const [currentView, setCurrentView] = React.useState('home'); // home, calculator
+            const [calculatorStep, setCalculatorStep] = React.useState(1);
+            const [calculatorData, setCalculatorData] = React.useState({});
             
             // Supabase 연결 테스트
             React.useEffect(() => {
@@ -151,6 +532,17 @@
                 testConnection();
             }, []);
 
+            // 계산기 데이터 업데이트
+            const updateCalculatorData = (step, field, value) => {
+                setCalculatorData(prev => ({
+                    ...prev,
+                    [`step${step}`]: {
+                        ...prev[`step${step}`],
+                        [field]: value
+                    }
+                }));
+            };
+
             // 로딩 화면
             if (isLoading) {
                 return React.createElement('div', {
@@ -170,6 +562,11 @@
                     }, connectionStatus === 'connecting' ? 'Supabase 연결 중...' : 
                        connectionStatus === 'connected' ? '연결 완료!' : '연결 오류')
                 ]);
+            }
+
+            // 화면별 렌더링 로직
+            if (currentView === 'calculator') {
+                return renderCalculatorView();
             }
 
             // 메인 화면
@@ -310,7 +707,7 @@
                         React.createElement('button', {
                             key: 'start-btn',
                             className: 'btn-primary text-lg px-8 py-4 mr-4',
-                            onClick: () => alert('취업경쟁력 계산기 개발 예정! 🚀')
+                            onClick: () => setCurrentView('calculator')
                         }, '🧮 취업경쟁력 진단 시작'),
                         
                         React.createElement('button', {
