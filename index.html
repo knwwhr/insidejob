@@ -397,6 +397,487 @@
             ]);
         };
 
+        // 계산기 4단계: 네트워크 & 소셜 렌더링
+        const renderStep4Network = (data, updateFn) => {
+            return React.createElement('div', {
+                className: 'card max-w-2xl mx-auto'
+            }, [
+                React.createElement('h3', {
+                    key: 'title',
+                    className: 'text-2xl font-bold text-gray-800 mb-6 text-center'
+                }, '🤝 4단계: 네트워크 & 소셜'),
+                
+                React.createElement('div', {
+                    key: 'form',
+                    className: 'space-y-6'
+                }, [
+                    // LinkedIn 보유 여부
+                    React.createElement('div', {
+                        key: 'linkedin-group'
+                    }, [
+                        React.createElement('label', {
+                            key: 'linkedin-label',
+                            className: 'block text-sm font-medium text-gray-700 mb-3'
+                        }, 'LinkedIn 프로필'),
+                        React.createElement('div', {
+                            key: 'linkedin-options',
+                            className: 'space-y-2'
+                        }, [
+                            React.createElement('label', {
+                                key: 'linkedin-none',
+                                className: 'flex items-center cursor-pointer'
+                            }, [
+                                React.createElement('input', {
+                                    key: 'linkedin-none-radio',
+                                    type: 'radio',
+                                    name: 'linkedinStatus',
+                                    value: 'none',
+                                    checked: data?.linkedinStatus === 'none',
+                                    onChange: (e) => updateFn(4, 'linkedinStatus', e.target.value),
+                                    className: 'mr-2'
+                                }),
+                                'LinkedIn 없음'
+                            ]),
+                            React.createElement('label', {
+                                key: 'linkedin-basic',
+                                className: 'flex items-center cursor-pointer'
+                            }, [
+                                React.createElement('input', {
+                                    key: 'linkedin-basic-radio',
+                                    type: 'radio',
+                                    name: 'linkedinStatus',
+                                    value: 'basic',
+                                    checked: data?.linkedinStatus === 'basic',
+                                    onChange: (e) => updateFn(4, 'linkedinStatus', e.target.value),
+                                    className: 'mr-2'
+                                }),
+                                '기본 프로필만 있음'
+                            ]),
+                            React.createElement('label', {
+                                key: 'linkedin-complete',
+                                className: 'flex items-center cursor-pointer'
+                            }, [
+                                React.createElement('input', {
+                                    key: 'linkedin-complete-radio',
+                                    type: 'radio',
+                                    name: 'linkedinStatus',
+                                    value: 'complete',
+                                    checked: data?.linkedinStatus === 'complete',
+                                    onChange: (e) => updateFn(4, 'linkedinStatus', e.target.value),
+                                    className: 'mr-2'
+                                }),
+                                '완전히 작성됨 (경험, 스킬 등)'
+                            ])
+                        ])
+                    ]),
+                    
+                    // GitHub/포트폴리오 보유
+                    React.createElement('div', {
+                        key: 'portfolio-group'
+                    }, [
+                        React.createElement('label', {
+                            key: 'portfolio-label',
+                            className: 'block text-sm font-medium text-gray-700 mb-3'
+                        }, '온라인 포트폴리오 (복수 선택 가능)'),
+                        React.createElement('div', {
+                            key: 'portfolio-grid',
+                            className: 'grid grid-cols-2 gap-2'
+                        }, [
+                            'GitHub', 'Behance', '개인 블로그', '포트폴리오 사이트', 'Notion', '기타'
+                        ].map((platform, index) => {
+                            const isSelected = (data?.portfolioPlatforms || []).includes(platform);
+                            return React.createElement('button', {
+                                key: `portfolio-${index}`,
+                                className: `px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                                    isSelected 
+                                    ? 'bg-blue-500 text-white' 
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`,
+                                onClick: () => {
+                                    const currentPlatforms = data?.portfolioPlatforms || [];
+                                    const newPlatforms = isSelected 
+                                        ? currentPlatforms.filter(p => p !== platform)
+                                        : [...currentPlatforms, platform];
+                                    updateFn(4, 'portfolioPlatforms', newPlatforms);
+                                }
+                            }, platform);
+                        }))
+                    ]),
+                    
+                    // 업계 인맥 수
+                    React.createElement('div', {
+                        key: 'network-group'
+                    }, [
+                        React.createElement('label', {
+                            key: 'network-label',
+                            className: 'block text-sm font-medium text-gray-700 mb-2'
+                        }, '업계 인맥'),
+                        React.createElement('select', {
+                            key: 'network-select',
+                            value: data?.industryNetwork || '',
+                            onChange: (e) => updateFn(4, 'industryNetwork', e.target.value),
+                            className: 'w-full px-4 py-3 border border-gray-300 rounded-lg text-base'
+                        }, [
+                            React.createElement('option', { key: 'network-empty', value: '' }, '선택하세요'),
+                            React.createElement('option', { key: 'network-none', value: 'none' }, '업계 인맥 없음'),
+                            React.createElement('option', { key: 'network-few', value: 'few' }, '1-3명 정도'),
+                            React.createElement('option', { key: 'network-some', value: 'some' }, '4-10명'),
+                            React.createElement('option', { key: 'network-many', value: 'many' }, '10명 이상'),
+                            React.createElement('option', { key: 'network-extensive', value: 'extensive' }, '광범위한 네트워크')
+                        ])
+                    ]),
+                    
+                    // 추천서 가능성
+                    React.createElement('div', {
+                        key: 'reference-group'
+                    }, [
+                        React.createElement('label', {
+                            key: 'reference-label',
+                            className: 'block text-sm font-medium text-gray-700 mb-2'
+                        }, '추천서 받을 수 있는 사람'),
+                        React.createElement('select', {
+                            key: 'reference-select',
+                            value: data?.referenceAvailable || '',
+                            onChange: (e) => updateFn(4, 'referenceAvailable', e.target.value),
+                            className: 'w-full px-4 py-3 border border-gray-300 rounded-lg text-base'
+                        }, [
+                            React.createElement('option', { key: 'ref-empty', value: '' }, '선택하세요'),
+                            React.createElement('option', { key: 'ref-none', value: 'none' }, '추천서 요청 불가'),
+                            React.createElement('option', { key: 'ref-professor', value: 'professor' }, '교수님'),
+                            React.createElement('option', { key: 'ref-supervisor', value: 'supervisor' }, '직장 상사'),
+                            React.createElement('option', { key: 'ref-both', value: 'both' }, '교수님 + 직장 상사'),
+                            React.createElement('option', { key: 'ref-multiple', value: 'multiple' }, '여러명 가능')
+                        ])
+                    ])
+                ])
+            ]);
+        };
+
+        // 계산기 5단계: 취업 준비 현황 렌더링
+        const renderStep5Preparation = (data, updateFn) => {
+            return React.createElement('div', {
+                className: 'card max-w-2xl mx-auto'
+            }, [
+                React.createElement('h3', {
+                    key: 'title',
+                    className: 'text-2xl font-bold text-gray-800 mb-6 text-center'
+                }, '📝 5단계: 취업 준비 현황'),
+                
+                React.createElement('div', {
+                    key: 'form',
+                    className: 'space-y-6'
+                }, [
+                    // 이력서 완성도
+                    React.createElement('div', {
+                        key: 'resume-group'
+                    }, [
+                        React.createElement('label', {
+                            key: 'resume-label',
+                            className: 'block text-sm font-medium text-gray-700 mb-2'
+                        }, '이력서 완성도'),
+                        React.createElement('select', {
+                            key: 'resume-select',
+                            value: data?.resumeStatus || '',
+                            onChange: (e) => updateFn(5, 'resumeStatus', e.target.value),
+                            className: 'w-full px-4 py-3 border border-gray-300 rounded-lg text-base'
+                        }, [
+                            React.createElement('option', { key: 'resume-empty', value: '' }, '선택하세요'),
+                            React.createElement('option', { key: 'resume-none', value: 'none' }, '이력서 없음'),
+                            React.createElement('option', { key: 'resume-draft', value: 'draft' }, '초안 작성 중'),
+                            React.createElement('option', { key: 'resume-basic', value: 'basic' }, '기본 완성'),
+                            React.createElement('option', { key: 'resume-polished', value: 'polished' }, '완벽하게 다듬어짐'),
+                            React.createElement('option', { key: 'resume-expert', value: 'expert' }, '전문가 검토 완료')
+                        ])
+                    ]),
+                    
+                    // 자기소개서 준비도
+                    React.createElement('div', {
+                        key: 'coverletter-group'
+                    }, [
+                        React.createElement('label', {
+                            key: 'coverletter-label',
+                            className: 'block text-sm font-medium text-gray-700 mb-2'
+                        }, '자기소개서 준비도'),
+                        React.createElement('select', {
+                            key: 'coverletter-select',
+                            value: data?.coverLetterStatus || '',
+                            onChange: (e) => updateFn(5, 'coverLetterStatus', e.target.value),
+                            className: 'w-full px-4 py-3 border border-gray-300 rounded-lg text-base'
+                        }, [
+                            React.createElement('option', { key: 'cover-empty', value: '' }, '선택하세요'),
+                            React.createElement('option', { key: 'cover-none', value: 'none' }, '준비하지 않음'),
+                            React.createElement('option', { key: 'cover-template', value: 'template' }, '기본 템플릿 사용'),
+                            React.createElement('option', { key: 'cover-customized', value: 'customized' }, '기업별 맞춤 작성'),
+                            React.createElement('option', { key: 'cover-multiple', value: 'multiple' }, '여러 버전 준비'),
+                            React.createElement('option', { key: 'cover-expert', value: 'expert' }, '전문가 첨삭 완료')
+                        ])
+                    ]),
+                    
+                    // 면접 준비 상태
+                    React.createElement('div', {
+                        key: 'interview-group'
+                    }, [
+                        React.createElement('label', {
+                            key: 'interview-label',
+                            className: 'block text-sm font-medium text-gray-700 mb-2'
+                        }, '면접 준비 상태'),
+                        React.createElement('select', {
+                            key: 'interview-select',
+                            value: data?.interviewPreparation || '',
+                            onChange: (e) => updateFn(5, 'interviewPreparation', e.target.value),
+                            className: 'w-full px-4 py-3 border border-gray-300 rounded-lg text-base'
+                        }, [
+                            React.createElement('option', { key: 'interview-empty', value: '' }, '선택하세요'),
+                            React.createElement('option', { key: 'interview-none', value: 'none' }, '준비하지 않음'),
+                            React.createElement('option', { key: 'interview-basic', value: 'basic' }, '기본 답변 준비'),
+                            React.createElement('option', { key: 'interview-practice', value: 'practice' }, '모의면접 경험'),
+                            React.createElement('option', { key: 'interview-multiple', value: 'multiple' }, '여러 번 모의면접'),
+                            React.createElement('option', { key: 'interview-professional', value: 'professional' }, '전문 코칭 받음')
+                        ])
+                    ]),
+                    
+                    // 지원한 회사 수
+                    React.createElement('div', {
+                        key: 'application-group'
+                    }, [
+                        React.createElement('label', {
+                            key: 'application-label',
+                            className: 'block text-sm font-medium text-gray-700 mb-2'
+                        }, '지원한 회사 수'),
+                        React.createElement('input', {
+                            key: 'application-input',
+                            type: 'number',
+                            value: data?.applicationCount || '',
+                            onChange: (e) => updateFn(5, 'applicationCount', parseInt(e.target.value) || 0),
+                            className: 'w-full px-4 py-3 border border-gray-300 rounded-lg text-base',
+                            placeholder: '현재까지 지원한 회사 수',
+                            min: '0'
+                        })
+                    ]),
+                    
+                    // 취업 준비 기간
+                    React.createElement('div', {
+                        key: 'preparation-period-group'
+                    }, [
+                        React.createElement('label', {
+                            key: 'preparation-label',
+                            className: 'block text-sm font-medium text-gray-700 mb-2'
+                        }, '취업 준비 기간 (개월)'),
+                        React.createElement('input', {
+                            key: 'preparation-input',
+                            type: 'number',
+                            value: data?.preparationMonths || '',
+                            onChange: (e) => updateFn(5, 'preparationMonths', parseInt(e.target.value) || 0),
+                            className: 'w-full px-4 py-3 border border-gray-300 rounded-lg text-base',
+                            placeholder: '본격적으로 취업준비를 시작한 개월 수',
+                            min: '0'
+                        })
+                    ])
+                ])
+            ]);
+        };
+
+        // 점수 계산 로직
+        const calculateCareerScore = (allData) => {
+            let totalScore = 0;
+            const breakdown = {};
+
+            // 1단계: 기본정보 (10점)
+            let basicScore = 0;
+            const step1 = allData.step1 || {};
+            if (step1.age >= 20 && step1.age <= 35) basicScore += 3; // 적정 연령
+            if (step1.education === 'university' || step1.education === 'graduate') basicScore += 4;
+            if (step1.targetJob) basicScore += 3;
+            breakdown.basic = Math.min(basicScore, 10);
+
+            // 2단계: 스킬 (25점)
+            let skillScore = 0;
+            const step2 = allData.step2 || {};
+            skillScore += Math.min((step2.technicalSkills || []).length * 2, 12); // 기술스택
+            if (step2.englishLevel === 'toeic_high' || step2.englishLevel === 'native') skillScore += 8;
+            else if (step2.englishLevel === 'toeic_mid' || step2.englishLevel === 'opic') skillScore += 5;
+            else if (step2.englishLevel === 'toeic_low' || step2.englishLevel === 'basic') skillScore += 2;
+            skillScore += Math.min((step2.certificationCount || 0) * 1, 5); // 자격증
+            breakdown.skills = Math.min(skillScore, 25);
+
+            // 3단계: 경험 (25점)
+            let expScore = 0;
+            const step3 = allData.step3 || {};
+            if (step3.internshipExperience === 'long_term') expScore += 10;
+            else if (step3.internshipExperience === 'multiple') expScore += 8;
+            else if (step3.internshipExperience === 'one') expScore += 5;
+            expScore += Math.min((step3.projectCount || 0) * 2, 8); // 프로젝트
+            expScore += Math.min((step3.workExperienceMonths || 0) * 0.3, 5); // 업무경험
+            if (step3.awards === 'international') expScore += 8;
+            else if (step3.awards === 'national') expScore += 6;
+            else if (step3.awards === 'external') expScore += 4;
+            else if (step3.awards === 'school') expScore += 2;
+            breakdown.experience = Math.min(expScore, 25);
+
+            // 4단계: 네트워크 (15점)
+            let networkScore = 0;
+            const step4 = allData.step4 || {};
+            if (step4.linkedinStatus === 'complete') networkScore += 5;
+            else if (step4.linkedinStatus === 'basic') networkScore += 2;
+            networkScore += Math.min((step4.portfolioPlatforms || []).length * 1, 4); // 포트폴리오
+            if (step4.industryNetwork === 'extensive') networkScore += 4;
+            else if (step4.industryNetwork === 'many') networkScore += 3;
+            else if (step4.industryNetwork === 'some') networkScore += 2;
+            else if (step4.industryNetwork === 'few') networkScore += 1;
+            if (step4.referenceAvailable === 'multiple') networkScore += 3;
+            else if (step4.referenceAvailable === 'both') networkScore += 2;
+            else if (step4.referenceAvailable === 'supervisor' || step4.referenceAvailable === 'professor') networkScore += 1;
+            breakdown.network = Math.min(networkScore, 15);
+
+            // 5단계: 준비도 (25점)
+            let prepScore = 0;
+            const step5 = allData.step5 || {};
+            if (step5.resumeStatus === 'expert') prepScore += 8;
+            else if (step5.resumeStatus === 'polished') prepScore += 6;
+            else if (step5.resumeStatus === 'basic') prepScore += 4;
+            else if (step5.resumeStatus === 'draft') prepScore += 2;
+            
+            if (step5.coverLetterStatus === 'expert') prepScore += 6;
+            else if (step5.coverLetterStatus === 'multiple') prepScore += 5;
+            else if (step5.coverLetterStatus === 'customized') prepScore += 4;
+            else if (step5.coverLetterStatus === 'template') prepScore += 2;
+            
+            if (step5.interviewPreparation === 'professional') prepScore += 6;
+            else if (step5.interviewPreparation === 'multiple') prepScore += 4;
+            else if (step5.interviewPreparation === 'practice') prepScore += 3;
+            else if (step5.interviewPreparation === 'basic') prepScore += 1;
+            
+            prepScore += Math.min((step5.applicationCount || 0) * 0.2, 3); // 지원 수
+            prepScore += Math.min((step5.preparationMonths || 0) * 0.5, 2); // 준비기간
+            breakdown.preparation = Math.min(prepScore, 25);
+
+            // 총점 계산
+            totalScore = breakdown.basic + breakdown.skills + breakdown.experience + breakdown.network + breakdown.preparation;
+
+            // 등급 계산
+            let grade = '';
+            if (totalScore >= 90) grade = 'S급 (최상위 1%)';
+            else if (totalScore >= 80) grade = 'A급 (상위 10%)';
+            else if (totalScore >= 70) grade = 'B급 (상위 30%)';
+            else if (totalScore >= 60) grade = 'C급 (상위 50%)';
+            else if (totalScore >= 50) grade = 'D급 (상위 70%)';
+            else grade = 'F급 (하위 30%)';
+
+            return {
+                totalScore: Math.round(totalScore),
+                breakdown,
+                grade,
+                maxScore: 100
+            };
+        };
+
+        // 6단계: 결과 화면 렌더링
+        const renderStep6Results = () => {
+            const result = calculateCareerScore(calculatorData);
+            
+            return React.createElement('div', {
+                className: 'max-w-4xl mx-auto space-y-6'
+            }, [
+                // 메인 결과 카드
+                React.createElement('div', {
+                    key: 'main-result',
+                    className: 'card bg-gradient-to-r from-green-50 to-blue-50'
+                }, [
+                    React.createElement('div', {
+                        key: 'result-header',
+                        className: 'text-center mb-8'
+                    }, [
+                        React.createElement('h2', {
+                            key: 'title',
+                            className: 'text-3xl font-bold text-gray-800 mb-4'
+                        }, '🎯 취업경쟁력 진단 결과'),
+                        
+                        React.createElement('div', {
+                            key: 'score-display',
+                            className: 'flex justify-center items-center mb-6'
+                        }, [
+                            React.createElement('div', {
+                                key: 'score-circle',
+                                className: 'w-32 h-32 rounded-full border-8 border-green-200 flex items-center justify-center bg-white shadow-lg'
+                            }, [
+                                React.createElement('div', {
+                                    key: 'score-content',
+                                    className: 'text-center'
+                                }, [
+                                    React.createElement('div', {
+                                        key: 'score-number',
+                                        className: 'text-4xl font-bold text-green-600'
+                                    }, result.totalScore),
+                                    React.createElement('div', {
+                                        key: 'score-max',
+                                        className: 'text-sm text-gray-500'
+                                    }, '/ 100')
+                                ])
+                            ])
+                        ]),
+                        
+                        React.createElement('div', {
+                            key: 'grade',
+                            className: 'text-2xl font-bold text-blue-600 mb-6'
+                        }, result.grade)
+                    ])
+                ]),
+                
+                // 상세 분석 차트
+                React.createElement('div', {
+                    key: 'detailed-analysis',
+                    className: 'card'
+                }, [
+                    React.createElement('h3', {
+                        key: 'analysis-title',
+                        className: 'text-xl font-bold text-gray-800 mb-6 text-center'
+                    }, '📊 영역별 상세 분석'),
+                    
+                    React.createElement('div', {
+                        key: 'breakdown-bars',
+                        className: 'space-y-4'
+                    }, [
+                        {label: '📋 기본정보', key: 'basic', max: 10},
+                        {label: '🛠️ 스킬/자격증', key: 'skills', max: 25},
+                        {label: '💼 경험', key: 'experience', max: 25},
+                        {label: '🤝 네트워크', key: 'network', max: 15},
+                        {label: '📝 준비도', key: 'preparation', max: 25}
+                    ].map((item) => {
+                        const score = result.breakdown[item.key] || 0;
+                        const percentage = (score / item.max) * 100;
+                        return React.createElement('div', {
+                            key: item.key,
+                            className: 'mb-4'
+                        }, [
+                            React.createElement('div', {
+                                key: 'label',
+                                className: 'flex justify-between mb-2'
+                            }, [
+                                React.createElement('span', {
+                                    key: 'name',
+                                    className: 'font-medium text-gray-700'
+                                }, item.label),
+                                React.createElement('span', {
+                                    key: 'score',
+                                    className: 'font-bold text-blue-600'
+                                }, `${score}/${item.max}점`)
+                            ]),
+                            React.createElement('div', {
+                                key: 'bar-container',
+                                className: 'w-full bg-gray-200 rounded-full h-4'
+                            }, [
+                                React.createElement('div', {
+                                    key: 'bar-fill',
+                                    className: 'bg-gradient-to-r from-green-400 to-blue-500 h-4 rounded-full transition-all duration-1000',
+                                    style: { width: `${percentage}%` }
+                                })
+                            ])
+                        ]);
+                    }))
+                ])
+            ]);
+        };
+
         // 계산기 메인 뷰 렌더링
         const renderCalculatorView = () => {
             const currentStepData = calculatorData[`step${calculatorStep}`] || {};
@@ -457,6 +938,9 @@
                     calculatorStep === 1 ? renderStep1BasicInfo(currentStepData, updateCalculatorData) :
                     calculatorStep === 2 ? renderStep2Skills(currentStepData, updateCalculatorData) : 
                     calculatorStep === 3 ? renderStep3Experience(currentStepData, updateCalculatorData) :
+                    calculatorStep === 4 ? renderStep4Network(currentStepData, updateCalculatorData) :
+                    calculatorStep === 5 ? renderStep5Preparation(currentStepData, updateCalculatorData) :
+                    calculatorStep === 6 ? renderStep6Results() :
                     React.createElement('div', {
                         key: 'placeholder',
                         className: 'card max-w-2xl mx-auto text-center'
@@ -488,10 +972,12 @@
                                 if (calculatorStep < 6) {
                                     setCalculatorStep(prev => prev + 1);
                                 } else {
-                                    alert('계산 완료! 결과 화면 개발 예정 🎉');
+                                    // 처음부터 다시 시작
+                                    setCalculatorStep(1);
+                                    setCalculatorData({});
                                 }
                             }
-                        }, calculatorStep === 6 ? '진단 완료' : '다음')
+                        }, calculatorStep === 6 ? '🔄 다시 진단하기' : '다음')
                     ])
                 ])
             ]);
