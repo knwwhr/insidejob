@@ -26,8 +26,8 @@ CREATE TABLE user_profiles (
     -- 플랜비와 동일한 역할 구조 유지
     role TEXT DEFAULT 'member' CHECK (role IN ('guest', 'member', 'expert', 'admin', 'super_admin')),
     
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
 -- ==============================================
@@ -67,8 +67,8 @@ CREATE TABLE career_calculations (
     migrated_from_guest BOOLEAN DEFAULT FALSE,
     calculation_version TEXT DEFAULT '1.0',
     
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
 -- ==============================================
@@ -106,8 +106,8 @@ CREATE TABLE job_seeker_posts (
     downvotes INTEGER DEFAULT 0,
     report_count INTEGER DEFAULT 0,
     
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW') NOT NULL
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
 CREATE TABLE post_comments (
@@ -122,8 +122,8 @@ CREATE TABLE post_comments (
     like_count INTEGER DEFAULT 0,
     report_count INTEGER DEFAULT 0,
     
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW') NOT NULL
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
 -- ==============================================
@@ -186,8 +186,8 @@ CREATE TABLE professional_requests (
     review_reason TEXT,
     approved_at TIMESTAMP WITH TIME ZONE,
     
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
 -- ==============================================
@@ -258,8 +258,8 @@ CREATE TABLE consultation_bookings (
     contact_exchange_approved BOOLEAN DEFAULT FALSE,
     contact_exchange_expires_at TIMESTAMP WITH TIME ZONE,
     
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW') NOT NULL
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
 -- ==============================================
@@ -291,8 +291,8 @@ CREATE TABLE payment_transactions (
     refund_reason TEXT,
     refunded_at TIMESTAMP WITH TIME ZONE,
     
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW') NOT NULL
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
 CREATE TABLE professional_settlements (
@@ -326,8 +326,8 @@ CREATE TABLE professional_settlements (
     payout_account TEXT,    -- 계좌 정보 (암호화)
     paid_at TIMESTAMP WITH TIME ZONE,
     
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW') NOT NULL
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
 -- ==============================================
@@ -358,15 +358,15 @@ CREATE TABLE announcements (
     author_id UUID REFERENCES auth.users(id),
     view_count INTEGER DEFAULT 0,
     
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW') NOT NULL
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
 CREATE TABLE announcement_views (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     announcement_id UUID REFERENCES announcements(id) ON DELETE CASCADE,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-    viewed_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    viewed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
     
     UNIQUE(announcement_id, user_id)
 );
@@ -384,7 +384,7 @@ CREATE TABLE chat_rooms (
     is_active BOOLEAN DEFAULT TRUE,
     
     created_by UUID REFERENCES auth.users(id),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
 CREATE TABLE chat_messages (
@@ -400,8 +400,8 @@ CREATE TABLE chat_messages (
     is_edited BOOLEAN DEFAULT FALSE,
     is_deleted BOOLEAN DEFAULT FALSE,
     
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW') NOT NULL
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
 CREATE TABLE chat_participants (
@@ -409,8 +409,8 @@ CREATE TABLE chat_participants (
     room_id UUID REFERENCES chat_rooms(id) ON DELETE CASCADE,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     
-    joined_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
-    last_read_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW'),
+    joined_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    last_read_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     is_active BOOLEAN DEFAULT TRUE,
     
     UNIQUE(room_id, user_id)
@@ -592,7 +592,7 @@ CREATE POLICY "Participants can send messages"
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
-    NEW.updated_at = TIMEZONE('utc'::text, NOW());
+    NEW.updated_at = NOW();
     RETURN NEW;
 END;
 $$ language 'plpgsql';
