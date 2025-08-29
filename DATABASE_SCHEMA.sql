@@ -1,0 +1,694 @@
+-- 커리어코치 (CareerCoach) 데이터베이스 스키마
+-- 기반: 플랜비(Plan B) 데이터베이스 구조 확장 및 변환
+-- 작성일: 2025년 8월 29일
+
+-- ==============================================
+-- 1. 사용자 프로필 (플랜비 구조 그대로 활용)
+-- ==============================================
+
+CREATE TABLE user_profiles (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE,
+    nickname TEXT NOT NULL,
+    email TEXT NOT NULL,
+    phone TEXT,
+    age INTEGER,
+    location TEXT,
+    
+    -- 커리어 서비스 특화 필드 추가
+    education_level TEXT CHECK (education_level IN ('high_school', 'college', 'university', 'graduate')),
+    major TEXT,
+    career_status TEXT CHECK (career_status IN ('student', 'job_seeker', 'employed', 'career_change', 'freelancer')),
+    target_industry TEXT,
+    target_job TEXT,
+    experience_years INTEGER DEFAULT 0,
+    
+    -- 플랜비와 동일한 역할 구조 유지
+    role TEXT DEFAULT 'member' CHECK (role IN ('guest', 'member', 'expert', 'admin', 'super_admin')),
+    
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- ==============================================
+-- 2. 취업경쟁력 계산 결과 (플랜비 계산 결과 구조 변환)
+-- ==============================================
+
+CREATE TABLE career_calculations (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    
+    -- 계산 입력 데이터 (JSON 형태 저장 - 플랜비 패턴)
+    step1_basic_info JSONB, -- 기본정보 (나이, 학력, 전공, 희망직무/업계)
+    step2_skills JSONB,     -- 스킬역량 (기술스택, 자격증, 어학, 포트폴리오)
+    step3_experience JSONB, -- 경험분석 (인턴, 프로젝트, 활동, 수상)
+    step4_network JSONB,    -- 네트워크 (인맥, 추천서, 멘토, SNS)
+    step5_preparation JSONB, -- 준비현황 (이력서, 자소서, 면접, 지원수)
+    step6_market JSONB,     -- 시장분석 (업계성장, 직무수요, 경쟁강도)
+    
+    -- 계산 결과 데이터
+    total_score INTEGER NOT NULL, -- 종합 점수 (0-100)
+    grade TEXT NOT NULL,          -- 등급 (S급, A급, B급, C급, D급, F급)
+    
+    -- 영역별 점수
+    skill_score INTEGER,
+    experience_score INTEGER, 
+    preparation_score INTEGER,
+    network_score INTEGER,
+    market_score INTEGER,
+    
+    -- 추천사항 및 분석
+    recommendations JSONB,     -- 개선 액션플랜
+    peer_comparison JSONB,     -- 또래 비교 데이터
+    predicted_success_rate INTEGER, -- 취업 성공률 예측 (%)
+    estimated_job_period INTEGER,   -- 예상 취업 기간 (개월)
+    
+    -- 플랜비와 동일한 메타데이터
+    migrated_from_guest BOOLEAN DEFAULT FALSE,
+    calculation_version TEXT DEFAULT '1.0',
+    
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- ==============================================
+-- 3. 구직자 커뮤니티 (플랜비 커뮤니티 구조 확장)
+-- ==============================================
+
+CREATE TABLE job_seeker_posts (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    
+    -- 커리어 전용 카테고리
+    category TEXT NOT NULL CHECK (category IN (
+        'resume_review',    -- 서류 준비
+        'interview_prep',   -- 면접 준비
+        'industry_info',    -- 업계 정보
+        'job_analysis',     -- 직무 탐구
+        'networking'        -- 네트워킹
+    )),
+    
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    
+    -- 익명성 보장을 위한 뱃지 시스템 (플랜비와 동일한 접근)
+    author_badge JSONB, -- {education_level, target_industry, preparation_period}
+    
+    -- 커뮤니티 활동 지표
+    view_count INTEGER DEFAULT 0,
+    like_count INTEGER DEFAULT 0,
+    comment_count INTEGER DEFAULT 0,
+    is_pinned BOOLEAN DEFAULT FALSE,
+    is_featured BOOLEAN DEFAULT FALSE,
+    
+    -- 추천/신고 시스템
+    upvotes INTEGER DEFAULT 0,
+    downvotes INTEGER DEFAULT 0,
+    report_count INTEGER DEFAULT 0,
+    
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW') NOT NULL
+);
+
+CREATE TABLE post_comments (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    post_id UUID REFERENCES job_seeker_posts(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    parent_comment_id UUID REFERENCES post_comments(id) ON DELETE CASCADE,
+    
+    content TEXT NOT NULL,
+    author_badge JSONB, -- 댓글 작성자 익명 뱃지
+    
+    like_count INTEGER DEFAULT 0,
+    report_count INTEGER DEFAULT 0,
+    
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW') NOT NULL
+);
+
+-- ==============================================
+-- 4. 현직자 등록 시스템 (플랜비 전문가 등록 구조 활용)
+-- ==============================================
+
+CREATE TABLE professional_requests (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    
+    -- 기본 정보 (플랜비와 동일)
+    name TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    email TEXT NOT NULL,
+    
+    -- 현직자 전문 분야 정보
+    current_company TEXT NOT NULL,    -- 현재 회사
+    current_position TEXT NOT NULL,   -- 현재 직책
+    industry TEXT NOT NULL CHECK (industry IN (
+        'tech_development',   -- IT/개발
+        'finance_consulting', -- 금융/컨설팅
+        'marketing_planning', -- 마케팅/기획
+        'manufacturing',      -- 제조/엔지니어링
+        'public_education',   -- 공공/교육
+        'service_retail',     -- 서비스/유통
+        'media_creative',     -- 미디어/크리에이티브
+        'healthcare',         -- 의료/바이오
+        'construction_real_estate', -- 건설/부동산
+        'others'             -- 기타
+    )),
+    job_function TEXT NOT NULL,      -- 구체적 직무 (개발자, PM, 마케터, 등)
+    experience_years INTEGER NOT NULL, -- 경력 연수
+    keywords TEXT,                   -- 전문성 키워드 (JSON 배열 문자열)
+    
+    -- 검증 정보 (플랜비 구조 확장)
+    verification_type TEXT NOT NULL CHECK (verification_type IN (
+        'employment_certificate', -- 재직증명서
+        'business_card',          -- 명함/사원증
+        'linkedin_profile',       -- LinkedIn 프로필
+        'portfolio'               -- 포트폴리오/경력증빙
+    )),
+    
+    -- 검증 세부사항
+    company_verification_doc TEXT,  -- 재직증명서 파일 경로
+    business_card_image TEXT,       -- 명함 이미지 경로
+    linkedin_url TEXT,              -- LinkedIn 프로필 URL
+    portfolio_files TEXT,           -- 포트폴리오 파일들 (JSON 배열)
+    additional_documents TEXT,       -- 추가 증빙 서류
+    
+    -- 상담 서비스 정보
+    consultation_types TEXT,        -- 제공 가능 상담 유형 (JSON 배열)
+    consultation_methods TEXT,      -- 상담 방식 (온라인/오프라인/전화)
+    hourly_rate INTEGER,           -- 시간당 상담료 (원)
+    available_times TEXT,          -- 상담 가능 시간 (JSON)
+    consultation_experience TEXT,   -- 상담/멘토링 경험
+    
+    -- 승인 상태 관리 (플랜비와 동일)
+    status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+    reviewed_by UUID REFERENCES auth.users(id),
+    review_reason TEXT,
+    approved_at TIMESTAMP WITH TIME ZONE,
+    
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- ==============================================
+-- 5. 매칭 및 상담 예약 시스템
+-- ==============================================
+
+CREATE TABLE consultation_bookings (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    
+    -- 매칭 정보
+    job_seeker_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    professional_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    
+    -- 상담 정보
+    consultation_type TEXT NOT NULL CHECK (consultation_type IN (
+        'resume_review',     -- 이력서 검토
+        'interview_coaching', -- 면접 코칭  
+        'industry_insight',  -- 업계 정보
+        'career_planning',   -- 커리어 설계
+        'skill_guidance',    -- 스킬 개발 가이드
+        'company_culture'    -- 기업문화 정보
+    )),
+    consultation_method TEXT NOT NULL CHECK (consultation_method IN (
+        'video_call',        -- 화상 통화
+        'phone_call',        -- 전화
+        'in_person',         -- 대면 미팅
+        'message_chat'       -- 메시지 상담
+    )),
+    
+    -- 예약 일정
+    scheduled_date DATE NOT NULL,
+    scheduled_time TIME NOT NULL,
+    duration_minutes INTEGER DEFAULT 60, -- 상담 시간 (기본 60분)
+    timezone TEXT DEFAULT 'Asia/Seoul',
+    
+    -- 결제 정보 (플랜비 결제 구조 확장)
+    consultation_fee INTEGER NOT NULL,   -- 상담료
+    platform_fee INTEGER NOT NULL,       -- 플랫폼 수수료 (10%)
+    total_amount INTEGER NOT NULL,       -- 총 결제 금액
+    payment_method TEXT,                 -- 결제 수단
+    payment_status TEXT DEFAULT 'pending' CHECK (payment_status IN (
+        'pending',           -- 결제 대기
+        'completed',         -- 결제 완료
+        'failed',            -- 결제 실패
+        'refunded',          -- 환불 완료
+        'disputed'           -- 분쟁 상태
+    )),
+    
+    -- 상담 현황
+    booking_status TEXT DEFAULT 'requested' CHECK (booking_status IN (
+        'requested',         -- 예약 요청
+        'accepted',          -- 전문가 수락
+        'rejected',          -- 전문가 거절
+        'completed',         -- 상담 완료
+        'cancelled',         -- 취소됨
+        'no_show'           -- 노쇼
+    )),
+    
+    -- 상담 내용 및 후기
+    consultation_notes TEXT,            -- 상담 노트 (전문가 작성)
+    job_seeker_feedback TEXT,           -- 구직자 후기
+    professional_feedback TEXT,         -- 전문가 후기
+    job_seeker_rating INTEGER CHECK (job_seeker_rating BETWEEN 1 AND 5),
+    professional_rating INTEGER CHECK (professional_rating BETWEEN 1 AND 5),
+    
+    -- 연락처 교환 (플랜비 연락처 교환 시스템 활용)
+    contact_exchange_requested BOOLEAN DEFAULT FALSE,
+    contact_exchange_approved BOOLEAN DEFAULT FALSE,
+    contact_exchange_expires_at TIMESTAMP WITH TIME ZONE,
+    
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW') NOT NULL
+);
+
+-- ==============================================
+-- 6. 결제 및 정산 시스템 (플랜비 구조 확장)
+-- ==============================================
+
+CREATE TABLE payment_transactions (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    booking_id UUID REFERENCES consultation_bookings(id) ON DELETE CASCADE,
+    
+    -- 결제 정보
+    payment_gateway TEXT, -- 결제 게이트웨이 (kakaopay, tosspay, card)
+    transaction_id TEXT UNIQUE, -- 결제 시스템 거래 ID
+    amount INTEGER NOT NULL,
+    currency TEXT DEFAULT 'KRW',
+    
+    -- 결제 상태
+    status TEXT DEFAULT 'pending' CHECK (status IN (
+        'pending',           -- 결제 진행 중
+        'completed',         -- 결제 완료
+        'failed',            -- 결제 실패
+        'cancelled',         -- 결제 취소
+        'refunded',          -- 환불 완료
+        'partial_refunded'   -- 부분 환불
+    )),
+    
+    -- 환불 정보
+    refund_amount INTEGER DEFAULT 0,
+    refund_reason TEXT,
+    refunded_at TIMESTAMP WITH TIME ZONE,
+    
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW') NOT NULL
+);
+
+CREATE TABLE professional_settlements (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    professional_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    
+    -- 정산 기간
+    settlement_period_start DATE NOT NULL,
+    settlement_period_end DATE NOT NULL,
+    
+    -- 정산 금액
+    total_consultation_fee INTEGER NOT NULL,  -- 총 상담료
+    platform_fee INTEGER NOT NULL,           -- 플랫폼 수수료
+    professional_payout INTEGER NOT NULL,    -- 전문가 수령액 (90%)
+    
+    -- 상담 건수 통계
+    total_consultations INTEGER NOT NULL,
+    completed_consultations INTEGER NOT NULL,
+    cancelled_consultations INTEGER NOT NULL,
+    
+    -- 정산 상태
+    status TEXT DEFAULT 'pending' CHECK (status IN (
+        'pending',           -- 정산 대기
+        'calculated',        -- 정산 계산 완료
+        'paid',             -- 지급 완료
+        'disputed'          -- 분쟁 상태
+    )),
+    
+    -- 지급 정보
+    payout_method TEXT,     -- 지급 방식 (bank_transfer, 등)
+    payout_account TEXT,    -- 계좌 정보 (암호화)
+    paid_at TIMESTAMP WITH TIME ZONE,
+    
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW') NOT NULL
+);
+
+-- ==============================================
+-- 7. 공지사항 및 관리 (플랜비 구조 그대로)
+-- ==============================================
+
+CREATE TABLE announcements (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    
+    -- 공지사항 유형
+    category TEXT DEFAULT 'general' CHECK (category IN (
+        'general',          -- 일반 공지
+        'system_update',    -- 시스템 업데이트
+        'service_notice',   -- 서비스 안내
+        'event',           -- 이벤트
+        'maintenance'      -- 점검 안내
+    )),
+    
+    -- 표시 옵션
+    is_important BOOLEAN DEFAULT FALSE,
+    is_active BOOLEAN DEFAULT TRUE,
+    display_start_date TIMESTAMP WITH TIME ZONE,
+    display_end_date TIMESTAMP WITH TIME ZONE,
+    
+    -- 메타데이터
+    author_id UUID REFERENCES auth.users(id),
+    view_count INTEGER DEFAULT 0,
+    
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW') NOT NULL
+);
+
+CREATE TABLE announcement_views (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    announcement_id UUID REFERENCES announcements(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    viewed_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    
+    UNIQUE(announcement_id, user_id)
+);
+
+-- ==============================================
+-- 8. 실시간 채팅 시스템 (플랜비 구조 그대로)
+-- ==============================================
+
+CREATE TABLE chat_rooms (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    room_type TEXT DEFAULT 'public' CHECK (room_type IN ('public', 'private', 'consultation')),
+    max_participants INTEGER DEFAULT 100,
+    is_active BOOLEAN DEFAULT TRUE,
+    
+    created_by UUID REFERENCES auth.users(id),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+CREATE TABLE chat_messages (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    room_id UUID REFERENCES chat_rooms(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    
+    message_text TEXT NOT NULL,
+    message_type TEXT DEFAULT 'text' CHECK (message_type IN ('text', 'image', 'file', 'system')),
+    
+    -- 메시지 메타데이터
+    reply_to UUID REFERENCES chat_messages(id),
+    is_edited BOOLEAN DEFAULT FALSE,
+    is_deleted BOOLEAN DEFAULT FALSE,
+    
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW') NOT NULL
+);
+
+CREATE TABLE chat_participants (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    room_id UUID REFERENCES chat_rooms(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    
+    joined_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    last_read_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW'),
+    is_active BOOLEAN DEFAULT TRUE,
+    
+    UNIQUE(room_id, user_id)
+);
+
+-- ==============================================
+-- 인덱스 생성 (성능 최적화)
+-- ==============================================
+
+-- 사용자 프로필 인덱스
+CREATE INDEX idx_user_profiles_role ON user_profiles(role);
+CREATE INDEX idx_user_profiles_career_status ON user_profiles(career_status);
+CREATE INDEX idx_user_profiles_target_industry ON user_profiles(target_industry);
+
+-- 계산 결과 인덱스
+CREATE INDEX idx_career_calculations_user_id ON career_calculations(user_id);
+CREATE INDEX idx_career_calculations_total_score ON career_calculations(total_score DESC);
+CREATE INDEX idx_career_calculations_created_at ON career_calculations(created_at DESC);
+
+-- 커뮤니티 인덱스
+CREATE INDEX idx_job_seeker_posts_category ON job_seeker_posts(category);
+CREATE INDEX idx_job_seeker_posts_created_at ON job_seeker_posts(created_at DESC);
+CREATE INDEX idx_job_seeker_posts_view_count ON job_seeker_posts(view_count DESC);
+
+-- 전문가 등록 인덱스
+CREATE INDEX idx_professional_requests_status ON professional_requests(status);
+CREATE INDEX idx_professional_requests_industry ON professional_requests(industry);
+CREATE INDEX idx_professional_requests_created_at ON professional_requests(created_at DESC);
+
+-- 예약 및 결제 인덱스
+CREATE INDEX idx_consultation_bookings_job_seeker ON consultation_bookings(job_seeker_id);
+CREATE INDEX idx_consultation_bookings_professional ON consultation_bookings(professional_id);
+CREATE INDEX idx_consultation_bookings_scheduled_date ON consultation_bookings(scheduled_date);
+CREATE INDEX idx_consultation_bookings_status ON consultation_bookings(booking_status);
+
+-- 채팅 인덱스
+CREATE INDEX idx_chat_messages_room_id ON chat_messages(room_id);
+CREATE INDEX idx_chat_messages_created_at ON chat_messages(created_at DESC);
+
+-- ==============================================
+-- RLS (Row Level Security) 정책 설정
+-- ==============================================
+
+-- 모든 테이블에 RLS 활성화
+ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE career_calculations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE job_seeker_posts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE post_comments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE professional_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE consultation_bookings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE payment_transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE professional_settlements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE announcements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE announcement_views ENABLE ROW LEVEL SECURITY;
+ALTER TABLE chat_rooms ENABLE ROW LEVEL SECURITY;
+ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE chat_participants ENABLE ROW LEVEL SECURITY;
+
+-- 사용자 프로필 정책
+CREATE POLICY "Users can view own profile"
+    ON user_profiles FOR SELECT
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own profile"
+    ON user_profiles FOR UPDATE
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Anyone can create profile"
+    ON user_profiles FOR INSERT
+    WITH CHECK (true);
+
+-- 계산 결과 정책 (플랜비 동일)
+CREATE POLICY "Users can view own calculations"
+    ON career_calculations FOR SELECT
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Anyone can create calculations"
+    ON career_calculations FOR INSERT
+    WITH CHECK (true);
+
+CREATE POLICY "Users can update own calculations"
+    ON career_calculations FOR UPDATE
+    USING (auth.uid() = user_id);
+
+-- 커뮤니티 정책
+CREATE POLICY "Anyone can view posts"
+    ON job_seeker_posts FOR SELECT
+    USING (true);
+
+CREATE POLICY "Members can create posts"
+    ON job_seeker_posts FOR INSERT
+    WITH CHECK (auth.uid() IS NOT NULL);
+
+CREATE POLICY "Users can update own posts"
+    ON job_seeker_posts FOR UPDATE
+    USING (auth.uid() = user_id);
+
+-- 전문가 등록 정책 (플랜비 동일)
+CREATE POLICY "Users can view own professional requests"
+    ON professional_requests FOR SELECT
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Anyone can create professional requests"
+    ON professional_requests FOR INSERT
+    WITH CHECK (true);
+
+CREATE POLICY "Admins can manage all professional requests"
+    ON professional_requests FOR ALL
+    USING (
+        EXISTS (
+            SELECT 1 FROM user_profiles 
+            WHERE user_id = auth.uid() 
+            AND role IN ('admin', 'super_admin')
+        )
+    );
+
+-- 예약 및 결제 정책
+CREATE POLICY "Users can view own bookings"
+    ON consultation_bookings FOR SELECT
+    USING (
+        auth.uid() = job_seeker_id OR 
+        auth.uid() = professional_id
+    );
+
+CREATE POLICY "Job seekers can create bookings"
+    ON consultation_bookings FOR INSERT
+    WITH CHECK (auth.uid() = job_seeker_id);
+
+CREATE POLICY "Participants can update bookings"
+    ON consultation_bookings FOR UPDATE
+    USING (
+        auth.uid() = job_seeker_id OR 
+        auth.uid() = professional_id
+    );
+
+-- 공지사항 정책 (플랜비 동일)
+CREATE POLICY "Anyone can view active announcements"
+    ON announcements FOR SELECT
+    USING (is_active = true);
+
+CREATE POLICY "Admins can manage announcements"
+    ON announcements FOR ALL
+    USING (
+        EXISTS (
+            SELECT 1 FROM user_profiles 
+            WHERE user_id = auth.uid() 
+            AND role IN ('admin', 'super_admin')
+        )
+    );
+
+-- 채팅 정책 (플랜비 동일)
+CREATE POLICY "Participants can view chat messages"
+    ON chat_messages FOR SELECT
+    USING (
+        EXISTS (
+            SELECT 1 FROM chat_participants
+            WHERE room_id = chat_messages.room_id
+            AND user_id = auth.uid()
+            AND is_active = true
+        )
+    );
+
+CREATE POLICY "Participants can send messages"
+    ON chat_messages FOR INSERT
+    WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM chat_participants
+            WHERE room_id = chat_messages.room_id
+            AND user_id = auth.uid()
+            AND is_active = true
+        )
+    );
+
+-- ==============================================
+-- 함수 및 트리거 설정
+-- ==============================================
+
+-- updated_at 자동 갱신 함수 (플랜비 동일)
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = TIMEZONE('utc'::text, NOW());
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- updated_at 트리거 생성
+CREATE TRIGGER update_user_profiles_updated_at
+    BEFORE UPDATE ON user_profiles
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_career_calculations_updated_at
+    BEFORE UPDATE ON career_calculations
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_job_seeker_posts_updated_at
+    BEFORE UPDATE ON job_seeker_posts
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_professional_requests_updated_at
+    BEFORE UPDATE ON professional_requests
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_consultation_bookings_updated_at
+    BEFORE UPDATE ON consultation_bookings
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- 플랫폼 수수료 자동 계산 함수
+CREATE OR REPLACE FUNCTION calculate_platform_fee()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- 플랫폼 수수료 10% 자동 계산
+    NEW.platform_fee = ROUND(NEW.consultation_fee * 0.1);
+    NEW.total_amount = NEW.consultation_fee;
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+CREATE TRIGGER calculate_consultation_fees
+    BEFORE INSERT OR UPDATE ON consultation_bookings
+    FOR EACH ROW
+    EXECUTE FUNCTION calculate_platform_fee();
+
+-- 댓글 수 자동 업데이트 함수
+CREATE OR REPLACE FUNCTION update_post_comment_count()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'INSERT' THEN
+        UPDATE job_seeker_posts 
+        SET comment_count = comment_count + 1
+        WHERE id = NEW.post_id;
+        RETURN NEW;
+    ELSIF TG_OP = 'DELETE' THEN
+        UPDATE job_seeker_posts 
+        SET comment_count = comment_count - 1
+        WHERE id = OLD.post_id;
+        RETURN OLD;
+    END IF;
+    RETURN NULL;
+END;
+$$ language 'plpgsql';
+
+CREATE TRIGGER update_comment_count
+    AFTER INSERT OR DELETE ON post_comments
+    FOR EACH ROW
+    EXECUTE FUNCTION update_post_comment_count();
+
+-- ==============================================
+-- 초기 데이터 삽입
+-- ==============================================
+
+-- 기본 채팅방 생성
+INSERT INTO chat_rooms (name, description, room_type) VALUES
+('일반 취업준비 채팅방', '모든 구직자가 참여할 수 있는 일반 채팅방', 'public'),
+('면접 준비 스터디', '면접 준비를 함께하는 스터디 채팅방', 'public'),
+('IT 개발자 준비방', 'IT/개발 분야 취업 준비자 전용 채팅방', 'public'),
+('경력직 이직 정보방', '경력직 이직 준비자들의 정보 교환', 'public');
+
+-- 기본 공지사항
+INSERT INTO announcements (title, content, category, is_important, author_id) VALUES
+('커리어코치 서비스 오픈 안내', '현직자-구직자 매칭 플랫폼 커리어코치가 정식 오픈했습니다.', 'general', true, NULL),
+('취업경쟁력 계산기 이용 안내', '무료 취업경쟁력 진단을 통해 나의 현재 수준을 확인해보세요.', 'service_notice', false, NULL),
+('현직자 등록 모집 안내', '후배 구직자들을 위한 멘토링에 참여해주세요.', 'event', false, NULL);
+
+-- 완료
+COMMENT ON TABLE user_profiles IS '사용자 프로필 - 플랜비 기반 확장';
+COMMENT ON TABLE career_calculations IS '취업경쟁력 계산 결과 - 플랜비 계산기 구조 변환';
+COMMENT ON TABLE job_seeker_posts IS '구직자 커뮤니티 게시글';
+COMMENT ON TABLE professional_requests IS '현직자 전문가 등록 요청 - 플랜비 전문가 등록 활용';
+COMMENT ON TABLE consultation_bookings IS '상담 예약 및 매칭 시스템';
+COMMENT ON TABLE payment_transactions IS '결제 거래 내역 - 플랜비 결제 구조 확장';
+COMMENT ON TABLE professional_settlements IS '전문가 수익 정산 시스템';
+
+-- 스키마 버전 정보
+INSERT INTO announcements (title, content, category) VALUES
+('데이터베이스 스키마 v1.0', '커리어코치 플랫폼 초기 데이터베이스 스키마가 구축되었습니다.', 'system_update');

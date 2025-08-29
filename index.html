@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>인사이드잡 - 취업 멘토링 플랫폼</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React 18 CDN (Development) -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Meta Tags for SEO -->
+    <meta name="description" content="현직자와 구직자를 연결하는 취업 멘토링 플랫폼. 취업경쟁력 진단부터 1:1 멘토링까지.">
+    <meta name="keywords" content="취업멘토링, 현직자상담, 취업경쟁력진단, 커리어코칭, 인사이드잡">
+    <meta name="author" content="(주)오픈커넥트">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="인사이드잡 - 취업 멘토링 플랫폼">
+    <meta property="og:description" content="현직자와 구직자를 연결하는 실무 중심 커리어 상담 서비스">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://knwwhr.github.io/insidejob">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
+    
+    <!-- Custom Styles -->
+    <style>
+        /* 인사이드잡 전용 스타일 */
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            font-size: 18px;
+            line-height: 1.6;
+            background-color: #f8fafc;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* 카드 스타일 */
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+
+        /* 인사이드잡 브랜드 컬러 */
+        .btn-primary {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 16px;
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 16px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 12px rgba(245, 158, 11, 0.3);
+        }
+
+        /* 로딩 애니메이션 */
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #10b981;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 반응형 최적화 */
+        @media (max-width: 768px) {
+            body { font-size: 16px; }
+            .card { padding: 16px; margin-bottom: 12px; }
+            .btn-primary { padding: 14px 20px; font-size: 14px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/javascript">
+        // Supabase 설정
+        const SUPABASE_URL = 'https://upsedttmnulbmarhawyj.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVwc2VkdHRtbnVsYm1hcmhhd3lqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0NDk5MzIsImV4cCI6MjA3MjAyNTkzMn0.j7QuXCFfIytrBvCsIQl0bt9EuVYScIzZWGTR3tVZdUs';
+        
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // 인사이드잡 메인 앱 컴포넌트
+        const InsideJobApp = () => {
+            const [isLoading, setIsLoading] = React.useState(true);
+            const [connectionStatus, setConnectionStatus] = React.useState('connecting');
+            
+            // Supabase 연결 테스트
+            React.useEffect(() => {
+                const testConnection = async () => {
+                    try {
+                        const { data, error } = await supabase
+                            .from('user_profiles')
+                            .select('count')
+                            .limit(1);
+                            
+                        if (error && error.code !== 'PGRST116') { // 테이블이 비어있어도 OK
+                            console.error('Supabase connection error:', error);
+                            setConnectionStatus('error');
+                        } else {
+                            console.log('✅ Supabase 연결 성공!');
+                            setConnectionStatus('connected');
+                        }
+                    } catch (err) {
+                        console.error('Connection test failed:', err);
+                        setConnectionStatus('error');
+                    } finally {
+                        setTimeout(() => setIsLoading(false), 1500);
+                    }
+                };
+
+                testConnection();
+            }, []);
+
+            // 로딩 화면
+            if (isLoading) {
+                return React.createElement('div', {
+                    className: 'flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-green-50 to-blue-50'
+                }, [
+                    React.createElement('div', {
+                        key: 'spinner',
+                        className: 'loading-spinner mb-4'
+                    }),
+                    React.createElement('div', {
+                        key: 'text',
+                        className: 'text-xl font-semibold text-gray-700'
+                    }, '인사이드잡 시작 중...'),
+                    React.createElement('div', {
+                        key: 'status',
+                        className: 'text-sm text-gray-500 mt-2'
+                    }, connectionStatus === 'connecting' ? 'Supabase 연결 중...' : 
+                       connectionStatus === 'connected' ? '연결 완료!' : '연결 오류')
+                ]);
+            }
+
+            // 메인 화면
+            return React.createElement('div', {
+                className: 'min-h-screen bg-gradient-to-br from-green-50 to-blue-50'
+            }, [
+                // 헤더
+                React.createElement('header', {
+                    key: 'header',
+                    className: 'bg-white shadow-sm border-b'
+                }, React.createElement('div', {
+                    className: 'max-w-7xl mx-auto px-4 py-6'
+                }, [
+                    React.createElement('div', {
+                        key: 'header-content',
+                        className: 'flex items-center justify-between'
+                    }, [
+                        React.createElement('div', {
+                            key: 'logo-area',
+                            className: 'flex items-center space-x-3'
+                        }, [
+                            React.createElement('div', {
+                                key: 'logo',
+                                className: 'text-4xl'
+                            }, '🎯'),
+                            React.createElement('div', {
+                                key: 'title-area'
+                            }, [
+                                React.createElement('h1', {
+                                    key: 'title',
+                                    className: 'text-2xl font-bold text-gray-900'
+                                }, '인사이드잡'),
+                                React.createElement('p', {
+                                    key: 'subtitle',
+                                    className: 'text-sm text-gray-500'
+                                }, 'by (주)오픈커넥트')
+                            ])
+                        ]),
+                        React.createElement('div', {
+                            key: 'connection-badge',
+                            className: `px-3 py-1 rounded-full text-xs font-medium ${
+                                connectionStatus === 'connected' 
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-red-100 text-red-800'
+                            }`
+                        }, connectionStatus === 'connected' ? '✅ 연결됨' : '❌ 연결 오류')
+                    ])
+                ])),
+                
+                // 메인 컨텐츠
+                React.createElement('main', {
+                    key: 'main',
+                    className: 'max-w-4xl mx-auto px-4 py-12'
+                }, [
+                    React.createElement('div', {
+                        key: 'hero-section',
+                        className: 'text-center mb-12'
+                    }, [
+                        React.createElement('h2', {
+                            key: 'hero-title',
+                            className: 'text-4xl font-bold text-gray-900 mb-4'
+                        }, '현직자와 구직자를 연결하는'),
+                        React.createElement('h3', {
+                            key: 'hero-subtitle', 
+                            className: 'text-3xl font-bold text-green-600 mb-6'
+                        }, '실무 중심 취업 멘토링 플랫폼'),
+                        React.createElement('p', {
+                            key: 'hero-description',
+                            className: 'text-lg text-gray-600 max-w-2xl mx-auto'
+                        }, '무료 취업경쟁력 진단부터 현직자 1:1 멘토링까지, 취업 성공을 위한 모든 것')
+                    ]),
+                    
+                    // 기능 카드들
+                    React.createElement('div', {
+                        key: 'features',
+                        className: 'grid md:grid-cols-3 gap-6 mb-12'
+                    }, [
+                        React.createElement('div', {
+                            key: 'feature-1',
+                            className: 'card text-center hover:shadow-lg transition-shadow'
+                        }, [
+                            React.createElement('div', {
+                                key: 'icon-1',
+                                className: 'text-4xl mb-4'
+                            }, '🧮'),
+                            React.createElement('h3', {
+                                key: 'title-1',
+                                className: 'text-xl font-semibold mb-2'
+                            }, '취업경쟁력 진단'),
+                            React.createElement('p', {
+                                key: 'desc-1',
+                                className: 'text-gray-600'
+                            }, '6단계 정밀 분석으로 현재 역량을 객관적으로 평가')
+                        ]),
+                        
+                        React.createElement('div', {
+                            key: 'feature-2',
+                            className: 'card text-center hover:shadow-lg transition-shadow'
+                        }, [
+                            React.createElement('div', {
+                                key: 'icon-2',
+                                className: 'text-4xl mb-4'
+                            }, '💬'),
+                            React.createElement('h3', {
+                                key: 'title-2',
+                                className: 'text-xl font-semibold mb-2'
+                            }, '구직자 커뮤니티'),
+                            React.createElement('p', {
+                                key: 'desc-2',
+                                className: 'text-gray-600'
+                            }, '같은 목표를 가진 구직자들과의 정보 교환 및 네트워킹')
+                        ]),
+                        
+                        React.createElement('div', {
+                            key: 'feature-3',
+                            className: 'card text-center hover:shadow-lg transition-shadow'
+                        }, [
+                            React.createElement('div', {
+                                key: 'icon-3',
+                                className: 'text-4xl mb-4'
+                            }, '👨‍💼'),
+                            React.createElement('h3', {
+                                key: 'title-3',
+                                className: 'text-xl font-semibold mb-2'
+                            }, '현직자 멘토링'),
+                            React.createElement('p', {
+                                key: 'desc-3',
+                                className: 'text-gray-600'
+                            }, '실무 경험을 바탕으로 한 1:1 맞춤형 커리어 조언')
+                        ])
+                    ]),
+                    
+                    // CTA 버튼들
+                    React.createElement('div', {
+                        key: 'cta-section',
+                        className: 'text-center space-y-4'
+                    }, [
+                        React.createElement('button', {
+                            key: 'start-btn',
+                            className: 'btn-primary text-lg px-8 py-4 mr-4',
+                            onClick: () => alert('취업경쟁력 계산기 개발 예정! 🚀')
+                        }, '🧮 취업경쟁력 진단 시작'),
+                        
+                        React.createElement('button', {
+                            key: 'expert-btn', 
+                            className: 'btn-secondary text-lg px-8 py-4',
+                            onClick: () => alert('현직자 등록 시스템 개발 예정! 💼')
+                        }, '👨‍💼 현직자로 참여하기')
+                    ])
+                ]),
+                
+                // 푸터
+                React.createElement('footer', {
+                    key: 'footer',
+                    className: 'bg-white border-t mt-16'
+                }, React.createElement('div', {
+                    className: 'max-w-7xl mx-auto px-4 py-8 text-center'
+                }, [
+                    React.createElement('p', {
+                        key: 'copyright',
+                        className: 'text-gray-600'
+                    }, '© 2025 (주)오픈커넥트. All rights reserved.'),
+                    React.createElement('p', {
+                        key: 'tech-info',
+                        className: 'text-sm text-gray-400 mt-2'
+                    }, `플랜비 검증 아키텍처 기반 • Supabase ${connectionStatus === 'connected' ? '연결됨' : '연결 오류'}`)
+                ]))
+            ]);
+        };
+
+        // 앱 렌더링
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(React.createElement(InsideJobApp));
+        
+        // 개발 편의를 위한 전역 함수
+        window.supabase = supabase;
+        window.testConnection = async () => {
+            const { data, error } = await supabase.from('user_profiles').select('*').limit(5);
+            console.log('Connection test result:', { data, error });
+        };
+        
+        console.log('🎯 인사이드잡 플랫폼 시작!');
+        console.log('개발자 도구에서 window.testConnection() 으로 Supabase 연결을 테스트하세요.');
+    </script>
+</body>
+</html>

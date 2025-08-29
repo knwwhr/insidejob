@@ -1,0 +1,27 @@
+# 인사이드잡 - .gitignore
+
+# 개발 파일들
+*.log
+*.tmp
+.DS_Store
+.vscode/settings.json
+
+# 환경 설정 (보안상 제외할 파일들 - 현재는 해당 없음)
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE 설정
+.idea/
+*.swp
+*.swo
+
+# 백업 파일
+*~
+*.bak
+
+# 임시 개발 파일
+test.html
+dev.html
+temp/
