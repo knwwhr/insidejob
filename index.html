@@ -117,7 +117,8 @@
         const SUPABASE_URL = 'https://upsedttmnulbmarhawyj.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVwc2VkdHRtbnVsYm1hcmhhd3lqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0NDk5MzIsImV4cCI6MjA3MjAyNTkzMn0.j7QuXCFfIytrBvCsIQl0bt9EuVYScIzZWGTR3tVZdUs';
         
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const { createClient } = supabase;
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // 계산기 1단계: 기본정보 렌더링
         const renderStep1BasicInfo = (data, updateFn) => {
@@ -995,7 +996,7 @@
             React.useEffect(() => {
                 const testConnection = async () => {
                     try {
-                        const { data, error } = await supabase
+                        const { data, error } = await supabaseClient
                             .from('user_profiles')
                             .select('count')
                             .limit(1);
@@ -1228,9 +1229,9 @@
         root.render(React.createElement(InsideJobApp));
         
         // 개발 편의를 위한 전역 함수
-        window.supabase = supabase;
+        window.supabase = supabaseClient;
         window.testConnection = async () => {
-            const { data, error } = await supabase.from('user_profiles').select('*').limit(5);
+            const { data, error } = await supabaseClient.from('user_profiles').select('*').limit(5);
             console.log('Connection test result:', { data, error });
         };
         
