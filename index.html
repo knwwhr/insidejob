@@ -101,11 +101,40 @@
             100% { transform: rotate(360deg); }
         }
 
+        /* 성능 최적화 */
+        .loading-spinner {
+            will-change: transform;
+        }
+
+        .card {
+            will-change: box-shadow;
+        }
+
+        /* 지연 로딩 최적화 */
+        .lazy-load {
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .lazy-load.loaded {
+            opacity: 1;
+        }
+
         /* 반응형 최적화 */
         @media (max-width: 768px) {
             body { font-size: 16px; }
             .card { padding: 16px; margin-bottom: 12px; }
             .btn-primary { padding: 14px 20px; font-size: 14px; }
+            
+            /* 모바일 성능 최적화 */
+            .hover\:shadow-lg:hover { transform: none; }
+            .transition-all { transition: none; }
+        }
+
+        /* 프리로드 최적화 */
+        .preload-none {
+            content-visibility: auto;
+            contain: layout style paint;
         }
     </style>
 </head>
@@ -238,6 +267,587 @@
                                 onClick: () => setCurrentView('home')
                             }, '← 홈으로')
                         ])
+                    ])
+                ])
+            ]);
+        };
+
+        // 커뮤니티 화면 렌더링
+        const renderCommunityView = () => {
+            const [posts, setPosts] = React.useState([]);
+            const [isLoading, setIsLoading] = React.useState(true);
+            const [showPostForm, setShowPostForm] = React.useState(false);
+            const [newPost, setNewPost] = React.useState({ title: '', content: '' });
+
+            // 게시글 목록 불러오기
+            React.useEffect(() => {
+                const fetchPosts = async () => {
+                    try {
+                        const { data, error } = await supabaseClient
+                            .from('job_seeker_posts')
+                            .select(`
+                                *,
+                                user_profiles!inner(nickname)
+                            `)
+                            .order('created_at', { ascending: false })
+                            .limit(20);
+
+                        if (error) throw error;
+                        setPosts(data || []);
+                    } catch (error) {
+                        console.error('Posts fetch error:', error);
+                        // 목업 데이터 표시
+                        setPosts([
+                            { id: 1, title: '취업 준비 꿀팁 공유합니다', content: '안녕하세요! 최근에 면접 합격한 경험을...', author: '취업성공러', created_at: '2025-08-29T10:00:00', views: 45 },
+                            { id: 2, title: '개발자 포트폴리오 피드백 부탁드려요', content: 'React로 만든 프로젝트인데 어떤지...', author: '신입개발자', created_at: '2025-08-29T09:30:00', views: 32 },
+                            { id: 3, title: '대기업 vs 스타트업 고민됩니다', content: '두 곳 다 합격했는데...', author: '고민많은청년', created_at: '2025-08-29T09:00:00', views: 78 }
+                        ]);
+                    } finally {
+                        setIsLoading(false);
+                    }
+                };
+
+                fetchPosts();
+            }, []);
+
+            // 새 게시글 작성
+            const handleCreatePost = async () => {
+                if (!newPost.title.trim() || !newPost.content.trim()) {
+                    alert('제목과 내용을 모두 입력해주세요.');
+                    return;
+                }
+
+                try {
+                    const { error } = await supabaseClient
+                        .from('job_seeker_posts')
+                        .insert({
+                            user_id: currentUser.id,
+                            title: newPost.title,
+                            content: newPost.content,
+                            category: 'general'
+                        });
+
+                    if (error) throw error;
+                    
+                    alert('게시글이 작성되었습니다!');
+                    setNewPost({ title: '', content: '' });
+                    setShowPostForm(false);
+                    // 목록 새로고침 로직 추가 필요
+                } catch (error) {
+                    console.error('Post creation error:', error);
+                    alert('게시글 작성 중 오류가 발생했습니다.');
+                }
+            };
+
+            return React.createElement('div', {
+                className: 'min-h-screen bg-gradient-to-br from-green-50 to-blue-50'
+            }, [
+                // 헤더
+                React.createElement('header', {
+                    key: 'community-header',
+                    className: 'bg-white shadow-sm border-b'
+                }, React.createElement('div', {
+                    className: 'max-w-7xl mx-auto px-4 py-6'
+                }, [
+                    React.createElement('div', {
+                        key: 'header-content',
+                        className: 'flex items-center justify-between'
+                    }, [
+                        React.createElement('button', {
+                            key: 'back-btn',
+                            className: 'text-gray-600 hover:text-gray-800 text-lg',
+                            onClick: () => setCurrentView('home')
+                        }, '← 홈으로'),
+                        React.createElement('h1', {
+                            key: 'community-title',
+                            className: 'text-2xl font-bold text-gray-900'
+                        }, '💬 구직자 커뮤니티'),
+                        React.createElement('button', {
+                            key: 'write-btn',
+                            className: 'btn-primary px-4 py-2',
+                            onClick: () => setShowPostForm(!showPostForm)
+                        }, showPostForm ? '취소' : '✏️ 글쓰기')
+                    ])
+                ])),
+
+                // 메인 컨텐츠
+                React.createElement('main', {
+                    key: 'community-main',
+                    className: 'max-w-4xl mx-auto px-4 py-8'
+                }, [
+                    // 글쓰기 폼
+                    showPostForm ? React.createElement('div', {
+                        key: 'post-form',
+                        className: 'card mb-6'
+                    }, [
+                        React.createElement('h3', {
+                            key: 'form-title',
+                            className: 'text-xl font-bold text-gray-800 mb-4'
+                        }, '새 게시글 작성'),
+                        React.createElement('div', {
+                            key: 'form-fields',
+                            className: 'space-y-4'
+                        }, [
+                            React.createElement('input', {
+                                key: 'title-input',
+                                type: 'text',
+                                placeholder: '제목을 입력하세요',
+                                value: newPost.title,
+                                onChange: (e) => setNewPost(prev => ({ ...prev, title: e.target.value })),
+                                className: 'w-full px-4 py-3 border border-gray-300 rounded-lg text-base'
+                            }),
+                            React.createElement('textarea', {
+                                key: 'content-input',
+                                placeholder: '내용을 입력하세요',
+                                rows: 6,
+                                value: newPost.content,
+                                onChange: (e) => setNewPost(prev => ({ ...prev, content: e.target.value })),
+                                className: 'w-full px-4 py-3 border border-gray-300 rounded-lg text-base resize-none'
+                            }),
+                            React.createElement('div', {
+                                key: 'form-actions',
+                                className: 'flex justify-end space-x-3'
+                            }, [
+                                React.createElement('button', {
+                                    key: 'cancel-btn',
+                                    className: 'px-6 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50',
+                                    onClick: () => setShowPostForm(false)
+                                }, '취소'),
+                                React.createElement('button', {
+                                    key: 'submit-btn',
+                                    className: 'btn-primary px-6 py-2',
+                                    onClick: handleCreatePost
+                                }, '작성완료')
+                            ])
+                        ])
+                    ]) : null,
+
+                    // 게시글 목록
+                    React.createElement('div', {
+                        key: 'posts-container',
+                        className: 'space-y-4'
+                    }, [
+                        React.createElement('h2', {
+                            key: 'posts-title',
+                            className: 'text-xl font-bold text-gray-800 mb-4'
+                        }, '최신 게시글'),
+
+                        isLoading ? 
+                            React.createElement('div', {
+                                key: 'loading',
+                                className: 'text-center py-8'
+                            }, '로딩 중...') :
+                            posts.map((post, index) => 
+                                React.createElement('div', {
+                                    key: post.id || index,
+                                    className: 'card hover:shadow-lg transition-shadow cursor-pointer',
+                                    onClick: () => {
+                                        if (isAuthenticated) {
+                                            alert(`"${post.title}" 게시글 상세 기능 개발 예정!`);
+                                        } else {
+                                            alert('게시글 상세보기는 로그인 후 이용 가능합니다.');
+                                        }
+                                    }
+                                }, [
+                                    React.createElement('div', {
+                                        key: 'post-header',
+                                        className: 'flex justify-between items-start mb-3'
+                                    }, [
+                                        React.createElement('h3', {
+                                            key: 'post-title',
+                                            className: 'text-lg font-semibold text-gray-800 hover:text-blue-600'
+                                        }, post.title),
+                                        React.createElement('div', {
+                                            key: 'post-meta',
+                                            className: 'text-sm text-gray-500'
+                                        }, `조회 ${post.views || 0}`)
+                                    ]),
+                                    React.createElement('p', {
+                                        key: 'post-content',
+                                        className: 'text-gray-600 mb-3 line-clamp-2'
+                                    }, post.content.substring(0, 100) + (post.content.length > 100 ? '...' : '')),
+                                    React.createElement('div', {
+                                        key: 'post-footer',
+                                        className: 'flex justify-between items-center text-sm text-gray-500'
+                                    }, [
+                                        React.createElement('span', {
+                                            key: 'author'
+                                        }, `작성자: ${post.user_profiles?.nickname || post.author || '익명'}`),
+                                        React.createElement('span', {
+                                            key: 'date'
+                                        }, new Date(post.created_at).toLocaleDateString())
+                                    ])
+                                ])
+                            )
+                    ])
+                ])
+            ]);
+        };
+
+        // 마이페이지 렌더링
+        const renderMyPageView = () => {
+            const [activeTab, setActiveTab] = React.useState('profile');
+            const [myCalculations, setMyCalculations] = React.useState([]);
+            const [myPosts, setMyPosts] = React.useState([]);
+            const [isLoading, setIsLoading] = React.useState(true);
+
+            // 내 데이터 불러오기
+            React.useEffect(() => {
+                const fetchMyData = async () => {
+                    try {
+                        // 내 계산 결과 조회
+                        const { data: calculations, error: calcError } = await supabaseClient
+                            .from('career_calculations')
+                            .select('*')
+                            .eq('user_id', currentUser.id)
+                            .order('created_at', { ascending: false });
+
+                        if (!calcError) {
+                            setMyCalculations(calculations || []);
+                        }
+
+                        // 내 게시글 조회
+                        const { data: posts, error: postsError } = await supabaseClient
+                            .from('job_seeker_posts')
+                            .select('*')
+                            .eq('user_id', currentUser.id)
+                            .order('created_at', { ascending: false });
+
+                        if (!postsError) {
+                            setMyPosts(posts || []);
+                        }
+
+                    } catch (error) {
+                        console.error('MyPage data fetch error:', error);
+                        // 목업 데이터
+                        setMyCalculations([
+                            { id: 1, total_score: 75, grade: 'B급 (상위 30%)', created_at: '2025-08-29T10:00:00' }
+                        ]);
+                        setMyPosts([
+                            { id: 1, title: '취업 준비 팁 공유', views: 45, created_at: '2025-08-29T09:00:00' }
+                        ]);
+                    } finally {
+                        setIsLoading(false);
+                    }
+                };
+
+                if (isAuthenticated) {
+                    fetchMyData();
+                }
+            }, [isAuthenticated]);
+
+            return React.createElement('div', {
+                className: 'min-h-screen bg-gradient-to-br from-green-50 to-blue-50'
+            }, [
+                // 헤더
+                React.createElement('header', {
+                    key: 'mypage-header',
+                    className: 'bg-white shadow-sm border-b'
+                }, React.createElement('div', {
+                    className: 'max-w-7xl mx-auto px-4 py-6'
+                }, [
+                    React.createElement('div', {
+                        key: 'header-content',
+                        className: 'flex items-center justify-between'
+                    }, [
+                        React.createElement('button', {
+                            key: 'back-btn',
+                            className: 'text-gray-600 hover:text-gray-800 text-lg',
+                            onClick: () => setCurrentView('home')
+                        }, '← 홈으로'),
+                        React.createElement('h1', {
+                            key: 'mypage-title',
+                            className: 'text-2xl font-bold text-gray-900'
+                        }, '👤 마이페이지'),
+                        React.createElement('div', {
+                            key: 'space'
+                        })
+                    ])
+                ])),
+
+                // 메인 컨텐츠
+                React.createElement('main', {
+                    key: 'mypage-main',
+                    className: 'max-w-6xl mx-auto px-4 py-8'
+                }, [
+                    // 프로필 카드
+                    React.createElement('div', {
+                        key: 'profile-card',
+                        className: 'card mb-8'
+                    }, [
+                        React.createElement('div', {
+                            key: 'profile-info',
+                            className: 'flex items-center space-x-4'
+                        }, [
+                            React.createElement('div', {
+                                key: 'avatar',
+                                className: 'w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-2xl font-bold'
+                            }, (currentUser?.user_metadata?.nickname || currentUser?.email || 'U')[0].toUpperCase()),
+                            React.createElement('div', {
+                                key: 'info'
+                            }, [
+                                React.createElement('h2', {
+                                    key: 'name',
+                                    className: 'text-xl font-bold text-gray-800'
+                                }, currentUser?.user_metadata?.nickname || '사용자'),
+                                React.createElement('p', {
+                                    key: 'email',
+                                    className: 'text-gray-600'
+                                }, currentUser?.email),
+                                React.createElement('p', {
+                                    key: 'join-date',
+                                    className: 'text-sm text-gray-500'
+                                }, `가입일: ${new Date(currentUser?.created_at).toLocaleDateString()}`)
+                            ])
+                        ])
+                    ]),
+
+                    // 탭 메뉴
+                    React.createElement('div', {
+                        key: 'tab-menu',
+                        className: 'flex space-x-1 bg-gray-100 p-1 rounded-lg mb-6'
+                    }, [
+                        React.createElement('button', {
+                            key: 'profile-tab',
+                            className: `px-4 py-2 rounded-md font-medium transition-all ${
+                                activeTab === 'profile' 
+                                ? 'bg-white text-blue-600 shadow-sm' 
+                                : 'text-gray-600 hover:text-gray-800'
+                            }`,
+                            onClick: () => setActiveTab('profile')
+                        }, '프로필'),
+                        React.createElement('button', {
+                            key: 'calculations-tab',
+                            className: `px-4 py-2 rounded-md font-medium transition-all ${
+                                activeTab === 'calculations' 
+                                ? 'bg-white text-blue-600 shadow-sm' 
+                                : 'text-gray-600 hover:text-gray-800'
+                            }`,
+                            onClick: () => setActiveTab('calculations')
+                        }, '진단 기록'),
+                        React.createElement('button', {
+                            key: 'posts-tab',
+                            className: `px-4 py-2 rounded-md font-medium transition-all ${
+                                activeTab === 'posts' 
+                                ? 'bg-white text-blue-600 shadow-sm' 
+                                : 'text-gray-600 hover:text-gray-800'
+                            }`,
+                            onClick: () => setActiveTab('posts')
+                        }, '내 게시글'),
+                        React.createElement('button', {
+                            key: 'settings-tab',
+                            className: `px-4 py-2 rounded-md font-medium transition-all ${
+                                activeTab === 'settings' 
+                                ? 'bg-white text-blue-600 shadow-sm' 
+                                : 'text-gray-600 hover:text-gray-800'
+                            }`,
+                            onClick: () => setActiveTab('settings')
+                        }, '설정')
+                    ]),
+
+                    // 탭 컨텐츠
+                    React.createElement('div', {
+                        key: 'tab-content',
+                        className: 'card min-h-[400px]'
+                    }, [
+                        // 프로필 탭
+                        activeTab === 'profile' ? React.createElement('div', {
+                            key: 'profile-content'
+                        }, [
+                            React.createElement('h3', {
+                                key: 'profile-title',
+                                className: 'text-xl font-bold text-gray-800 mb-4'
+                            }, '프로필 정보'),
+                            React.createElement('div', {
+                                key: 'profile-stats',
+                                className: 'grid grid-cols-1 md:grid-cols-3 gap-6'
+                            }, [
+                                React.createElement('div', {
+                                    key: 'stat-1',
+                                    className: 'bg-blue-50 p-4 rounded-lg text-center'
+                                }, [
+                                    React.createElement('div', {
+                                        key: 'stat-number',
+                                        className: 'text-2xl font-bold text-blue-600'
+                                    }, myCalculations.length),
+                                    React.createElement('div', {
+                                        key: 'stat-label',
+                                        className: 'text-sm text-gray-600 mt-1'
+                                    }, '진단 횟수')
+                                ]),
+                                React.createElement('div', {
+                                    key: 'stat-2',
+                                    className: 'bg-green-50 p-4 rounded-lg text-center'
+                                }, [
+                                    React.createElement('div', {
+                                        key: 'stat-number',
+                                        className: 'text-2xl font-bold text-green-600'
+                                    }, myPosts.length),
+                                    React.createElement('div', {
+                                        key: 'stat-label',
+                                        className: 'text-sm text-gray-600 mt-1'
+                                    }, '작성 글')
+                                ]),
+                                React.createElement('div', {
+                                    key: 'stat-3',
+                                    className: 'bg-purple-50 p-4 rounded-lg text-center'
+                                }, [
+                                    React.createElement('div', {
+                                        key: 'stat-number',
+                                        className: 'text-2xl font-bold text-purple-600'
+                                    }, '0'),
+                                    React.createElement('div', {
+                                        key: 'stat-label',
+                                        className: 'text-sm text-gray-600 mt-1'
+                                    }, '상담 횟수')
+                                ])
+                            ])
+                        ]) : null,
+
+                        // 진단 기록 탭
+                        activeTab === 'calculations' ? React.createElement('div', {
+                            key: 'calculations-content'
+                        }, [
+                            React.createElement('h3', {
+                                key: 'calc-title',
+                                className: 'text-xl font-bold text-gray-800 mb-4'
+                            }, '취업경쟁력 진단 기록'),
+                            myCalculations.length === 0 ? 
+                                React.createElement('div', {
+                                    key: 'no-calc',
+                                    className: 'text-center py-12 text-gray-500'
+                                }, [
+                                    React.createElement('div', {
+                                        key: 'icon',
+                                        className: 'text-4xl mb-4'
+                                    }, '📊'),
+                                    React.createElement('p', {
+                                        key: 'text'
+                                    }, '아직 진단 기록이 없습니다.'),
+                                    React.createElement('button', {
+                                        key: 'calc-btn',
+                                        className: 'btn-primary mt-4',
+                                        onClick: () => setCurrentView('calculator')
+                                    }, '진단 시작하기')
+                                ]) :
+                                React.createElement('div', {
+                                    key: 'calc-list',
+                                    className: 'space-y-4'
+                                }, myCalculations.map((calc, index) => 
+                                    React.createElement('div', {
+                                        key: calc.id || index,
+                                        className: 'border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow'
+                                    }, [
+                                        React.createElement('div', {
+                                            key: 'calc-header',
+                                            className: 'flex justify-between items-center mb-2'
+                                        }, [
+                                            React.createElement('span', {
+                                                key: 'score',
+                                                className: 'text-xl font-bold text-blue-600'
+                                            }, `${calc.total_score}점`),
+                                            React.createElement('span', {
+                                                key: 'date',
+                                                className: 'text-sm text-gray-500'
+                                            }, new Date(calc.created_at).toLocaleDateString())
+                                        ]),
+                                        React.createElement('div', {
+                                            key: 'grade',
+                                            className: 'text-gray-700'
+                                        }, calc.grade)
+                                    ])
+                                ))
+                        ]) : null,
+
+                        // 내 게시글 탭
+                        activeTab === 'posts' ? React.createElement('div', {
+                            key: 'posts-content'
+                        }, [
+                            React.createElement('h3', {
+                                key: 'posts-title',
+                                className: 'text-xl font-bold text-gray-800 mb-4'
+                            }, '내가 쓴 게시글'),
+                            myPosts.length === 0 ? 
+                                React.createElement('div', {
+                                    key: 'no-posts',
+                                    className: 'text-center py-12 text-gray-500'
+                                }, [
+                                    React.createElement('div', {
+                                        key: 'icon',
+                                        className: 'text-4xl mb-4'
+                                    }, '📝'),
+                                    React.createElement('p', {
+                                        key: 'text'
+                                    }, '아직 작성한 게시글이 없습니다.'),
+                                    React.createElement('button', {
+                                        key: 'community-btn',
+                                        className: 'btn-primary mt-4',
+                                        onClick: () => setCurrentView('community')
+                                    }, '커뮤니티 가기')
+                                ]) :
+                                React.createElement('div', {
+                                    key: 'posts-list',
+                                    className: 'space-y-4'
+                                }, myPosts.map((post, index) => 
+                                    React.createElement('div', {
+                                        key: post.id || index,
+                                        className: 'border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer',
+                                        onClick: () => alert('게시글 상세 보기 개발 예정!')
+                                    }, [
+                                        React.createElement('div', {
+                                            key: 'post-header',
+                                            className: 'flex justify-between items-start mb-2'
+                                        }, [
+                                            React.createElement('h4', {
+                                                key: 'title',
+                                                className: 'font-semibold text-gray-800'
+                                            }, post.title),
+                                            React.createElement('span', {
+                                                key: 'views',
+                                                className: 'text-sm text-gray-500'
+                                            }, `조회 ${post.views || 0}`)
+                                        ]),
+                                        React.createElement('div', {
+                                            key: 'post-date',
+                                            className: 'text-sm text-gray-500'
+                                        }, new Date(post.created_at).toLocaleDateString())
+                                    ])
+                                ))
+                        ]) : null,
+
+                        // 설정 탭
+                        activeTab === 'settings' ? React.createElement('div', {
+                            key: 'settings-content'
+                        }, [
+                            React.createElement('h3', {
+                                key: 'settings-title',
+                                className: 'text-xl font-bold text-gray-800 mb-4'
+                            }, '계정 설정'),
+                            React.createElement('div', {
+                                key: 'settings-options',
+                                className: 'space-y-4'
+                            }, [
+                                React.createElement('button', {
+                                    key: 'logout-btn',
+                                    className: 'w-full bg-red-500 hover:bg-red-600 text-white px-4 py-3 rounded-lg font-medium transition-colors',
+                                    onClick: handleLogout
+                                }, '로그아웃'),
+                                React.createElement('div', {
+                                    key: 'danger-zone',
+                                    className: 'mt-8 pt-8 border-t border-red-200'
+                                }, [
+                                    React.createElement('h4', {
+                                        key: 'danger-title',
+                                        className: 'text-lg font-semibold text-red-600 mb-4'
+                                    }, '위험 구역'),
+                                    React.createElement('button', {
+                                        key: 'delete-account',
+                                        className: 'bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-lg font-medium transition-colors',
+                                        onClick: () => alert('계정 삭제 기능은 개발 예정입니다.')
+                                    }, '계정 삭제')
+                                ])
+                            ])
+                        ]) : null
                     ])
                 ])
             ]);
@@ -1066,7 +1676,7 @@
                             className: 'btn-secondary py-3',
                             onClick: () => {
                                 if (isAuthenticated) {
-                                    alert('커뮤니티 기능 개발 예정! 🚀');
+                                    setCurrentView('community');
                                 } else {
                                     alert('커뮤니티는 회원가입 후 이용가능합니다!');
                                     setCurrentView('auth');
@@ -1223,6 +1833,37 @@
                 testConnection();
             }, []);
 
+            // 게스트 데이터 마이그레이션
+            const migrateGuestData = React.useCallback(async (userId) => {
+                try {
+                    const guestData = localStorage.getItem('career_calculation_guest');
+                    if (guestData) {
+                        const parsedData = JSON.parse(guestData);
+                        const { error } = await supabaseClient
+                            .from('career_calculations')
+                            .insert({
+                                user_id: userId,
+                                step1_basic_info: parsedData.calculatorData.step1 || {},
+                                step2_skills: parsedData.calculatorData.step2 || {},
+                                step3_experience: parsedData.calculatorData.step3 || {},
+                                step4_network: parsedData.calculatorData.step4 || {},
+                                step5_preparation: parsedData.calculatorData.step5 || {},
+                                total_score: parsedData.result.totalScore,
+                                grade: parsedData.result.grade,
+                                breakdown: parsedData.result.breakdown,
+                                migrated_from_guest: true
+                            });
+                            
+                        if (!error) {
+                            localStorage.removeItem('career_calculation_guest');
+                            alert('🎉 게스트 데이터가 성공적으로 이관되었습니다!');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Guest data migration failed:', error);
+                }
+            }, []);
+
             // 사용자 인증 상태 체크
             React.useEffect(() => {
                 const checkUser = async () => {
@@ -1231,6 +1872,8 @@
                         if (user) {
                             setCurrentUser(user);
                             setIsAuthenticated(true);
+                            // 게스트 데이터 마이그레이션
+                            await migrateGuestData(user.id);
                         }
                     } catch (error) {
                         console.error('Auth check error:', error);
@@ -1305,8 +1948,8 @@
                 }
             };
 
-            // 계산기 데이터 업데이트
-            const updateCalculatorData = (step, field, value) => {
+            // 계산기 데이터 업데이트 (메모이제이션)
+            const updateCalculatorData = React.useCallback((step, field, value) => {
                 setCalculatorData(prev => ({
                     ...prev,
                     [`step${step}`]: {
@@ -1314,7 +1957,15 @@
                         [field]: value
                     }
                 }));
-            };
+            }, []);
+
+            // 결과 캐싱
+            const calculationResult = React.useMemo(() => {
+                if (Object.keys(calculatorData).length > 0) {
+                    return calculateCareerScore(calculatorData);
+                }
+                return null;
+            }, [calculatorData]);
 
             // 로딩 화면
             if (isLoading) {
@@ -1343,6 +1994,12 @@
             }
             if (currentView === 'auth') {
                 return renderAuthView();
+            }
+            if (currentView === 'community') {
+                return renderCommunityView();
+            }
+            if (currentView === 'mypage') {
+                return renderMyPageView();
             }
 
             // 메인 화면
@@ -1399,9 +2056,10 @@
                                     key: 'user-menu',
                                     className: 'flex items-center space-x-3'
                                 }, [
-                                    React.createElement('span', {
+                                    React.createElement('button', {
                                         key: 'user-greeting',
-                                        className: 'text-sm text-gray-600'
+                                        className: 'text-sm text-gray-600 hover:text-blue-600 font-medium',
+                                        onClick: () => setCurrentView('mypage')
                                     }, `안녕하세요, ${currentUser?.user_metadata?.nickname || currentUser?.email || '사용자'}님!`),
                                     React.createElement('button', {
                                         key: 'logout-btn',
@@ -1466,7 +2124,15 @@
                         
                         React.createElement('div', {
                             key: 'feature-2',
-                            className: 'card text-center hover:shadow-lg transition-shadow'
+                            className: 'card text-center hover:shadow-lg transition-shadow cursor-pointer',
+                            onClick: () => {
+                                if (isAuthenticated) {
+                                    setCurrentView('community');
+                                } else {
+                                    alert('커뮤니티는 회원가입 후 이용가능합니다!');
+                                    setCurrentView('auth');
+                                }
+                            }
                         }, [
                             React.createElement('div', {
                                 key: 'icon-2',
