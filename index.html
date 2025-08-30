@@ -12,6 +12,9 @@
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     
+    <!-- Babel Standalone for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
     <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
@@ -169,7 +172,7 @@
     <div id="root"></div>
     
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useCallback, useRef } = React;
 
         // 이메일 알림 시스템
         const sendExpertNotification = async (expert, action, reason = '') => {
@@ -200,7 +203,7 @@
                 console.log('이메일 발송 예정:', emailData);
                 
                 // TODO: 실제 이메일 발송 구현
-                // const { data, error } = await supabase.functions.invoke('send-email', { body: emailData });
+                // const { data, error } = await supabaseClient.functions.invoke('send-email', { body: emailData });
                 
                 return { success: true, message: '알림 이메일이 발송되었습니다.' };
             } catch (error) {
@@ -242,10 +245,12 @@
             );
         };
 
-        // Supabase 설정 (플랜비 전용)
-        const supabaseUrl = 'https://iopidkmpoxcctixchkmv.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlvcGlka21wb3hjY3RpeGNoa212Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2NTY0MDIsImV4cCI6MjA3MTIzMjQwMn0.M_bvNzXqPFxmyj4n5xGi3L_eV5yP_8ex-5z8rhjltrQ';
-        const supabase = window.supabase?.createClient ? window.supabase.createClient(supabaseUrl, supabaseKey) : null;
+        // Supabase 설정 (인사이드잡 전용)
+        const SUPABASE_URL = 'https://upsedttmnulbmarhawyj.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVwc2VkdHRtbnVsYm1hcmhhd3lqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0NDk5MzIsImV4cCI6MjA3MjAyNTkzMn0.j7QuXCFfIytrBvCsIQl0bt9EuVYScIzZWGTR3tVZdUs';
+        
+        const { createClient } = window.supabase;
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // 익명 세션 관리 시스템
         class AnonymousSessionManager {
@@ -662,7 +667,7 @@
                     const finalNickname = nickname || this.nicknameGen.generate();
                     
                     
-                    const { data, error } = await supabase.auth.signUp({
+                    const { data, error } = await supabaseClient.auth.signUp({
                         email: email,
                         password: password,
                         options: {
@@ -721,7 +726,7 @@
             async signIn(email, password) {
                 try {
                     
-                    const { data, error } = await supabase.auth.signInWithPassword({
+                    const { data, error } = await supabaseClient.auth.signInWithPassword({
                         email: email,
                         password: password
                     });
@@ -782,7 +787,7 @@
             // 로그아웃
             async signOut() {
                 try {
-                    const { error } = await supabase.auth.signOut();
+                    const { error } = await supabaseClient.auth.signOut();
                     if (error) throw error;
                     
                     this.currentUser = null;
@@ -795,7 +800,7 @@
             // 현재 사용자 정보 가져오기 (role 포함)
             async getCurrentUser() {
                 try {
-                    const { data: { user } } = await supabase.auth.getUser();
+                    const { data: { user } } = await supabaseClient.auth.getUser();
                     if (!user) {
                         this.currentUser = null;
                         return null;
@@ -3305,7 +3310,7 @@
             const approveSettlement = async (settlementId) => {
                 try {
                     // 실제로는 Supabase 업데이트
-                    // await supabase.from('fee_settlements').update({ status: 'completed' }).eq('id', settlementId);
+                    // await supabaseClient.from('fee_settlements').update({ status: 'completed' }).eq('id', settlementId);
                     
                     alert('정산이 승인되었습니다.');
                     loadSettlements();
@@ -8620,7 +8625,7 @@
                     // 실제 환경에서는 아래 주석을 해제하고 Supabase Storage 설정 필요
                     /*
                     const fileName = `${currentUser.id}/${Date.now()}_${file.name}`;
-                    const { data, error } = await supabase.storage
+                    const { data, error } = await supabaseClient.storage
                         .from('chat-files')
                         .upload(fileName, file);
 
@@ -9027,7 +9032,7 @@
                                                                                 // 데모 모드: 실제 파일 다운로드 대신 알림 표시
                                                                                 if (message.file_url) {
                                                                                     // 실제 환경에서는 아래 코드 사용
-                                                                                    // const { data } = supabase.storage
+                                                                                    // const { data } = supabaseClient.storage
                                                                                     //     .from('chat-files')
                                                                                     //     .getPublicUrl(message.file_url);
                                                                                     // window.open(data.publicUrl, '_blank');
