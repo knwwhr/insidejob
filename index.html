@@ -31,201 +31,131 @@
     
     <!-- Custom Styles -->
     <style>
-        /* 플랜비 완전 복사 스타일 */
+        /* 플랜비 정확한 원본 스타일 */
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-            font-size: 16px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            font-size: 18px;
             line-height: 1.6;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-color: #f8fafc;
             margin: 0;
             padding: 0;
-            min-height: 100vh;
         }
 
-        /* 플랜비 카드 스타일 */
+        /* 플랜비 정확한 카드 스타일 */
         .card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            padding: 32px;
-            margin-bottom: 24px;
-            transition: all 0.3s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.18);
-        }
-
-        /* 플랜비 브랜드 컬러 - 주황/파랑 그라데이션 */
-        .btn-primary {
-            background: linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%);
-            color: white;
-            padding: 18px 32px;
+            background: white;
             border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+
+        /* 플랜비 정확한 버튼 스타일 */
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
             font-weight: 600;
             border: none;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.3s;
             font-size: 16px;
             display: inline-block;
             text-decoration: none;
-            box-shadow: 0 4px 15px rgba(255, 126, 95, 0.3);
         }
 
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(255, 126, 95, 0.4);
-            background: linear-gradient(135deg, #feb47b 0%, #ff7e5f 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3);
         }
 
-        .btn-secondary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 14px 24px;
-            border-radius: 12px;
-            font-weight: 500;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        .btn-primary:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
 
-        .btn-secondary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        /* 플랜비 입력 필드 스타일 */
+        input[type="text"], 
+        input[type="number"], 
+        select, 
+        textarea {
+            transition: all 0.2s;
         }
 
-        /* 플랜비 그라데이션 텍스트 */
-        .gradient-text {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-weight: 700;
-        }
-
-        /* 플랜비 글래스모피즘 헤더 */
-        .glass-header {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 4px 32px rgba(0, 0, 0, 0.1);
-        }
-
-        /* 플랜비 3-카드 레이아웃 */
-        .feature-card {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
-            border-radius: 24px;
-            padding: 40px 32px;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
-            background: rgba(255, 255, 255, 0.95);
-        }
-
-        .feature-icon {
-            font-size: 48px;
-            margin-bottom: 20px;
-            display: block;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .feature-title {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 16px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .feature-desc {
-            color: #6b7280;
-            font-size: 16px;
-            line-height: 1.6;
-            margin-bottom: 24px;
-        }
-
-        /* 로딩 애니메이션 - 플랜비 스타일 */
-        .loading-spinner {
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* 플랜비 텍스트 그림자 효과 */
-        .text-shadow-lg {
-            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        /* 플랜비 모달 스타일 */
-        .modal-backdrop {
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(8px);
-        }
-
-        .modal-content {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 24px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        }
-
-        /* 플랜비 입력 필드 */
-        .glass-input {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            color: white;
-            padding: 16px 20px;
-            transition: all 0.3s ease;
-        }
-
-        .glass-input::placeholder {
-            color: rgba(255, 255, 255, 0.6);
-        }
-
-        .glass-input:focus {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(255, 126, 95, 0.5);
-            box-shadow: 0 0 20px rgba(255, 126, 95, 0.3);
+        input[type="text"]:focus, 
+        input[type="number"]:focus, 
+        select:focus, 
+        textarea:focus {
             outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
 
-        /* 플랜비 섹션 제목 */
-        .section-title {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-size: 3rem;
-            font-weight: 800;
-            text-align: center;
-            margin-bottom: 2rem;
+        /* 체크박스 스타일 */
+        input[type="checkbox"] {
+            accent-color: #3b82f6;
         }
+
+        /* 호버 효과 */
+        .hover-lift {
+            transition: transform 0.2s;
+        }
+
+        .hover-lift:hover {
+            transform: translateY(-2px);
+        }
+
+        /* 반응형 조정 */
+        @media (max-width: 768px) {
+            body {
+                font-size: 16px;
+            }
+            
+            .card {
+                padding: 16px;
+                margin-bottom: 12px;
+            }
+            
+            .btn-primary {
+                padding: 14px 20px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                padding: 12px;
+                border-radius: 12px;
+            }
+            
+            .btn-primary {
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+        }
+
+        /* 한글 줄바꿉 방지 */
+        .no-break-korean {
+            word-break: keep-all;
+            white-space: nowrap;
+        }
+
+        .break-keep {
+            word-break: keep-all;
+        }
+
+        /* 모바일에서 텍스트 자동 크기 조정 */
+        .responsive-text {
+            font-size: clamp(0.75rem, 3vw, 1rem);
+        }
+
+        .responsive-text-sm {
+            font-size: clamp(0.65rem, 2.5vw, 0.875rem);
+        }
+
 
         /* 성능 최적화 */
         .loading-spinner {
@@ -479,7 +409,7 @@
             };
 
             return React.createElement('div', {
-                className: 'min-h-screen bg-gradient-to-br from-green-50 to-blue-50'
+                className: 'min-h-screen'
             }, [
                 // 헤더
                 React.createElement('header', {
@@ -676,7 +606,7 @@
             }, [isAuthenticated]);
 
             return React.createElement('div', {
-                className: 'min-h-screen bg-gradient-to-br from-green-50 to-blue-50'
+                className: 'min-h-screen'
             }, [
                 // 헤더
                 React.createElement('header', {
@@ -720,7 +650,7 @@
                         }, [
                             React.createElement('div', {
                                 key: 'avatar',
-                                className: 'w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-2xl font-bold'
+                                className: 'w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center text-white text-2xl font-bold'
                             }, (currentUser?.user_metadata?.nickname || currentUser?.email || 'U')[0].toUpperCase()),
                             React.createElement('div', {
                                 key: 'info'
@@ -1088,7 +1018,7 @@
             };
 
             return React.createElement('div', {
-                className: 'min-h-screen bg-gradient-to-br from-green-50 to-blue-50'
+                className: 'min-h-screen'
             }, [
                 // 헤더
                 React.createElement('header', {
@@ -1178,7 +1108,7 @@
                                     }, [
                                         React.createElement('div', {
                                             key: 'avatar',
-                                            className: 'w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-lg font-bold'
+                                            className: 'w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white text-lg font-bold'
                                         }, expert.name[0]),
                                         React.createElement('div', {
                                             key: 'details'
@@ -1376,7 +1306,7 @@
             };
 
             return React.createElement('div', {
-                className: 'min-h-screen bg-gradient-to-br from-green-50 to-blue-50'
+                className: 'min-h-screen'
             }, [
                 // 헤더
                 React.createElement('header', {
@@ -1709,7 +1639,7 @@
             };
 
             return React.createElement('div', {
-                className: 'min-h-screen bg-gradient-to-br from-red-50 to-orange-50'
+                className: 'min-h-screen'
             }, [
                 // 헤더
                 React.createElement('header', {
@@ -2891,7 +2821,7 @@
             const currentStepData = calculatorData[`step${calculatorStep}`] || {};
             
             return React.createElement('div', {
-                className: 'min-h-screen bg-gradient-to-br from-green-50 to-blue-50'
+                className: 'min-h-screen'
             }, [
                 // 헤더 with 뒤로가기
                 React.createElement('header', {
@@ -3242,7 +3172,7 @@
             // 로딩 화면
             if (isLoading) {
                 return React.createElement('div', {
-                    className: 'flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-green-50 to-blue-50'
+                    className: 'flex flex-col items-center justify-center min-h-screen'
                 }, [
                     React.createElement('div', {
                         key: 'spinner',
@@ -3283,17 +3213,17 @@
                 return renderConsultationChatView(selectedBooking);
             }
 
-            // 플랜비 완전 복사 랜딩 페이지
+            // 플랜비 정확한 원본 랜딩 페이지
             const renderLandingPage = () => {
                 return React.createElement('div', {
-                    className: 'min-h-screen'
+                    className: 'min-h-screen bg-gradient-to-br from-green-50 to-blue-50'
                 }, [
-                    // 플랜비 스타일 글래스모피즘 헤더
+                    // 플랜비 정확한 헤더
                     React.createElement('header', {
                         key: 'landing-header',
-                        className: 'glass-header sticky top-0 z-50'
+                        className: 'bg-white shadow-sm border-b'
                     }, React.createElement('div', {
-                        className: 'max-w-7xl mx-auto px-6 py-4'
+                        className: 'max-w-7xl mx-auto px-4 py-6'
                     }, [
                         React.createElement('div', {
                             key: 'header-content',
@@ -3301,7 +3231,7 @@
                         }, [
                             React.createElement('div', {
                                 key: 'logo-area',
-                                className: 'flex items-center space-x-4'
+                                className: 'flex items-center space-x-3'
                             }, [
                                 React.createElement('div', {
                                     key: 'logo',
@@ -3312,11 +3242,11 @@
                                 }, [
                                     React.createElement('h1', {
                                         key: 'title',
-                                        className: 'text-2xl font-bold text-white'
+                                        className: 'text-2xl font-bold text-gray-900'
                                     }, '인사이드잡'),
                                     React.createElement('p', {
                                         key: 'subtitle',
-                                        className: 'text-xs text-white text-opacity-70'
+                                        className: 'text-sm text-gray-500'
                                     }, 'by (주)오픈커넥트')
                                 ])
                             ]),
@@ -3326,138 +3256,134 @@
                             }, [
                                 React.createElement('div', {
                                     key: 'connection-badge',
-                                    className: `px-4 py-2 rounded-full text-xs font-medium backdrop-filter backdrop-blur-sm ${
+                                    className: `px-3 py-1 rounded-full text-xs font-medium ${
                                         connectionStatus === 'connected' 
-                                        ? 'bg-green-500 bg-opacity-20 text-green-100 border border-green-300 border-opacity-30'
-                                        : 'bg-red-500 bg-opacity-20 text-red-100 border border-red-300 border-opacity-30'
+                                        ? 'bg-green-100 text-green-800'
+                                        : 'bg-red-100 text-red-800'
                                     }`
                                 }, connectionStatus === 'connected' ? '✅ 연결됨' : '❌ 연결 오류'),
                                 
                                 React.createElement('button', {
                                     key: 'login-btn',
-                                    className: 'btn-primary text-sm',
+                                    className: 'btn-primary text-sm px-6 py-2',
                                     onClick: () => setCurrentView('auth')
                                 }, '로그인 / 회원가입')
                             ])
                         ])
                     ])),
 
-                    // 플랜비 스타일 메인 컨텐츠
+                    // 플랜비 정확한 메인 컨텐츠
                     React.createElement('main', {
                         key: 'landing-main',
-                        className: 'max-w-6xl mx-auto px-6 py-20'
+                        className: 'max-w-6xl mx-auto px-4 py-8'
                     }, [
-                        // 플랜비 스타일 히어로 섹션
+                        // 플랜비 정확한 히어로 섹션
                         React.createElement('div', {
                             key: 'hero-section',
-                            className: 'text-center mb-24'
+                            className: 'text-center mb-12'
                         }, [
                             React.createElement('h1', {
                                 key: 'hero-title',
-                                className: 'text-6xl md:text-7xl font-bold text-white mb-8 leading-tight'
+                                className: 'text-3xl md:text-4xl font-bold text-gray-900 mb-4'
                             }, '🎯 인사이드잡'),
                             React.createElement('p', {
                                 key: 'hero-subtitle',
-                                className: 'text-2xl md:text-3xl text-white text-opacity-90 mb-6 font-light'
-                            }, '현직자와 구직자를 연결하는'),
-                            React.createElement('p', {
-                                key: 'hero-desc',
-                                className: 'text-xl md:text-2xl text-white text-opacity-80 mb-16 font-light'
-                            }, '실무 중심 취업 멘토링 플랫폼')
+                                className: 'text-lg md:text-xl text-gray-600 mb-8'
+                            }, '현직자와 구직자를 연결하는 취업 멘토링 플랫폼')
                         ]),
 
-                        // 플랜비 완전 복사 3카드 레이아웃
+                        // 플랜비 정확한 3카드 레이아웃
                         React.createElement('div', {
                             key: 'main-features',
-                            className: 'grid md:grid-cols-3 gap-8 mb-16'
+                            className: 'grid md:grid-cols-3 gap-8 mb-12'
                         }, [
-                            // 1. 취업경쟁력 진단 카드 - 플랜비 스타일
+                            // 1. 취업경쟁력 진단 카드 - 플랜비 정확한 스타일
                             React.createElement('div', {
                                 key: 'calculator-card',
-                                className: 'feature-card',
+                                className: 'card text-center hover-lift cursor-pointer border-2 border-green-200',
                                 onClick: () => setCurrentView('calculator')
                             }, [
-                                React.createElement('span', {
+                                React.createElement('div', {
                                     key: 'calc-icon',
-                                    className: 'feature-icon'
+                                    className: 'text-6xl mb-4'
                                 }, '🧮'),
                                 React.createElement('h3', {
                                     key: 'calc-title',
-                                    className: 'feature-title'
+                                    className: 'text-2xl font-bold text-gray-800 mb-3'
                                 }, '취업경쟁력 진단'),
                                 React.createElement('p', {
                                     key: 'calc-desc',
-                                    className: 'feature-desc'
-                                }, '6단계 정밀 분석으로 현재 취업 역량을 객관적으로 평가하고 개선방안을 제시합니다'),
+                                    className: 'text-gray-600 mb-4 leading-relaxed'
+                                }, '6단계 정밀 분석으로 현재 취업 역량을 객관적으로 평가합니다'),
                                 React.createElement('div', {
                                     key: 'calc-badge',
-                                    className: 'inline-block px-6 py-3 bg-gradient-to-r from-green-400 to-green-500 text-white rounded-full text-sm font-semibold mb-6 shadow-lg'
+                                    className: 'inline-block px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-semibold'
                                 }, '🆓 무료 이용'),
-                                React.createElement('button', {
+                                React.createElement('div', {
                                     key: 'calc-cta',
-                                    className: 'btn-primary w-full'
+                                    className: 'mt-4 btn-primary w-full py-3'
                                 }, '지금 진단하기')
                             ]),
 
-                            // 2. 구직자 커뮤니티 카드 - 플랜비 스타일
+                            // 2. 구직자 커뮤니티 카드 - 플랜비 정확한 스타일
                             React.createElement('div', {
                                 key: 'community-card',
-                                className: 'feature-card',
+                                className: 'card text-center hover-lift cursor-pointer opacity-75',
                                 onClick: () => {
                                     alert('🔐 구직자 커뮤니티는 무료 회원가입 후 이용가능합니다!');
                                     setCurrentView('auth');
                                 }
                             }, [
-                                React.createElement('span', {
+                                React.createElement('div', {
                                     key: 'community-icon',
-                                    className: 'feature-icon'
+                                    className: 'text-6xl mb-4'
                                 }, '💬'),
                                 React.createElement('h3', {
                                     key: 'community-title',
-                                    className: 'feature-title'
+                                    className: 'text-2xl font-bold text-gray-800 mb-3'
                                 }, '구직자 커뮤니티'),
                                 React.createElement('p', {
                                     key: 'community-desc',
-                                    className: 'feature-desc'
-                                }, '같은 목표를 가진 구직자들과 취업 정보를 공유하고 스터디를 만들어보세요'),
+                                    className: 'text-gray-600 mb-4 leading-relaxed'
+                                }, '같은 목표를 가진 구직자들과 정보 교환 및 네트워킹'),
                                 React.createElement('div', {
                                     key: 'community-badge',
-                                    className: 'inline-block px-6 py-3 bg-gradient-to-r from-orange-400 to-orange-500 text-white rounded-full text-sm font-semibold mb-6 shadow-lg'
+                                    className: 'inline-block px-4 py-2 bg-orange-100 text-orange-700 rounded-full text-sm font-semibold'
                                 }, '🔒 로그인 필요'),
-                                React.createElement('button', {
+                                React.createElement('div', {
                                     key: 'community-cta',
-                                    className: 'btn-secondary w-full'
+                                    className: 'mt-4 btn-secondary w-full py-3'
                                 }, '커뮤니티 참여')
                             ]),
 
-                            // 3. 현직자 멘토링 카드 - 플랜비 스타일
+                            // 3. 현직자 멘토링 카드 - 플랜비 정확한 스타일
                             React.createElement('div', {
                                 key: 'mentoring-card',
-                                className: 'feature-card',
+                                className: 'card text-center hover-lift cursor-pointer opacity-75',
                                 onClick: () => {
                                     alert('💼 현직자 멘토링은 무료 회원가입 후 이용가능합니다!');
                                     setCurrentView('auth');
                                 }
                             }, [
-                                React.createElement('span', {
+                                React.createElement('div', {
                                     key: 'mentoring-icon',
-                                    className: 'feature-icon'
+                                    className: 'text-6xl mb-4'
                                 }, '👨‍💼'),
                                 React.createElement('h3', {
                                     key: 'mentoring-title',
-                                    className: 'feature-title'
+                                    className: 'text-2xl font-bold text-gray-800 mb-3'
                                 }, '현직자 멘토링'),
                                 React.createElement('p', {
                                     key: 'mentoring-desc',
-                                    className: 'feature-desc'
-                                }, '업계 현직자와 10분 단위 유연한 시간으로 실무 중심 1:1 상담을 받으세요'),
+                                    className: 'text-gray-600 mb-4 leading-relaxed'
+                                }, '10분 단위 유연한 시간으로 실무 중심 1:1 상담'),
                                 React.createElement('div', {
                                     key: 'mentoring-badge',
-                                    className: 'inline-block px-6 py-3 bg-gradient-to-r from-purple-400 to-purple-500 text-white rounded-full text-sm font-semibold mb-6 shadow-lg'
+                                    className: 'inline-block px-4 py-2 bg-orange-100 text-orange-700 rounded-full text-sm font-semibold'
                                 }, '🔒 로그인 필요'),
-                                React.createElement('button', {
+                                React.createElement('div', {
                                     key: 'mentoring-cta',
-                                    className: 'btn-secondary w-full'
+                                    className: 'mt-4 btn-secondary w-full py-3'
                                 }, '상담 예약하기')
                             ])
                         ]),
@@ -3520,7 +3446,7 @@
 
             // 로그인 후 메인 화면 (기존 코드)
             return React.createElement('div', {
-                className: 'min-h-screen bg-gradient-to-br from-green-50 to-blue-50'
+                className: 'min-h-screen'
             }, [
                 // 헤더
                 React.createElement('header', {
