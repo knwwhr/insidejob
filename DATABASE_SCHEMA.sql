@@ -23,8 +23,8 @@ CREATE TABLE user_profiles (
     target_job TEXT,
     experience_years INTEGER DEFAULT 0,
     
-    -- 플랜비와 동일한 역할 구조 유지
-    role TEXT DEFAULT 'member' CHECK (role IN ('guest', 'member', 'expert', 'admin', 'super_admin')),
+    -- 3단계 역할 구조: 관리자, 일반회원, 전문가 회원
+    role TEXT DEFAULT 'member' CHECK (role IN ('admin', 'member', 'expert')),
     
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
@@ -217,15 +217,17 @@ CREATE TABLE consultation_bookings (
         'message_chat'       -- 메시지 상담
     )),
     
-    -- 예약 일정
+    -- 예약 일정 (10분 단위 시스템)
     scheduled_date DATE NOT NULL,
     scheduled_time TIME NOT NULL,
-    duration_minutes INTEGER DEFAULT 60, -- 상담 시간 (기본 60분)
+    duration_minutes INTEGER DEFAULT 60 CHECK (duration_minutes IN (10, 20, 30, 40, 50, 60)), -- 10분 단위로 최대 60분
     timezone TEXT DEFAULT 'Asia/Seoul',
     
-    -- 결제 정보 (플랜비 결제 구조 확장)
-    consultation_fee INTEGER NOT NULL,   -- 상담료
-    platform_fee INTEGER NOT NULL,       -- 플랫폼 수수료 (10%)
+    -- 결제 정보 (20% 수수료 시스템)
+    consultation_fee INTEGER NOT NULL,   -- 상담료 (분 단위 계산)
+    platform_fee_rate DECIMAL(3,2) DEFAULT 0.20, -- 플랫폼 수수료율 (20%, 관리자 변경 가능)
+    platform_fee INTEGER NOT NULL,       -- 플랫폼 수수료 금액
+    expert_payout INTEGER NOT NULL,      -- 전문가 정산 금액 (80%)
     total_amount INTEGER NOT NULL,       -- 총 결제 금액
     payment_method TEXT,                 -- 결제 수단
     payment_status TEXT DEFAULT 'pending' CHECK (payment_status IN (
@@ -246,17 +248,12 @@ CREATE TABLE consultation_bookings (
         'no_show'           -- 노쇼
     )),
     
-    -- 상담 내용 및 후기
+    -- 상담 내용 (전문가 후기 제거)
     consultation_notes TEXT,            -- 상담 노트 (전문가 작성)
     job_seeker_feedback TEXT,           -- 구직자 후기
-    professional_feedback TEXT,         -- 전문가 후기
     job_seeker_rating INTEGER CHECK (job_seeker_rating BETWEEN 1 AND 5),
-    professional_rating INTEGER CHECK (professional_rating BETWEEN 1 AND 5),
     
-    -- 연락처 교환 (플랜비 연락처 교환 시스템 활용)
-    contact_exchange_requested BOOLEAN DEFAULT FALSE,
-    contact_exchange_approved BOOLEAN DEFAULT FALSE,
-    contact_exchange_expires_at TIMESTAMP WITH TIME ZONE,
+    -- 연락처 교환 기능 제거 (불필요한 기능)
     
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
@@ -331,7 +328,27 @@ CREATE TABLE professional_settlements (
 );
 
 -- ==============================================
--- 7. 공지사항 및 관리 (플랜비 구조 그대로)
+-- 7. 시스템 설정 (관리자 전용)
+-- ==============================================
+
+CREATE TABLE system_settings (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    setting_key TEXT NOT NULL UNIQUE,
+    setting_value TEXT NOT NULL,
+    description TEXT,
+    
+    -- 설정 유형
+    setting_type TEXT DEFAULT 'string' CHECK (setting_type IN ('string', 'number', 'boolean', 'json')),
+    
+    -- 수정 권한
+    updated_by UUID REFERENCES auth.users(id),
+    
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+);
+
+-- ==============================================
+-- 8. 공지사항 및 관리 (플랜비 구조 그대로)
 -- ==============================================
 
 CREATE TABLE announcements (
@@ -372,7 +389,33 @@ CREATE TABLE announcement_views (
 );
 
 -- ==============================================
--- 8. 실시간 채팅 시스템 (플랜비 구조 그대로)
+-- 8. 쪽지 시스템 (일반 회원 간 메시지)
+-- ==============================================
+
+CREATE TABLE member_messages (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    sender_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    receiver_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    
+    subject TEXT NOT NULL,
+    content TEXT NOT NULL,
+    
+    -- 메시지 상태
+    is_read BOOLEAN DEFAULT FALSE,
+    read_at TIMESTAMP WITH TIME ZONE,
+    
+    -- 삭제 상태 (발신자/수신자별 삭제 가능)
+    sender_deleted BOOLEAN DEFAULT FALSE,
+    receiver_deleted BOOLEAN DEFAULT FALSE,
+    
+    -- 답장 연결
+    reply_to_message_id UUID REFERENCES member_messages(id) ON DELETE SET NULL,
+    
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+);
+
+-- ==============================================
+-- 9. 실시간 채팅 시스템 (전문가 상담 전용)
 -- ==============================================
 
 CREATE TABLE chat_rooms (
@@ -463,8 +506,10 @@ ALTER TABLE professional_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE consultation_bookings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payment_transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE professional_settlements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE system_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE announcements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE announcement_views ENABLE ROW LEVEL SECURITY;
+ALTER TABLE member_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE chat_rooms ENABLE ROW LEVEL SECURITY;
 ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE chat_participants ENABLE ROW LEVEL SECURITY;
@@ -561,8 +606,38 @@ CREATE POLICY "Admins can manage announcements"
         )
     );
 
--- 채팅 정책 (플랜비 동일)
-CREATE POLICY "Participants can view chat messages"
+-- 시스템 설정 정책 (관리자만 접근)
+CREATE POLICY "Admins can manage system settings"
+    ON system_settings FOR ALL
+    USING (
+        EXISTS (
+            SELECT 1 FROM user_profiles 
+            WHERE user_id = auth.uid() 
+            AND role = 'admin'
+        )
+    );
+
+-- 쪽지 정책 (발신자/수신자만 접근)
+CREATE POLICY "Users can view own messages"
+    ON member_messages FOR SELECT
+    USING (
+        auth.uid() = sender_id OR 
+        auth.uid() = receiver_id
+    );
+
+CREATE POLICY "Users can send messages"
+    ON member_messages FOR INSERT
+    WITH CHECK (auth.uid() = sender_id);
+
+CREATE POLICY "Users can update own messages"
+    ON member_messages FOR UPDATE
+    USING (
+        auth.uid() = sender_id OR 
+        auth.uid() = receiver_id
+    );
+
+-- 채팅 정책 (전문가 상담 전용)
+CREATE POLICY "Consultation participants can view chat messages"
     ON chat_messages FOR SELECT
     USING (
         EXISTS (
@@ -573,7 +648,7 @@ CREATE POLICY "Participants can view chat messages"
         )
     );
 
-CREATE POLICY "Participants can send messages"
+CREATE POLICY "Consultation participants can send messages"
     ON chat_messages FOR INSERT
     WITH CHECK (
         EXISTS (
@@ -623,12 +698,13 @@ CREATE TRIGGER update_consultation_bookings_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
--- 플랫폼 수수료 자동 계산 함수
-CREATE OR REPLACE FUNCTION calculate_platform_fee()
+-- 플랫폼 수수료 자동 계산 함수 (20% 가변형 수수료)
+CREATE OR REPLACE FUNCTION calculate_consultation_fees()
 RETURNS TRIGGER AS $$
 BEGIN
-    -- 플랫폼 수수료 10% 자동 계산
-    NEW.platform_fee = ROUND(NEW.consultation_fee * 0.1);
+    -- 플랫폼 수수료 계산 (기본 20%, 관리자가 변경 가능)
+    NEW.platform_fee = ROUND(NEW.consultation_fee * NEW.platform_fee_rate);
+    NEW.expert_payout = NEW.consultation_fee - NEW.platform_fee;
     NEW.total_amount = NEW.consultation_fee;
     RETURN NEW;
 END;
@@ -637,7 +713,7 @@ $$ language 'plpgsql';
 CREATE TRIGGER calculate_consultation_fees
     BEFORE INSERT OR UPDATE ON consultation_bookings
     FOR EACH ROW
-    EXECUTE FUNCTION calculate_platform_fee();
+    EXECUTE FUNCTION calculate_consultation_fees();
 
 -- 댓글 수 자동 업데이트 함수
 CREATE OR REPLACE FUNCTION update_post_comment_count()
@@ -667,28 +743,35 @@ CREATE TRIGGER update_comment_count
 -- 초기 데이터 삽입
 -- ==============================================
 
--- 기본 채팅방 생성
-INSERT INTO chat_rooms (name, description, room_type) VALUES
-('일반 취업준비 채팅방', '모든 구직자가 참여할 수 있는 일반 채팅방', 'public'),
-('면접 준비 스터디', '면접 준비를 함께하는 스터디 채팅방', 'public'),
-('IT 개발자 준비방', 'IT/개발 분야 취업 준비자 전용 채팅방', 'public'),
-('경력직 이직 정보방', '경력직 이직 준비자들의 정보 교환', 'public');
+-- 시스템 기본 설정
+INSERT INTO system_settings (setting_key, setting_value, description, setting_type) VALUES
+('platform_commission_rate', '0.20', '플랫폼 수수료율 (기본 20%)', 'number'),
+('min_consultation_minutes', '10', '최소 상담 시간 (분)', 'number'),
+('max_consultation_minutes', '60', '최대 상담 시간 (분)', 'number'),
+('consultation_time_units', '[10,20,30,40,50,60]', '예약 가능한 상담 시간 단위 (분)', 'json'),
+('payment_methods', '["kakaopay","tosspay","card"]', '지원하는 결제 방식', 'json'),
+('expert_approval_required', 'true', '전문가 등록 시 관리자 승인 필요 여부', 'boolean');
 
 -- 기본 공지사항
 INSERT INTO announcements (title, content, category, is_important, author_id) VALUES
-('커리어코치 서비스 오픈 안내', '현직자-구직자 매칭 플랫폼 커리어코치가 정식 오픈했습니다.', 'general', true, NULL),
+('인사이드잡 서비스 오픈 안내', '현직자-구직자 매칭 플랫폼 인사이드잡이 정식 오픈했습니다.', 'general', true, NULL),
 ('취업경쟁력 계산기 이용 안내', '무료 취업경쟁력 진단을 통해 나의 현재 수준을 확인해보세요.', 'service_notice', false, NULL),
-('현직자 등록 모집 안내', '후배 구직자들을 위한 멘토링에 참여해주세요.', 'event', false, NULL);
+('현직자 등록 모집 안내', '후배 구직자들을 위한 멘토링에 참여해주세요.', 'event', false, NULL),
+('새로운 상담 시스템 안내', '10분 단위로 유연하게 상담 시간을 선택할 수 있습니다.', 'service_notice', false, NULL);
 
 -- 완료
-COMMENT ON TABLE user_profiles IS '사용자 프로필 - 플랜비 기반 확장';
-COMMENT ON TABLE career_calculations IS '취업경쟁력 계산 결과 - 플랜비 계산기 구조 변환';
+COMMENT ON TABLE user_profiles IS '사용자 프로필 - 3단계 역할 시스템 (관리자/일반회원/전문가)';
+COMMENT ON TABLE career_calculations IS '취업경쟁력 계산 결과 - 6단계 진단 시스템';
 COMMENT ON TABLE job_seeker_posts IS '구직자 커뮤니티 게시글';
-COMMENT ON TABLE professional_requests IS '현직자 전문가 등록 요청 - 플랜비 전문가 등록 활용';
-COMMENT ON TABLE consultation_bookings IS '상담 예약 및 매칭 시스템';
-COMMENT ON TABLE payment_transactions IS '결제 거래 내역 - 플랜비 결제 구조 확장';
-COMMENT ON TABLE professional_settlements IS '전문가 수익 정산 시스템';
+COMMENT ON TABLE professional_requests IS '현직자 전문가 등록 요청 - 관리자 승인 시스템';
+COMMENT ON TABLE consultation_bookings IS '상담 예약 시스템 - 10분 단위, 20% 수수료';
+COMMENT ON TABLE payment_transactions IS '결제 거래 내역';
+COMMENT ON TABLE professional_settlements IS '전문가 수익 정산 시스템 - 80% 지급';
+COMMENT ON TABLE system_settings IS '시스템 설정 - 관리자가 수수료율 등 변경 가능';
+COMMENT ON TABLE member_messages IS '일반 회원 간 쪽지 시스템';
+COMMENT ON TABLE chat_rooms IS '실시간 채팅방 - 전문가 상담 전용';
+COMMENT ON TABLE chat_messages IS '채팅 메시지 - 전문가 상담에서만 사용';
 
 -- 스키마 버전 정보
 INSERT INTO announcements (title, content, category) VALUES
-('데이터베이스 스키마 v1.0', '커리어코치 플랫폼 초기 데이터베이스 스키마가 구축되었습니다.', 'system_update');
+('데이터베이스 스키마 v2.0', '인사이드잡 플랫폼 새로운 상담 시스템이 적용되었습니다.', 'system_update');

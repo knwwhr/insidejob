@@ -853,6 +853,1059 @@
             ]);
         };
 
+        // 10분 단위 상담 예약 시스템 컴포넌트
+        const renderConsultationView = () => {
+            const [consultationDuration, setConsultationDuration] = React.useState(30); // 기본 30분
+            
+            // 시스템 설정 (실제로는 데이터베이스에서 가져와야 함)
+            const systemSettings = {
+                commissionRate: 0.20, // 20% 수수료
+                availableTimeUnits: [10, 20, 30, 40, 50, 60] // 10분 단위
+            };
+            const [experts] = React.useState([
+                { 
+                    id: 1, 
+                    name: '김개발', 
+                    company: '네이버', 
+                    position: '시니어 개발자',
+                    industry: 'tech_development',
+                    hourlyRate: 100000,
+                    experience: '5년',
+                    specialties: ['React', 'Node.js', '면접 코칭']
+                },
+                { 
+                    id: 2, 
+                    name: '박마케터', 
+                    company: '카카오', 
+                    position: '마케팅 팀장',
+                    industry: 'marketing_planning',
+                    hourlyRate: 80000,
+                    experience: '7년',
+                    specialties: ['디지털 마케팅', '브랜딩', '커리어 설계']
+                }
+            ]);
+
+            // 상담료 계산
+            const calculateConsultationFee = (hourlyRate, duration) => {
+                return Math.round((hourlyRate / 60) * duration);
+            };
+
+            const renderPriceBreakdown = (consultationFee) => {
+                const platformFee = Math.round(consultationFee * systemSettings.commissionRate);
+                const expertPayout = consultationFee - platformFee;
+                
+                return React.createElement('div', {
+                    className: 'card bg-blue-50'
+                }, [
+                    React.createElement('h4', {
+                        key: 'title',
+                        className: 'font-semibold mb-3 text-blue-800'
+                    }, '💰 상담료 상세내역'),
+                    
+                    React.createElement('div', {
+                        key: 'breakdown',
+                        className: 'space-y-2 text-sm'
+                    }, [
+                        React.createElement('div', {
+                            key: 'consultation-fee',
+                            className: 'flex justify-between'
+                        }, [
+                            React.createElement('span', { key: 'label' }, `상담료 (${consultationDuration}분)`),
+                            React.createElement('span', { 
+                                key: 'amount',
+                                className: 'font-semibold' 
+                            }, `${consultationFee.toLocaleString()}원`)
+                        ]),
+                        
+                        React.createElement('div', {
+                            key: 'platform-fee', 
+                            className: 'flex justify-between text-gray-600'
+                        }, [
+                            React.createElement('span', { key: 'label' }, `플랫폼 수수료 (${Math.round(systemSettings.commissionRate * 100)}%)`),
+                            React.createElement('span', { key: 'amount' }, `-${platformFee.toLocaleString()}원`)
+                        ]),
+                        
+                        React.createElement('div', {
+                            key: 'expert-payout',
+                            className: 'flex justify-between text-gray-600'  
+                        }, [
+                            React.createElement('span', { key: 'label' }, '전문가 수령액'),
+                            React.createElement('span', { key: 'amount' }, `${expertPayout.toLocaleString()}원`)
+                        ]),
+                        
+                        React.createElement('hr', { key: 'divider', className: 'my-2' }),
+                        
+                        React.createElement('div', {
+                            key: 'total',
+                            className: 'flex justify-between font-bold text-lg text-blue-800'
+                        }, [
+                            React.createElement('span', { key: 'label' }, '결제 금액'),
+                            React.createElement('span', { 
+                                key: 'amount'
+                            }, `${consultationFee.toLocaleString()}원`)
+                        ])
+                    ])
+                ]);
+            };
+
+            return React.createElement('div', {
+                className: 'min-h-screen bg-gradient-to-br from-green-50 to-blue-50'
+            }, [
+                // 헤더
+                React.createElement('header', {
+                    key: 'consultation-header',
+                    className: 'bg-white shadow-sm border-b'
+                }, React.createElement('div', {
+                    className: 'max-w-7xl mx-auto px-4 py-6'
+                }, [
+                    React.createElement('div', {
+                        key: 'header-content',
+                        className: 'flex items-center justify-between'
+                    }, [
+                        React.createElement('button', {
+                            key: 'back-btn',
+                            className: 'text-gray-600 hover:text-gray-800 text-lg',
+                            onClick: () => setCurrentView('home')
+                        }, '← 홈으로'),
+                        React.createElement('h1', {
+                            key: 'consultation-title',
+                            className: 'text-2xl font-bold text-gray-900'
+                        }, '💼 전문가 상담 예약'),
+                        React.createElement('div', {
+                            key: 'space'
+                        })
+                    ])
+                ])),
+
+                // 메인 컨텐츠
+                React.createElement('main', {
+                    key: 'consultation-main',
+                    className: 'max-w-6xl mx-auto px-4 py-8'
+                }, [
+                    // 상담 시간 선택
+                    React.createElement('div', {
+                        key: 'time-selector',
+                        className: 'card mb-6'
+                    }, [
+                        React.createElement('h3', {
+                            key: 'time-title',
+                            className: 'text-lg font-semibold mb-4'
+                        }, '⏰ 상담 시간 선택'),
+                        
+                        React.createElement('div', {
+                            key: 'time-options',
+                            className: 'grid grid-cols-3 sm:grid-cols-6 gap-3'
+                        }, systemSettings.availableTimeUnits.map(minutes => 
+                            React.createElement('button', {
+                                key: minutes,
+                                className: `p-3 border-2 rounded-lg transition-all text-center ${
+                                    consultationDuration === minutes 
+                                        ? 'border-blue-500 bg-blue-50 text-blue-700' 
+                                        : 'border-gray-300 hover:border-gray-400'
+                                }`,
+                                onClick: () => setConsultationDuration(minutes)
+                            }, [
+                                React.createElement('div', {
+                                    key: 'duration',
+                                    className: 'font-semibold'
+                                }, `${minutes}분`)
+                            ])
+                        ))
+                    ]),
+
+                    // 전문가 목록
+                    React.createElement('div', {
+                        key: 'experts-list',
+                        className: 'space-y-6'
+                    }, experts.map(expert => {
+                        const consultationFee = calculateConsultationFee(expert.hourlyRate, consultationDuration);
+                        
+                        return React.createElement('div', {
+                            key: expert.id,
+                            className: 'card hover:shadow-lg transition-shadow'
+                        }, [
+                            React.createElement('div', {
+                                key: 'expert-info',
+                                className: 'flex flex-col lg:flex-row gap-6'
+                            }, [
+                                // 전문가 정보
+                                React.createElement('div', {
+                                    key: 'info',
+                                    className: 'flex-1'
+                                }, [
+                                    React.createElement('div', {
+                                        key: 'header',
+                                        className: 'flex items-center space-x-4 mb-4'
+                                    }, [
+                                        React.createElement('div', {
+                                            key: 'avatar',
+                                            className: 'w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-lg font-bold'
+                                        }, expert.name[0]),
+                                        React.createElement('div', {
+                                            key: 'details'
+                                        }, [
+                                            React.createElement('h3', {
+                                                key: 'name',
+                                                className: 'text-xl font-bold text-gray-800'
+                                            }, expert.name),
+                                            React.createElement('p', {
+                                                key: 'position',
+                                                className: 'text-gray-600'
+                                            }, `${expert.company} • ${expert.position}`),
+                                            React.createElement('p', {
+                                                key: 'experience',
+                                                className: 'text-sm text-blue-600'
+                                            }, `경력 ${expert.experience}`)
+                                        ])
+                                    ]),
+                                    
+                                    React.createElement('div', {
+                                        key: 'specialties',
+                                        className: 'mb-4'
+                                    }, [
+                                        React.createElement('p', {
+                                            key: 'label',
+                                            className: 'text-sm text-gray-600 mb-2'
+                                        }, '전문 분야:'),
+                                        React.createElement('div', {
+                                            key: 'tags',
+                                            className: 'flex flex-wrap gap-2'
+                                        }, expert.specialties.map((specialty, index) => 
+                                            React.createElement('span', {
+                                                key: index,
+                                                className: 'px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full'
+                                            }, specialty)
+                                        ))
+                                    ])
+                                ]),
+
+                                // 가격 정보 및 예약 버튼
+                                React.createElement('div', {
+                                    key: 'booking',
+                                    className: 'lg:w-1/3'
+                                }, [
+                                    renderPriceBreakdown(consultationFee),
+                                    
+                                    React.createElement('div', {
+                                        key: 'booking-buttons',
+                                        className: 'space-y-3 mt-4'
+                                    }, [
+                                        React.createElement('button', {
+                                            key: 'book-btn',
+                                            className: 'btn-primary w-full',
+                                            onClick: async () => {
+                                                if (!isAuthenticated) {
+                                                    alert('상담 예약은 로그인이 필요합니다.');
+                                                    setCurrentView('auth');
+                                                    return;
+                                                }
+                                                
+                                                try {
+                                                    // 상담 예약 생성
+                                                    const bookingData = {
+                                                        job_seeker_id: currentUser?.id,
+                                                        professional_id: `expert-${expert.id}`, // 실제 전문가 ID로 교체 필요
+                                                        consultation_type: 'career_planning',
+                                                        consultation_method: 'video_call',
+                                                        scheduled_date: new Date().toISOString().split('T')[0],
+                                                        scheduled_time: '14:00:00',
+                                                        duration_minutes: consultationDuration,
+                                                        consultation_fee: consultationFee,
+                                                        platform_fee_rate: systemSettings.commissionRate,
+                                                        total_amount: consultationFee
+                                                    };
+                                                    
+                                                    const { data, error } = await supabaseClient
+                                                        .from('consultation_bookings')
+                                                        .insert(bookingData)
+                                                        .select()
+                                                        .single();
+                                                    
+                                                    if (error) throw error;
+                                                    
+                                                    alert('상담 예약이 완료되었습니다! 채팅방에서 전문가와 상담하세요.');
+                                                    setSelectedBooking(data.id);
+                                                    
+                                                } catch (error) {
+                                                    console.error('Booking error:', error);
+                                                    alert('예약에 실패했습니다: ' + error.message);
+                                                }
+                                            }
+                                        }, `💼 ${consultationDuration}분 상담 예약`),
+                                        
+                                        // 데모용 채팅 입장 버튼 (실제로는 예약 완료 후 표시)
+                                        React.createElement('button', {
+                                            key: 'chat-btn',
+                                            className: 'btn-secondary w-full bg-green-500 hover:bg-green-600 text-white',
+                                            onClick: () => {
+                                                if (!isAuthenticated) {
+                                                    alert('채팅은 로그인이 필요합니다.');
+                                                    setCurrentView('auth');
+                                                    return;
+                                                }
+                                                
+                                                // 데모용 채팅방 ID 생성
+                                                const demoBookingId = `demo-${expert.id}-${Date.now()}`;
+                                                enterConsultationChat(demoBookingId);
+                                            }
+                                        }, '💬 채팅방 입장 (데모)')
+                                    ])
+                                ])
+                            ])
+                        ]);
+                    }))
+                ])
+            ]);
+        };
+
+        // 쪽지 시스템 컴포넌트
+        const renderMessagesView = () => {
+            const [activeTab, setActiveTab] = React.useState('inbox'); // inbox, sent, compose
+            const [messageContent, setMessageContent] = React.useState({ subject: '', content: '', receiverId: '' });
+            const [isLoading, setIsLoading] = React.useState(false);
+
+            // 받은 쪽지 목록
+            const [inboxMessages] = React.useState([
+                {
+                    id: 1,
+                    subject: '면접 준비 스터디 참여 문의',
+                    content: '안녕하세요! 게시글을 보고 연락드립니다. 함께 면접 준비하실래요?',
+                    sender_name: '취업준비생A',
+                    is_read: false,
+                    created_at: '2025-08-29T10:00:00'
+                },
+                {
+                    id: 2,
+                    subject: '포트폴리오 피드백 감사합니다',
+                    content: '조언해주신 내용 반영해서 수정했습니다. 정말 감사해요!',
+                    sender_name: '신입개발자B',
+                    is_read: true,
+                    created_at: '2025-08-28T15:30:00'
+                }
+            ]);
+
+            // 보낸 쪽지 목록
+            const [sentMessages] = React.useState([
+                {
+                    id: 3,
+                    subject: '개발자 스터디 그룹 초대',
+                    content: 'React 스터디 그룹을 만들었습니다. 참여하실래요?',
+                    receiver_name: '예비개발자C',
+                    created_at: '2025-08-28T09:00:00'
+                }
+            ]);
+
+            // 쪽지 전송
+            const sendMessage = async () => {
+                if (!messageContent.subject.trim() || !messageContent.content.trim()) {
+                    alert('제목과 내용을 모두 입력해주세요.');
+                    return;
+                }
+
+                setIsLoading(true);
+                try {
+                    // 실제 구현 시 Supabase에 저장
+                    // const { error } = await supabaseClient
+                    //     .from('member_messages')
+                    //     .insert({
+                    //         receiver_id: messageContent.receiverId,
+                    //         subject: messageContent.subject,
+                    //         content: messageContent.content
+                    //     });
+
+                    alert('쪽지가 전송되었습니다!');
+                    setMessageContent({ subject: '', content: '', receiverId: '' });
+                    setActiveTab('inbox');
+                } catch (error) {
+                    console.error('Message send error:', error);
+                    alert('쪽지 전송 중 오류가 발생했습니다.');
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+
+            const renderTabButton = (tab, label, icon) => {
+                return React.createElement('button', {
+                    key: tab,
+                    className: `px-4 py-2 rounded-lg font-medium transition-colors ${
+                        activeTab === tab 
+                            ? 'bg-blue-500 text-white' 
+                            : 'text-gray-600 hover:bg-gray-100'
+                    }`,
+                    onClick: () => setActiveTab(tab)
+                }, `${icon} ${label}`);
+            };
+
+            return React.createElement('div', {
+                className: 'min-h-screen bg-gradient-to-br from-green-50 to-blue-50'
+            }, [
+                // 헤더
+                React.createElement('header', {
+                    key: 'messages-header',
+                    className: 'bg-white shadow-sm border-b'
+                }, React.createElement('div', {
+                    className: 'max-w-7xl mx-auto px-4 py-6'
+                }, [
+                    React.createElement('div', {
+                        key: 'header-content',
+                        className: 'flex items-center justify-between'
+                    }, [
+                        React.createElement('button', {
+                            key: 'back-btn',
+                            className: 'text-gray-600 hover:text-gray-800 text-lg',
+                            onClick: () => setCurrentView('home')
+                        }, '← 홈으로'),
+                        React.createElement('h1', {
+                            key: 'messages-title',
+                            className: 'text-2xl font-bold text-gray-900'
+                        }, '📩 쪽지'),
+                        React.createElement('div', {
+                            key: 'space'
+                        })
+                    ])
+                ])),
+
+                // 메인 컨텐츠
+                React.createElement('main', {
+                    key: 'messages-main',
+                    className: 'max-w-4xl mx-auto px-4 py-8'
+                }, [
+                    // 탭 네비게이션
+                    React.createElement('div', {
+                        key: 'tabs',
+                        className: 'flex space-x-2 mb-6'
+                    }, [
+                        renderTabButton('inbox', '받은쪽지', '📥'),
+                        renderTabButton('sent', '보낸쪽지', '📤'),
+                        renderTabButton('compose', '쪽지쓰기', '✏️')
+                    ]),
+
+                    // 받은쪽지 탭
+                    activeTab === 'inbox' ? React.createElement('div', {
+                        key: 'inbox-content',
+                        className: 'card'
+                    }, [
+                        React.createElement('h3', {
+                            key: 'inbox-title',
+                            className: 'text-xl font-bold text-gray-800 mb-4'
+                        }, '📥 받은쪽지'),
+                        
+                        inboxMessages.length === 0 ? 
+                            React.createElement('div', {
+                                key: 'no-messages',
+                                className: 'text-center py-12 text-gray-500'
+                            }, [
+                                React.createElement('div', {
+                                    key: 'icon',
+                                    className: 'text-4xl mb-4'
+                                }, '📥'),
+                                React.createElement('p', {
+                                    key: 'text'
+                                }, '받은 쪽지가 없습니다.')
+                            ]) :
+                            React.createElement('div', {
+                                key: 'messages-list',
+                                className: 'space-y-3'
+                            }, inboxMessages.map(message => 
+                                React.createElement('div', {
+                                    key: message.id,
+                                    className: `border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer ${
+                                        !message.is_read ? 'bg-blue-50 border-blue-200' : ''
+                                    }`,
+                                    onClick: () => {
+                                        setSelectedMessage(message);
+                                        alert(`쪽지 내용: ${message.content}`);
+                                    }
+                                }, [
+                                    React.createElement('div', {
+                                        key: 'message-header',
+                                        className: 'flex justify-between items-start mb-2'
+                                    }, [
+                                        React.createElement('div', {
+                                            key: 'info'
+                                        }, [
+                                            React.createElement('h4', {
+                                                key: 'subject',
+                                                className: `font-semibold text-gray-800 ${!message.is_read ? 'font-bold' : ''}`
+                                            }, message.subject),
+                                            React.createElement('p', {
+                                                key: 'sender',
+                                                className: 'text-sm text-gray-600'
+                                            }, `발신자: ${message.sender_name}`)
+                                        ]),
+                                        React.createElement('div', {
+                                            key: 'meta',
+                                            className: 'text-right'
+                                        }, [
+                                            !message.is_read ? React.createElement('span', {
+                                                key: 'new-badge',
+                                                className: 'inline-block w-2 h-2 bg-blue-500 rounded-full mb-1'
+                                            }) : null,
+                                            React.createElement('p', {
+                                                key: 'date',
+                                                className: 'text-xs text-gray-500'
+                                            }, new Date(message.created_at).toLocaleDateString())
+                                        ])
+                                    ]),
+                                    React.createElement('p', {
+                                        key: 'preview',
+                                        className: 'text-sm text-gray-700 line-clamp-2'
+                                    }, message.content.substring(0, 80) + (message.content.length > 80 ? '...' : ''))
+                                ])
+                            ))
+                    ]) : null,
+
+                    // 보낸쪽지 탭
+                    activeTab === 'sent' ? React.createElement('div', {
+                        key: 'sent-content',
+                        className: 'card'
+                    }, [
+                        React.createElement('h3', {
+                            key: 'sent-title',
+                            className: 'text-xl font-bold text-gray-800 mb-4'
+                        }, '📤 보낸쪽지'),
+                        
+                        sentMessages.length === 0 ? 
+                            React.createElement('div', {
+                                key: 'no-sent',
+                                className: 'text-center py-12 text-gray-500'
+                            }, [
+                                React.createElement('div', {
+                                    key: 'icon',
+                                    className: 'text-4xl mb-4'
+                                }, '📤'),
+                                React.createElement('p', {
+                                    key: 'text'
+                                }, '보낸 쪽지가 없습니다.')
+                            ]) :
+                            React.createElement('div', {
+                                key: 'sent-list',
+                                className: 'space-y-3'
+                            }, sentMessages.map(message => 
+                                React.createElement('div', {
+                                    key: message.id,
+                                    className: 'border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer',
+                                    onClick: () => alert(`보낸 쪽지 내용: ${message.content}`)
+                                }, [
+                                    React.createElement('div', {
+                                        key: 'sent-header',
+                                        className: 'flex justify-between items-start mb-2'
+                                    }, [
+                                        React.createElement('div', {
+                                            key: 'info'
+                                        }, [
+                                            React.createElement('h4', {
+                                                key: 'subject',
+                                                className: 'font-semibold text-gray-800'
+                                            }, message.subject),
+                                            React.createElement('p', {
+                                                key: 'receiver',
+                                                className: 'text-sm text-gray-600'
+                                            }, `받는사람: ${message.receiver_name}`)
+                                        ]),
+                                        React.createElement('p', {
+                                            key: 'date',
+                                            className: 'text-xs text-gray-500'
+                                        }, new Date(message.created_at).toLocaleDateString())
+                                    ]),
+                                    React.createElement('p', {
+                                        key: 'preview',
+                                        className: 'text-sm text-gray-700 line-clamp-2'
+                                    }, message.content.substring(0, 80) + (message.content.length > 80 ? '...' : ''))
+                                ])
+                            ))
+                    ]) : null,
+
+                    // 쪽지쓰기 탭
+                    activeTab === 'compose' ? React.createElement('div', {
+                        key: 'compose-content',
+                        className: 'card'
+                    }, [
+                        React.createElement('h3', {
+                            key: 'compose-title',
+                            className: 'text-xl font-bold text-gray-800 mb-4'
+                        }, '✏️ 쪽지 쓰기'),
+                        
+                        React.createElement('div', {
+                            key: 'compose-form',
+                            className: 'space-y-4'
+                        }, [
+                            // 받는사람 (현재는 임시로 텍스트 입력)
+                            React.createElement('div', {
+                                key: 'receiver-group'
+                            }, [
+                                React.createElement('label', {
+                                    key: 'receiver-label',
+                                    className: 'block text-sm font-medium text-gray-700 mb-2'
+                                }, '받는사람'),
+                                React.createElement('input', {
+                                    key: 'receiver-input',
+                                    type: 'text',
+                                    placeholder: '받는사람의 닉네임을 입력하세요',
+                                    value: messageContent.receiverId,
+                                    onChange: (e) => setMessageContent({...messageContent, receiverId: e.target.value}),
+                                    className: 'w-full px-3 py-2 border border-gray-300 rounded-lg'
+                                })
+                            ]),
+
+                            // 제목
+                            React.createElement('div', {
+                                key: 'subject-group'
+                            }, [
+                                React.createElement('label', {
+                                    key: 'subject-label',
+                                    className: 'block text-sm font-medium text-gray-700 mb-2'
+                                }, '제목'),
+                                React.createElement('input', {
+                                    key: 'subject-input',
+                                    type: 'text',
+                                    placeholder: '쪽지 제목을 입력하세요',
+                                    value: messageContent.subject,
+                                    onChange: (e) => setMessageContent({...messageContent, subject: e.target.value}),
+                                    className: 'w-full px-3 py-2 border border-gray-300 rounded-lg'
+                                })
+                            ]),
+
+                            // 내용
+                            React.createElement('div', {
+                                key: 'content-group'
+                            }, [
+                                React.createElement('label', {
+                                    key: 'content-label',
+                                    className: 'block text-sm font-medium text-gray-700 mb-2'
+                                }, '내용'),
+                                React.createElement('textarea', {
+                                    key: 'content-textarea',
+                                    placeholder: '쪽지 내용을 입력하세요',
+                                    value: messageContent.content,
+                                    onChange: (e) => setMessageContent({...messageContent, content: e.target.value}),
+                                    rows: 8,
+                                    className: 'w-full px-3 py-2 border border-gray-300 rounded-lg'
+                                })
+                            ]),
+
+                            // 전송 버튼
+                            React.createElement('div', {
+                                key: 'actions',
+                                className: 'flex justify-end space-x-3'
+                            }, [
+                                React.createElement('button', {
+                                    key: 'cancel-btn',
+                                    className: 'px-6 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50',
+                                    onClick: () => {
+                                        setMessageContent({ subject: '', content: '', receiverId: '' });
+                                        setActiveTab('inbox');
+                                    }
+                                }, '취소'),
+                                React.createElement('button', {
+                                    key: 'send-btn',
+                                    className: 'btn-primary',
+                                    onClick: sendMessage,
+                                    disabled: isLoading
+                                }, isLoading ? '전송중...' : '📩 쪽지 보내기')
+                            ])
+                        ])
+                    ]) : null
+                ])
+            ]);
+        };
+
+        // 관리자 설정 패널 컴포넌트
+        const renderAdminView = () => {
+            const [activeAdminTab, setActiveAdminTab] = React.useState('settings'); // settings, experts, statistics
+            const [tempSettings, setTempSettings] = React.useState({...systemSettings});
+            const [isSaving, setIsSaving] = React.useState(false);
+            
+            // 전문가 승인 대기 목록 (목업)
+            const [pendingExperts] = React.useState([
+                {
+                    id: 1,
+                    name: '이전문가',
+                    email: 'expert@company.com',
+                    company: '삼성전자',
+                    position: '선임연구원',
+                    industry: 'tech_development',
+                    verification_type: 'employment_certificate',
+                    created_at: '2025-08-29T09:00:00'
+                }
+            ]);
+
+            // 시스템 설정 저장
+            const saveSystemSettings = async () => {
+                setIsSaving(true);
+                try {
+                    // 실제 구현 시 Supabase에 저장
+                    // const updates = [
+                    //     { setting_key: 'platform_commission_rate', setting_value: tempSettings.commissionRate.toString() },
+                    //     { setting_key: 'consultation_time_units', setting_value: JSON.stringify(tempSettings.availableTimeUnits) }
+                    // ];
+                    
+                    // for (const update of updates) {
+                    //     await supabaseClient
+                    //         .from('system_settings')
+                    //         .update({ setting_value: update.setting_value })
+                    //         .eq('setting_key', update.setting_key);
+                    // }
+
+                    setSystemSettings(tempSettings);
+                    alert('시스템 설정이 저장되었습니다.');
+                } catch (error) {
+                    console.error('Settings save error:', error);
+                    alert('설정 저장 중 오류가 발생했습니다.');
+                } finally {
+                    setIsSaving(false);
+                }
+            };
+
+            const renderAdminTabButton = (tab, label, icon) => {
+                return React.createElement('button', {
+                    key: tab,
+                    className: `px-4 py-2 rounded-lg font-medium transition-colors ${
+                        activeAdminTab === tab 
+                            ? 'bg-red-500 text-white' 
+                            : 'text-gray-600 hover:bg-gray-100'
+                    }`,
+                    onClick: () => setActiveAdminTab(tab)
+                }, `${icon} ${label}`);
+            };
+
+            return React.createElement('div', {
+                className: 'min-h-screen bg-gradient-to-br from-red-50 to-orange-50'
+            }, [
+                // 헤더
+                React.createElement('header', {
+                    key: 'admin-header',
+                    className: 'bg-white shadow-sm border-b border-red-200'
+                }, React.createElement('div', {
+                    className: 'max-w-7xl mx-auto px-4 py-6'
+                }, [
+                    React.createElement('div', {
+                        key: 'header-content',
+                        className: 'flex items-center justify-between'
+                    }, [
+                        React.createElement('button', {
+                            key: 'back-btn',
+                            className: 'text-gray-600 hover:text-gray-800 text-lg',
+                            onClick: () => setCurrentView('home')
+                        }, '← 홈으로'),
+                        React.createElement('h1', {
+                            key: 'admin-title',
+                            className: 'text-2xl font-bold text-red-900'
+                        }, '🔧 관리자 패널'),
+                        React.createElement('div', {
+                            key: 'user-info',
+                            className: 'text-sm text-gray-600'
+                        }, `${currentUser?.user_metadata?.nickname || '관리자'} (${userRole})`)
+                    ])
+                ])),
+
+                // 메인 컨텐츠
+                React.createElement('main', {
+                    key: 'admin-main',
+                    className: 'max-w-6xl mx-auto px-4 py-8'
+                }, [
+                    // 탭 네비게이션
+                    React.createElement('div', {
+                        key: 'admin-tabs',
+                        className: 'flex space-x-2 mb-6'
+                    }, [
+                        renderAdminTabButton('settings', '시스템설정', '⚙️'),
+                        renderAdminTabButton('experts', '전문가승인', '👨‍💼'),
+                        renderAdminTabButton('statistics', '통계', '📊')
+                    ]),
+
+                    // 시스템 설정 탭
+                    activeAdminTab === 'settings' ? React.createElement('div', {
+                        key: 'settings-content',
+                        className: 'card'
+                    }, [
+                        React.createElement('h3', {
+                            key: 'settings-title',
+                            className: 'text-xl font-bold text-gray-800 mb-6'
+                        }, '⚙️ 시스템 설정'),
+                        
+                        React.createElement('div', {
+                            key: 'settings-form',
+                            className: 'space-y-6'
+                        }, [
+                            // 수수료율 설정
+                            React.createElement('div', {
+                                key: 'commission-group'
+                            }, [
+                                React.createElement('label', {
+                                    key: 'commission-label',
+                                    className: 'block text-sm font-medium text-gray-700 mb-2'
+                                }, '플랫폼 수수료율 (%)'),
+                                React.createElement('div', {
+                                    key: 'commission-input-group',
+                                    className: 'flex items-center space-x-3'
+                                }, [
+                                    React.createElement('input', {
+                                        key: 'commission-input',
+                                        type: 'number',
+                                        min: '5',
+                                        max: '50',
+                                        step: '1',
+                                        value: Math.round(tempSettings.commissionRate * 100),
+                                        onChange: (e) => setTempSettings({
+                                            ...tempSettings, 
+                                            commissionRate: parseFloat(e.target.value) / 100
+                                        }),
+                                        className: 'w-24 px-3 py-2 border border-gray-300 rounded-lg'
+                                    }),
+                                    React.createElement('span', {
+                                        key: 'commission-unit',
+                                        className: 'text-gray-600'
+                                    }, '%'),
+                                    React.createElement('div', {
+                                        key: 'commission-preview',
+                                        className: 'text-sm text-gray-500'
+                                    }, `예시: 10만원 상담 → 플랫폼 ${Math.round(100000 * tempSettings.commissionRate).toLocaleString()}원, 전문가 ${Math.round(100000 * (1 - tempSettings.commissionRate)).toLocaleString()}원`)
+                                ])
+                            ]),
+
+                            // 상담 시간 단위 설정
+                            React.createElement('div', {
+                                key: 'time-units-group'
+                            }, [
+                                React.createElement('label', {
+                                    key: 'time-units-label',
+                                    className: 'block text-sm font-medium text-gray-700 mb-2'
+                                }, '상담 시간 단위 (분)'),
+                                React.createElement('div', {
+                                    key: 'time-units-info',
+                                    className: 'text-sm text-gray-600 mb-3'
+                                }, '현재 설정된 시간 단위: ' + tempSettings.availableTimeUnits.join(', ') + '분'),
+                                React.createElement('div', {
+                                    key: 'time-units-grid',
+                                    className: 'grid grid-cols-6 gap-2'
+                                }, [10, 20, 30, 40, 50, 60].map(minutes => 
+                                    React.createElement('label', {
+                                        key: minutes,
+                                        className: 'flex items-center space-x-2 p-2 border border-gray-300 rounded cursor-pointer hover:bg-gray-50'
+                                    }, [
+                                        React.createElement('input', {
+                                            key: 'checkbox',
+                                            type: 'checkbox',
+                                            checked: tempSettings.availableTimeUnits.includes(minutes),
+                                            onChange: (e) => {
+                                                const newUnits = e.target.checked 
+                                                    ? [...tempSettings.availableTimeUnits, minutes].sort((a, b) => a - b)
+                                                    : tempSettings.availableTimeUnits.filter(unit => unit !== minutes);
+                                                setTempSettings({...tempSettings, availableTimeUnits: newUnits});
+                                            }
+                                        }),
+                                        React.createElement('span', {
+                                            key: 'label',
+                                            className: 'text-sm'
+                                        }, `${minutes}분`)
+                                    ])
+                                ))
+                            ]),
+
+                            // 저장 버튼
+                            React.createElement('div', {
+                                key: 'save-actions',
+                                className: 'flex justify-end space-x-3 pt-4 border-t'
+                            }, [
+                                React.createElement('button', {
+                                    key: 'reset-btn',
+                                    className: 'px-6 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50',
+                                    onClick: () => setTempSettings({...systemSettings})
+                                }, '초기화'),
+                                React.createElement('button', {
+                                    key: 'save-btn',
+                                    className: 'btn-primary',
+                                    onClick: saveSystemSettings,
+                                    disabled: isSaving
+                                }, isSaving ? '저장중...' : '💾 설정 저장')
+                            ])
+                        ])
+                    ]) : null,
+
+                    // 전문가 승인 탭
+                    activeAdminTab === 'experts' ? React.createElement('div', {
+                        key: 'experts-content',
+                        className: 'card'
+                    }, [
+                        React.createElement('h3', {
+                            key: 'experts-title',
+                            className: 'text-xl font-bold text-gray-800 mb-4'
+                        }, '👨‍💼 전문가 승인 관리'),
+                        
+                        pendingExperts.length === 0 ? 
+                            React.createElement('div', {
+                                key: 'no-pending',
+                                className: 'text-center py-12 text-gray-500'
+                            }, [
+                                React.createElement('div', {
+                                    key: 'icon',
+                                    className: 'text-4xl mb-4'
+                                }, '✅'),
+                                React.createElement('p', {
+                                    key: 'text'
+                                }, '승인 대기 중인 전문가가 없습니다.')
+                            ]) :
+                            React.createElement('div', {
+                                key: 'experts-list',
+                                className: 'space-y-4'
+                            }, pendingExperts.map(expert => 
+                                React.createElement('div', {
+                                    key: expert.id,
+                                    className: 'border border-gray-200 rounded-lg p-4'
+                                }, [
+                                    React.createElement('div', {
+                                        key: 'expert-header',
+                                        className: 'flex justify-between items-start mb-4'
+                                    }, [
+                                        React.createElement('div', {
+                                            key: 'info'
+                                        }, [
+                                            React.createElement('h4', {
+                                                key: 'name',
+                                                className: 'font-bold text-lg text-gray-800'
+                                            }, expert.name),
+                                            React.createElement('p', {
+                                                key: 'position',
+                                                className: 'text-gray-600'
+                                            }, `${expert.company} • ${expert.position}`),
+                                            React.createElement('p', {
+                                                key: 'email',
+                                                className: 'text-sm text-gray-500'
+                                            }, expert.email)
+                                        ]),
+                                        React.createElement('div', {
+                                            key: 'date',
+                                            className: 'text-sm text-gray-500'
+                                        }, new Date(expert.created_at).toLocaleDateString())
+                                    ]),
+                                    
+                                    React.createElement('div', {
+                                        key: 'expert-actions',
+                                        className: 'flex space-x-3'
+                                    }, [
+                                        React.createElement('button', {
+                                            key: 'approve-btn',
+                                            className: 'btn-primary',
+                                            onClick: () => alert(`${expert.name} 전문가 승인 기능 개발 예정!`)
+                                        }, '✅ 승인'),
+                                        React.createElement('button', {
+                                            key: 'reject-btn',
+                                            className: 'px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600',
+                                            onClick: () => alert(`${expert.name} 전문가 거절 기능 개발 예정!`)
+                                        }, '❌ 거절'),
+                                        React.createElement('button', {
+                                            key: 'detail-btn',
+                                            className: 'px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50',
+                                            onClick: () => alert(`${expert.name} 전문가 상세정보 보기 개발 예정!`)
+                                        }, '📋 상세보기')
+                                    ])
+                                ])
+                            ))
+                    ]) : null,
+
+                    // 통계 탭
+                    activeAdminTab === 'statistics' ? React.createElement('div', {
+                        key: 'statistics-content',
+                        className: 'space-y-6'
+                    }, [
+                        // 통계 카드들
+                        React.createElement('div', {
+                            key: 'stats-grid',
+                            className: 'grid md:grid-cols-4 gap-6'
+                        }, [
+                            React.createElement('div', {
+                                key: 'users-stat',
+                                className: 'card text-center'
+                            }, [
+                                React.createElement('div', {
+                                    key: 'icon',
+                                    className: 'text-3xl mb-2'
+                                }, '👥'),
+                                React.createElement('h3', {
+                                    key: 'number',
+                                    className: 'text-2xl font-bold text-gray-800'
+                                }, '1,234'),
+                                React.createElement('p', {
+                                    key: 'label',
+                                    className: 'text-gray-600'
+                                }, '총 회원수')
+                            ]),
+                            React.createElement('div', {
+                                key: 'experts-stat',
+                                className: 'card text-center'
+                            }, [
+                                React.createElement('div', {
+                                    key: 'icon',
+                                    className: 'text-3xl mb-2'
+                                }, '👨‍💼'),
+                                React.createElement('h3', {
+                                    key: 'number',
+                                    className: 'text-2xl font-bold text-gray-800'
+                                }, '89'),
+                                React.createElement('p', {
+                                    key: 'label',
+                                    className: 'text-gray-600'
+                                }, '활성 전문가')
+                            ]),
+                            React.createElement('div', {
+                                key: 'consultations-stat',
+                                className: 'card text-center'
+                            }, [
+                                React.createElement('div', {
+                                    key: 'icon',
+                                    className: 'text-3xl mb-2'
+                                }, '💼'),
+                                React.createElement('h3', {
+                                    key: 'number',
+                                    className: 'text-2xl font-bold text-gray-800'
+                                }, '456'),
+                                React.createElement('p', {
+                                    key: 'label',
+                                    className: 'text-gray-600'
+                                }, '이번달 상담')
+                            ]),
+                            React.createElement('div', {
+                                key: 'revenue-stat',
+                                className: 'card text-center'
+                            }, [
+                                React.createElement('div', {
+                                    key: 'icon',
+                                    className: 'text-3xl mb-2'
+                                }, '💰'),
+                                React.createElement('h3', {
+                                    key: 'number',
+                                    className: 'text-2xl font-bold text-gray-800'
+                                }, '2.1M'),
+                                React.createElement('p', {
+                                    key: 'label',
+                                    className: 'text-gray-600'
+                                }, '월간 수수료 (원)')
+                            ])
+                        ]),
+
+                        React.createElement('div', {
+                            key: 'chart-placeholder',
+                            className: 'card text-center py-12'
+                        }, [
+                            React.createElement('div', {
+                                key: 'icon',
+                                className: 'text-4xl mb-4'
+                            }, '📈'),
+                            React.createElement('h3', {
+                                key: 'title',
+                                className: 'text-lg font-semibold text-gray-800 mb-2'
+                            }, '상세 통계 차트'),
+                            React.createElement('p', {
+                                key: 'desc',
+                                className: 'text-gray-600'
+                            }, '월별 매출, 사용자 증가 추이 등 상세 통계 차트 개발 예정')
+                        ])
+                    ]) : null
+                ])
+            ]);
+        };
+
         // 계산기 1단계: 기본정보 렌더링
         const renderStep1BasicInfo = (data, updateFn) => {
             return React.createElement('div', {
@@ -1803,13 +2856,86 @@
         const InsideJobApp = () => {
             const [isLoading, setIsLoading] = React.useState(true);
             const [connectionStatus, setConnectionStatus] = React.useState('connecting');
-            const [currentView, setCurrentView] = React.useState('home'); // home, calculator, auth, mypage, community
+            const [currentView, setCurrentView] = React.useState('home');
+            const [selectedBooking, setSelectedBooking] = React.useState(null); // home, calculator, auth, mypage, community, consultation, messages, admin
             const [calculatorStep, setCalculatorStep] = React.useState(1);
             const [calculatorData, setCalculatorData] = React.useState({});
             const [currentUser, setCurrentUser] = React.useState(null);
             const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+            
+            // 상담 예약 시스템 상태
+            const [consultationDuration, setConsultationDuration] = React.useState(30);
+            const [selectedExpert, setSelectedExpert] = React.useState(null);
+            const [systemSettings, setSystemSettings] = React.useState({
+                commissionRate: 0.20,
+                availableTimeUnits: [10, 20, 30, 40, 50, 60]
+            });
+            
+            // 쪽지 시스템 상태
+            const [messages, setMessages] = React.useState([]);
+            const [selectedMessage, setSelectedMessage] = React.useState(null);
+            
+            // 사용자 역할 상태
+            const [userRole, setUserRole] = React.useState('member'); // admin, member, expert
             const [authMode, setAuthMode] = React.useState('login'); // login, signup
             
+            // 시스템 설정 불러오기
+            const loadSystemSettings = React.useCallback(async () => {
+                try {
+                    const { data, error } = await supabaseClient
+                        .from('system_settings')
+                        .select('*');
+                    
+                    if (!error && data) {
+                        const settingsMap = {};
+                        data.forEach(setting => {
+                            let value = setting.setting_value;
+                            if (setting.setting_type === 'number') {
+                                value = parseFloat(value);
+                            } else if (setting.setting_type === 'boolean') {
+                                value = value === 'true';
+                            } else if (setting.setting_type === 'json') {
+                                try {
+                                    value = JSON.parse(value);
+                                } catch (e) {
+                                    console.warn('JSON 파싱 오류:', setting.setting_key);
+                                }
+                            }
+                            settingsMap[setting.setting_key] = value;
+                        });
+                        
+                        setSystemSettings({
+                            commissionRate: settingsMap.platform_commission_rate || 0.20,
+                            availableTimeUnits: settingsMap.consultation_time_units || [10, 20, 30, 40, 50, 60],
+                            minConsultationMinutes: settingsMap.min_consultation_minutes || 10,
+                            maxConsultationMinutes: settingsMap.max_consultation_minutes || 60
+                        });
+                    }
+                } catch (error) {
+                    console.error('시스템 설정 로딩 오류:', error);
+                }
+            }, []);
+            
+            // 사용자 역할 확인
+            const checkUserRole = React.useCallback(async (user) => {
+                if (!user) return;
+                
+                try {
+                    const { data, error } = await supabaseClient
+                        .from('user_profiles')
+                        .select('role')
+                        .eq('user_id', user.id)
+                        .single();
+                    
+                    if (!error && data) {
+                        setUserRole(data.role || 'member');
+                    }
+                } catch (error) {
+                    console.error('사용자 역할 확인 오류:', error);
+                    setUserRole('member');
+                }
+            }, []);
+
             // Supabase 연결 테스트
             React.useEffect(() => {
                 const testConnection = async () => {
@@ -1872,6 +2998,10 @@
                         if (user) {
                             setCurrentUser(user);
                             setIsAuthenticated(true);
+                            await Promise.all([
+                                checkUserRole(user),
+                                loadSystemSettings()
+                            ]);
                             // 게스트 데이터 마이그레이션
                             await migrateGuestData(user.id);
                         }
@@ -1887,6 +3017,8 @@
                     if (session?.user) {
                         setCurrentUser(session.user);
                         setIsAuthenticated(true);
+                        checkUserRole(session.user);
+                        loadSystemSettings();
                     } else {
                         setCurrentUser(null);
                         setIsAuthenticated(false);
@@ -2001,8 +3133,259 @@
             if (currentView === 'mypage') {
                 return renderMyPageView();
             }
+            if (currentView === 'consultation') {
+                return renderConsultationView();
+            }
+            if (currentView === 'messages') {
+                return renderMessagesView();
+            }
+            if (currentView === 'admin' && userRole === 'admin') {
+                return renderAdminView();
+            }
+            if (currentView === 'consultation-chat') {
+                return renderConsultationChatView(selectedBooking);
+            }
 
-            // 메인 화면
+            // 로그인하지 않은 경우 로그인 유도 화면 (플랜비 패턴)
+            // 단, 계산기는 게스트도 이용 가능
+            if (!isAuthenticated && currentView === 'home') {
+                return React.createElement('div', {
+                    className: 'min-h-screen bg-gradient-to-br from-green-50 to-blue-50'
+                }, [
+                    // 헤더
+                    React.createElement('header', {
+                        key: 'landing-header',
+                        className: 'bg-white shadow-sm border-b'
+                    }, React.createElement('div', {
+                        className: 'max-w-7xl mx-auto px-4 py-6'
+                    }, [
+                        React.createElement('div', {
+                            key: 'header-content',
+                            className: 'flex items-center justify-between'
+                        }, [
+                            React.createElement('div', {
+                                key: 'logo-area',
+                                className: 'flex items-center space-x-3'
+                            }, [
+                                React.createElement('div', {
+                                    key: 'logo',
+                                    className: 'text-4xl'
+                                }, '🎯'),
+                                React.createElement('div', {
+                                    key: 'title-area'
+                                }, [
+                                    React.createElement('h1', {
+                                        key: 'title',
+                                        className: 'text-2xl font-bold text-gray-900'
+                                    }, '인사이드잡'),
+                                    React.createElement('p', {
+                                        key: 'subtitle',
+                                        className: 'text-sm text-gray-500'
+                                    }, 'by (주)오픈커넥트')
+                                ])
+                            ]),
+                            React.createElement('div', {
+                                key: 'header-actions',
+                                className: 'flex items-center space-x-4'
+                            }, [
+                                React.createElement('div', {
+                                    key: 'connection-badge',
+                                    className: `px-3 py-1 rounded-full text-xs font-medium ${
+                                        connectionStatus === 'connected' 
+                                        ? 'bg-green-100 text-green-800'
+                                        : 'bg-red-100 text-red-800'
+                                    }`
+                                }, connectionStatus === 'connected' ? '✅ 연결됨' : '❌ 연결 오류'),
+                                
+                                React.createElement('button', {
+                                    key: 'login-btn',
+                                    className: 'btn-primary text-sm px-6 py-2',
+                                    onClick: () => setCurrentView('auth')
+                                }, '로그인 / 회원가입')
+                            ])
+                        ])
+                    ])),
+
+                    // 랜딩 메인 컨텐츠
+                    React.createElement('main', {
+                        key: 'landing-main',
+                        className: 'max-w-4xl mx-auto px-4 py-12'
+                    }, [
+                        // 히어로 섹션
+                        React.createElement('div', {
+                            key: 'hero-section',
+                            className: 'text-center mb-16'
+                        }, [
+                            React.createElement('h2', {
+                                key: 'hero-title',
+                                className: 'text-4xl md:text-5xl font-bold text-gray-900 mb-6'
+                            }, '현직자와 구직자를 연결하는'),
+                            React.createElement('h3', {
+                                key: 'hero-subtitle', 
+                                className: 'text-3xl md:text-4xl font-bold text-green-600 mb-8'
+                            }, '실무 중심 취업 멘토링 플랫폼'),
+                            React.createElement('p', {
+                                key: 'hero-description',
+                                className: 'text-lg md:text-xl text-gray-600 max-w-3xl mx-auto mb-8'
+                            }, '무료 취업경쟁력 진단부터 현직자 1:1 멘토링까지, 취업 성공을 위한 모든 것을 한 곳에서'),
+                            
+                            // 메인 CTA 버튼
+                            React.createElement('div', {
+                                key: 'cta-buttons',
+                                className: 'space-y-4 md:space-y-0 md:space-x-6 md:flex md:justify-center'
+                            }, [
+                                React.createElement('button', {
+                                    key: 'start-btn',
+                                    className: 'btn-primary text-lg px-8 py-4 w-full md:w-auto',
+                                    onClick: () => setCurrentView('calculator')
+                                }, '🧮 무료 취업경쟁력 진단 시작'),
+                                
+                                React.createElement('button', {
+                                    key: 'login-cta-btn',
+                                    className: 'btn-secondary text-lg px-8 py-4 w-full md:w-auto',
+                                    onClick: () => setCurrentView('auth')
+                                }, '🔐 로그인하고 모든 서비스 이용')
+                            ])
+                        ]),
+
+                        // 서비스 미리보기 (클릭 시 로그인 유도)
+                        React.createElement('div', {
+                            key: 'preview-section',
+                            className: 'mb-16'
+                        }, [
+                            React.createElement('h3', {
+                                key: 'preview-title',
+                                className: 'text-2xl font-bold text-center text-gray-800 mb-8'
+                            }, '🎯 로그인 후 이용 가능한 서비스'),
+                            
+                            React.createElement('div', {
+                                key: 'preview-cards',
+                                className: 'grid md:grid-cols-3 gap-6'
+                            }, [
+                                React.createElement('div', {
+                                    key: 'preview-community',
+                                    className: 'card text-center hover:shadow-lg transition-shadow cursor-pointer opacity-80',
+                                    onClick: () => {
+                                        alert('구직자 커뮤니티는 회원가입 후 이용가능합니다!');
+                                        setCurrentView('auth');
+                                    }
+                                }, [
+                                    React.createElement('div', {
+                                        key: 'icon',
+                                        className: 'text-4xl mb-4'
+                                    }, '💬'),
+                                    React.createElement('h4', {
+                                        key: 'title',
+                                        className: 'text-xl font-semibold mb-2'
+                                    }, '구직자 커뮤니티'),
+                                    React.createElement('p', {
+                                        key: 'desc',
+                                        className: 'text-gray-600'
+                                    }, '같은 목표를 가진 구직자들과의 정보 교환'),
+                                    React.createElement('div', {
+                                        key: 'login-required',
+                                        className: 'mt-4 px-3 py-1 bg-orange-100 text-orange-600 text-sm rounded-full'
+                                    }, '🔒 로그인 필요')
+                                ]),
+                                
+                                React.createElement('div', {
+                                    key: 'preview-mentoring',
+                                    className: 'card text-center hover:shadow-lg transition-shadow cursor-pointer opacity-80',
+                                    onClick: () => {
+                                        alert('전문가 멘토링은 회원가입 후 이용가능합니다!');
+                                        setCurrentView('auth');
+                                    }
+                                }, [
+                                    React.createElement('div', {
+                                        key: 'icon',
+                                        className: 'text-4xl mb-4'
+                                    }, '👨‍💼'),
+                                    React.createElement('h4', {
+                                        key: 'title',
+                                        className: 'text-xl font-semibold mb-2'
+                                    }, '현직자 멘토링'),
+                                    React.createElement('p', {
+                                        key: 'desc',
+                                        className: 'text-gray-600'
+                                    }, '10분 단위 유연한 시간의 1:1 실무 상담'),
+                                    React.createElement('div', {
+                                        key: 'login-required',
+                                        className: 'mt-4 px-3 py-1 bg-orange-100 text-orange-600 text-sm rounded-full'
+                                    }, '🔒 로그인 필요')
+                                ]),
+                                
+                                React.createElement('div', {
+                                    key: 'preview-messages',
+                                    className: 'card text-center hover:shadow-lg transition-shadow cursor-pointer opacity-80',
+                                    onClick: () => {
+                                        alert('쪽지 시스템은 회원가입 후 이용가능합니다!');
+                                        setCurrentView('auth');
+                                    }
+                                }, [
+                                    React.createElement('div', {
+                                        key: 'icon',
+                                        className: 'text-4xl mb-4'
+                                    }, '📩'),
+                                    React.createElement('h4', {
+                                        key: 'title',
+                                        className: 'text-xl font-semibold mb-2'
+                                    }, '쪽지 시스템'),
+                                    React.createElement('p', {
+                                        key: 'desc',
+                                        className: 'text-gray-600'
+                                    }, '회원 간 개인 메시지 교환 및 네트워킹'),
+                                    React.createElement('div', {
+                                        key: 'login-required',
+                                        className: 'mt-4 px-3 py-1 bg-orange-100 text-orange-600 text-sm rounded-full'
+                                    }, '🔒 로그인 필요')
+                                ])
+                            ])
+                        ]),
+
+                        // 전문가 등록 안내
+                        React.createElement('div', {
+                            key: 'expert-section',
+                            className: 'text-center bg-white rounded-2xl p-8 shadow-lg'
+                        }, [
+                            React.createElement('h3', {
+                                key: 'expert-title',
+                                className: 'text-2xl font-bold text-gray-800 mb-4'
+                            }, '👨‍💼 현직자이신가요?'),
+                            React.createElement('p', {
+                                key: 'expert-desc',
+                                className: 'text-gray-600 mb-6'
+                            }, '후배 구직자들에게 실무 경험을 전수하고 추가 수입을 창출하세요'),
+                            React.createElement('button', {
+                                key: 'expert-btn',
+                                className: 'btn-secondary text-lg px-8 py-4',
+                                onClick: () => {
+                                    alert('현직자 등록은 회원가입 후 가능합니다!');
+                                    setCurrentView('auth');
+                                }
+                            }, '전문가로 참여하기')
+                        ])
+                    ]),
+
+                    // 푸터
+                    React.createElement('footer', {
+                        key: 'landing-footer',
+                        className: 'bg-white border-t mt-16'
+                    }, React.createElement('div', {
+                        className: 'max-w-7xl mx-auto px-4 py-8 text-center'
+                    }, [
+                        React.createElement('p', {
+                            key: 'copyright',
+                            className: 'text-gray-600'
+                        }, '© 2025 (주)오픈커넥트. All rights reserved.'),
+                        React.createElement('p', {
+                            key: 'tech-info',
+                            className: 'text-sm text-gray-400 mt-2'
+                        }, `플랜비 검증 아키텍처 기반 • Supabase ${connectionStatus === 'connected' ? '연결됨' : '연결 오류'}`)
+                    ]))
+                ]);
+            }
+
+            // 로그인 후 메인 화면 (기존 코드)
             return React.createElement('div', {
                 className: 'min-h-screen bg-gradient-to-br from-green-50 to-blue-50'
             }, [
@@ -2150,7 +3533,15 @@
                         
                         React.createElement('div', {
                             key: 'feature-3',
-                            className: 'card text-center hover:shadow-lg transition-shadow'
+                            className: 'card text-center hover:shadow-lg transition-shadow cursor-pointer',
+                            onClick: () => {
+                                if (isAuthenticated) {
+                                    setCurrentView('consultation');
+                                } else {
+                                    alert('전문가 상담은 회원가입 후 이용가능합니다!');
+                                    setCurrentView('auth');
+                                }
+                            }
                         }, [
                             React.createElement('div', {
                                 key: 'icon-3',
@@ -2163,7 +3554,7 @@
                             React.createElement('p', {
                                 key: 'desc-3',
                                 className: 'text-gray-600'
-                            }, '실무 경험을 바탕으로 한 1:1 맞춤형 커리어 조언')
+                            }, '10분 단위 유연한 시간으로 실무 중심 1:1 상담')
                         ])
                     ]),
                     
@@ -2183,7 +3574,103 @@
                             className: 'btn-secondary text-lg px-8 py-4',
                             onClick: () => alert('현직자 등록 시스템 개발 예정! 💼')
                         }, '👨‍💼 현직자로 참여하기')
-                    ])
+                    ]),
+                    
+                    // 사용자 역할별 추가 메뉴 (로그인 후에만 표시)
+                    isAuthenticated ? React.createElement('div', {
+                        key: 'user-menu-section',
+                        className: 'mt-16 pt-8 border-t border-gray-200'
+                    }, [
+                        React.createElement('h3', {
+                            key: 'menu-title',
+                            className: 'text-2xl font-bold text-gray-900 text-center mb-8'
+                        }, '🎯 개인 맞춤 서비스'),
+                        
+                        React.createElement('div', {
+                            key: 'user-features',
+                            className: 'grid md:grid-cols-2 lg:grid-cols-4 gap-4'
+                        }, [
+                            // 모든 사용자 공통 - 마이페이지
+                            React.createElement('div', {
+                                key: 'mypage-card',
+                                className: 'card text-center hover:shadow-lg transition-shadow cursor-pointer',
+                                onClick: () => setCurrentView('mypage')
+                            }, [
+                                React.createElement('div', {
+                                    key: 'mypage-icon',
+                                    className: 'text-3xl mb-3'
+                                }, '👤'),
+                                React.createElement('h4', {
+                                    key: 'mypage-title',
+                                    className: 'font-semibold mb-2'
+                                }, '마이페이지'),
+                                React.createElement('p', {
+                                    key: 'mypage-desc',
+                                    className: 'text-sm text-gray-600'
+                                }, '프로필 및 활동 관리')
+                            ]),
+                            
+                            // 일반회원/전문가 공통 - 쪽지
+                            ['member', 'expert'].includes(userRole) ? React.createElement('div', {
+                                key: 'messages-card',
+                                className: 'card text-center hover:shadow-lg transition-shadow cursor-pointer',
+                                onClick: () => setCurrentView('messages')
+                            }, [
+                                React.createElement('div', {
+                                    key: 'messages-icon',
+                                    className: 'text-3xl mb-3'
+                                }, '📩'),
+                                React.createElement('h4', {
+                                    key: 'messages-title',
+                                    className: 'font-semibold mb-2'
+                                }, '쪽지'),
+                                React.createElement('p', {
+                                    key: 'messages-desc',
+                                    className: 'text-sm text-gray-600'
+                                }, '회원 간 메시지 교환')
+                            ]) : null,
+                            
+                            // 전문가 전용 메뉴
+                            userRole === 'expert' ? React.createElement('div', {
+                                key: 'expert-dashboard-card',
+                                className: 'card text-center hover:shadow-lg transition-shadow cursor-pointer',
+                                onClick: () => alert('전문가 대시보드 개발 예정!')
+                            }, [
+                                React.createElement('div', {
+                                    key: 'expert-icon',
+                                    className: 'text-3xl mb-3'
+                                }, '👨‍💼'),
+                                React.createElement('h4', {
+                                    key: 'expert-title',
+                                    className: 'font-semibold mb-2'
+                                }, '상담 관리'),
+                                React.createElement('p', {
+                                    key: 'expert-desc',
+                                    className: 'text-sm text-gray-600'
+                                }, '예약 및 수익 관리')
+                            ]) : null,
+                            
+                            // 관리자 전용 메뉴
+                            userRole === 'admin' ? React.createElement('div', {
+                                key: 'admin-panel-card',
+                                className: 'card text-center hover:shadow-lg transition-shadow cursor-pointer bg-red-50 border-red-200',
+                                onClick: () => setCurrentView('admin')
+                            }, [
+                                React.createElement('div', {
+                                    key: 'admin-icon',
+                                    className: 'text-3xl mb-3'
+                                }, '🔧'),
+                                React.createElement('h4', {
+                                    key: 'admin-title',
+                                    className: 'font-semibold mb-2 text-red-800'
+                                }, '관리자 패널'),
+                                React.createElement('p', {
+                                    key: 'admin-desc',
+                                    className: 'text-sm text-red-600'
+                                }, '시스템 설정 및 관리')
+                            ]) : null
+                        ].filter(Boolean)) // null 값 제거
+                    ]) : null
                 ]),
                 
                 // 푸터
@@ -2203,6 +3690,302 @@
                     }, `플랜비 검증 아키텍처 기반 • Supabase ${connectionStatus === 'connected' ? '연결됨' : '연결 오류'}`)
                 ]))
             ]);
+        };
+
+        // 실시간 채팅 시스템 (전문가 상담 전용)
+        const renderConsultationChatView = (bookingId) => {
+            const [messages, setMessages] = React.useState([]);
+            const [newMessage, setNewMessage] = React.useState('');
+            const [chatRoom, setChatRoom] = React.useState(null);
+            const [isLoading, setIsLoading] = React.useState(true);
+            const [participants, setParticipants] = React.useState([]);
+            const messagesEndRef = React.useRef(null);
+
+            // 채팅방 생성 또는 가져오기
+            React.useEffect(() => {
+                const initializeChatRoom = async () => {
+                    try {
+                        // 기존 채팅방 확인
+                        const { data: existingRoom, error: roomError } = await supabaseClient
+                            .from('chat_rooms')
+                            .select('*')
+                            .eq('name', `상담 ${bookingId}`)
+                            .eq('room_type', 'consultation')
+                            .single();
+
+                        let room;
+                        if (existingRoom) {
+                            room = existingRoom;
+                        } else {
+                            // 새 채팅방 생성
+                            const { data: newRoom, error: createError } = await supabaseClient
+                                .from('chat_rooms')
+                                .insert({
+                                    name: `상담 ${bookingId}`,
+                                    description: '전문가 상담 채팅방',
+                                    room_type: 'consultation',
+                                    created_by: currentUser?.id
+                                })
+                                .select()
+                                .single();
+
+                            if (createError) throw createError;
+                            room = newRoom;
+                        }
+
+                        setChatRoom(room);
+
+                        // 채팅방 참여자 등록
+                        const { error: participantError } = await supabaseClient
+                            .from('chat_participants')
+                            .upsert({
+                                room_id: room.id,
+                                user_id: currentUser?.id,
+                                is_active: true
+                            });
+
+                        if (participantError) console.error('Participant error:', participantError);
+
+                        // 기존 메시지 로드
+                        const { data: existingMessages, error: messagesError } = await supabaseClient
+                            .from('chat_messages')
+                            .select(`
+                                *,
+                                user_profiles!inner(nickname)
+                            `)
+                            .eq('room_id', room.id)
+                            .order('created_at', { ascending: true });
+
+                        if (!messagesError && existingMessages) {
+                            setMessages(existingMessages);
+                        }
+
+                        setIsLoading(false);
+                    } catch (error) {
+                        console.error('Chat room initialization error:', error);
+                        setIsLoading(false);
+                    }
+                };
+
+                if (bookingId && currentUser) {
+                    initializeChatRoom();
+                }
+            }, [bookingId, currentUser]);
+
+            // 실시간 메시지 구독
+            React.useEffect(() => {
+                if (!chatRoom) return;
+
+                const subscription = supabaseClient
+                    .channel(`chat-room-${chatRoom.id}`)
+                    .on('postgres_changes', {
+                        event: 'INSERT',
+                        schema: 'public',
+                        table: 'chat_messages',
+                        filter: `room_id=eq.${chatRoom.id}`
+                    }, async (payload) => {
+                        // 새 메시지에 사용자 정보 추가
+                        const { data: userInfo } = await supabaseClient
+                            .from('user_profiles')
+                            .select('nickname')
+                            .eq('user_id', payload.new.user_id)
+                            .single();
+
+                        const messageWithUser = {
+                            ...payload.new,
+                            user_profiles: userInfo || { nickname: '익명' }
+                        };
+
+                        setMessages(prev => [...prev, messageWithUser]);
+                    })
+                    .subscribe();
+
+                return () => {
+                    supabaseClient.removeChannel(subscription);
+                };
+            }, [chatRoom]);
+
+            // 자동 스크롤
+            React.useEffect(() => {
+                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }, [messages]);
+
+            // 메시지 전송
+            const handleSendMessage = async () => {
+                if (!newMessage.trim() || !chatRoom) return;
+
+                try {
+                    const { error } = await supabaseClient
+                        .from('chat_messages')
+                        .insert({
+                            room_id: chatRoom.id,
+                            user_id: currentUser?.id,
+                            message_text: newMessage.trim(),
+                            message_type: 'text'
+                        });
+
+                    if (error) throw error;
+                    setNewMessage('');
+                } catch (error) {
+                    console.error('Message send error:', error);
+                    alert('메시지 전송에 실패했습니다.');
+                }
+            };
+
+            // 엔터 키로 전송
+            const handleKeyPress = (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                }
+            };
+
+            if (isLoading) {
+                return React.createElement('div', {
+                    className: 'flex items-center justify-center h-96'
+                }, [
+                    React.createElement('div', {
+                        key: 'spinner',
+                        className: 'loading-spinner'
+                    }),
+                    React.createElement('div', {
+                        key: 'text',
+                        className: 'ml-4 text-gray-600'
+                    }, '채팅방 연결 중...')
+                ]);
+            }
+
+            return React.createElement('div', {
+                className: 'max-w-4xl mx-auto p-4'
+            }, [
+                React.createElement('div', {
+                    key: 'header',
+                    className: 'card mb-4'
+                }, [
+                    React.createElement('div', {
+                        key: 'chat-header',
+                        className: 'flex items-center justify-between'
+                    }, [
+                        React.createElement('div', {
+                            key: 'title-section'
+                        }, [
+                            React.createElement('h2', {
+                                key: 'title',
+                                className: 'text-2xl font-bold text-gray-800'
+                            }, '💬 실시간 상담 채팅'),
+                            React.createElement('p', {
+                                key: 'subtitle',
+                                className: 'text-gray-600 text-sm'
+                            }, `상담 ID: ${bookingId}`)
+                        ]),
+                        React.createElement('div', {
+                            key: 'status',
+                            className: 'flex items-center'
+                        }, [
+                            React.createElement('div', {
+                                key: 'online-indicator',
+                                className: 'w-3 h-3 bg-green-500 rounded-full mr-2'
+                            }),
+                            React.createElement('span', {
+                                key: 'status-text',
+                                className: 'text-sm text-green-600 font-medium'
+                            }, '실시간 연결')
+                        ])
+                    ])
+                ]),
+
+                React.createElement('div', {
+                    key: 'chat-container',
+                    className: 'card'
+                }, [
+                    // 메시지 목록
+                    React.createElement('div', {
+                        key: 'messages-area',
+                        className: 'h-96 overflow-y-auto border border-gray-200 rounded-lg p-4 bg-gray-50 mb-4',
+                        style: { maxHeight: '400px' }
+                    }, [
+                        ...messages.map(message => 
+                            React.createElement('div', {
+                                key: message.id,
+                                className: `mb-4 ${message.user_id === currentUser?.id ? 'text-right' : 'text-left'}`
+                            }, [
+                                React.createElement('div', {
+                                    key: 'message-bubble',
+                                    className: `inline-block max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                                        message.user_id === currentUser?.id
+                                            ? 'bg-blue-500 text-white'
+                                            : 'bg-white text-gray-800 shadow-md'
+                                    }`
+                                }, message.message_text),
+                                React.createElement('div', {
+                                    key: 'message-info',
+                                    className: 'text-xs text-gray-500 mt-1'
+                                }, [
+                                    React.createElement('span', {
+                                        key: 'author'
+                                    }, message.user_profiles?.nickname || '익명'),
+                                    React.createElement('span', {
+                                        key: 'time',
+                                        className: 'ml-2'
+                                    }, new Date(message.created_at).toLocaleTimeString())
+                                ])
+                            ])
+                        ),
+                        React.createElement('div', {
+                            key: 'messages-end',
+                            ref: messagesEndRef
+                        })
+                    ]),
+
+                    // 메시지 입력 영역
+                    React.createElement('div', {
+                        key: 'input-area',
+                        className: 'flex space-x-3'
+                    }, [
+                        React.createElement('textarea', {
+                            key: 'message-input',
+                            value: newMessage,
+                            onChange: (e) => setNewMessage(e.target.value),
+                            onKeyPress: handleKeyPress,
+                            placeholder: '메시지를 입력하세요... (Enter: 전송, Shift+Enter: 줄바꿈)',
+                            className: 'flex-1 px-4 py-3 border border-gray-300 rounded-lg resize-none text-base',
+                            rows: 2
+                        }),
+                        React.createElement('button', {
+                            key: 'send-button',
+                            onClick: handleSendMessage,
+                            disabled: !newMessage.trim(),
+                            className: 'btn-primary px-6 py-3 disabled:opacity-50 disabled:cursor-not-allowed'
+                        }, '전송')
+                    ])
+                ]),
+
+                React.createElement('div', {
+                    key: 'chat-footer',
+                    className: 'mt-6 text-center'
+                }, [
+                    React.createElement('button', {
+                        key: 'back-btn',
+                        className: 'btn-secondary mr-4',
+                        onClick: () => setCurrentView('consultation')
+                    }, '← 상담 목록으로'),
+                    React.createElement('button', {
+                        key: 'end-chat-btn',
+                        className: 'btn-secondary bg-red-500 hover:bg-red-600',
+                        onClick: () => {
+                            if (confirm('채팅을 종료하시겠습니까?')) {
+                                setCurrentView('consultation');
+                            }
+                        }
+                    }, '채팅 종료')
+                ])
+            ]);
+        };
+
+        // 채팅방 입장 함수
+        const enterConsultationChat = (bookingId) => {
+            setCurrentView('consultation-chat');
+            setSelectedBooking(bookingId);
         };
 
         // 앱 렌더링
