@@ -2879,7 +2879,6 @@
             const [isAuthenticated, setIsAuthenticated] = React.useState(false);
             
             // 상담 예약 시스템 상태
-            const [consultationDuration, setConsultationDuration] = React.useState(30);
             const [selectedExpert, setSelectedExpert] = React.useState(null);
             const [systemSettings, setSystemSettings] = React.useState({
                 commissionRate: 0.20,
@@ -2892,7 +2891,6 @@
             
             // 사용자 역할 상태
             const [userRole, setUserRole] = React.useState('member'); // admin, member, expert
-            const [authMode, setAuthMode] = React.useState('login'); // login, signup
             
             // 시스템 설정 불러오기
             const loadSystemSettings = React.useCallback(async () => {
