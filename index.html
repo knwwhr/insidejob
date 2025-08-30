@@ -149,123 +149,136 @@
         const { createClient } = supabase;
         const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // 인증 화면 렌더링
-        const renderAuthView = () => {
+        // 로그인/회원가입 모달 (플랜비 스타일)
+        const renderAuthModal = () => {
             const [email, setEmail] = React.useState('');
             const [password, setPassword] = React.useState('');
             const [nickname, setNickname] = React.useState('');
+            const [isLoading, setIsLoading] = React.useState(false);
             
             return React.createElement('div', {
-                className: 'min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center'
+                className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4'
             }, [
                 React.createElement('div', {
-                    key: 'auth-container',
-                    className: 'max-w-md w-full mx-4'
+                    key: 'modal-content',
+                    className: 'bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl relative'
                 }, [
+                    // 닫기 버튼
+                    React.createElement('button', {
+                        key: 'close-btn',
+                        className: 'absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl font-bold',
+                        onClick: () => setCurrentView('home')
+                    }, '×'),
+                    
+                    // 헤더
                     React.createElement('div', {
-                        key: 'auth-card',
-                        className: 'card'
+                        key: 'modal-header',
+                        className: 'text-center mb-6'
                     }, [
-                        React.createElement('div', {
-                            key: 'header',
-                            className: 'text-center mb-6'
+                        React.createElement('h2', {
+                            key: 'modal-title',
+                            className: 'text-2xl font-bold text-gray-800 mb-2'
+                        }, authMode === 'login' ? '🔐 로그인' : '✨ 회원가입'),
+                        React.createElement('p', {
+                            key: 'modal-subtitle',
+                            className: 'text-gray-600'
+                        }, authMode === 'login' ? '인사이드잡에 로그인하세요' : '인사이드잡에 가입하고 모든 서비스를 이용하세요')
+                    ]),
+                    
+                    // 폼
+                    React.createElement('form', {
+                        key: 'auth-form',
+                        className: 'space-y-4',
+                        onSubmit: (e) => {
+                            e.preventDefault();
+                            if (authMode === 'login') {
+                                handleLogin(email, password);
+                            } else {
+                                handleSignUp(email, password, nickname);
+                            }
+                        }
+                    }, [
+                        // 닉네임 (회원가입 시에만)
+                        authMode === 'signup' ? React.createElement('div', {
+                            key: 'nickname-field'
                         }, [
-                            React.createElement('h2', {
-                                key: 'title',
-                                className: 'text-3xl font-bold text-gray-800'
-                            }, authMode === 'login' ? '🔐 로그인' : '📝 회원가입'),
-                            React.createElement('p', {
-                                key: 'subtitle',
-                                className: 'text-gray-600 mt-2'
-                            }, authMode === 'login' ? '인사이드잡에 로그인하세요' : '인사이드잡에 가입하세요')
+                            React.createElement('label', {
+                                key: 'nickname-label',
+                                className: 'block text-sm font-medium text-gray-700 mb-2'
+                            }, '닉네임'),
+                            React.createElement('input', {
+                                key: 'nickname-input',
+                                type: 'text',
+                                value: nickname,
+                                onChange: (e) => setNickname(e.target.value),
+                                className: 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-base',
+                                placeholder: '닉네임을 입력하세요',
+                                required: true
+                            })
+                        ]) : null,
+                        
+                        // 이메일
+                        React.createElement('div', {
+                            key: 'email-field'
+                        }, [
+                            React.createElement('label', {
+                                key: 'email-label',
+                                className: 'block text-sm font-medium text-gray-700 mb-2'
+                            }, '이메일'),
+                            React.createElement('input', {
+                                key: 'email-input',
+                                type: 'email',
+                                value: email,
+                                onChange: (e) => setEmail(e.target.value),
+                                className: 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-base',
+                                placeholder: 'email@example.com',
+                                required: true
+                            })
                         ]),
                         
+                        // 비밀번호
                         React.createElement('div', {
-                            key: 'form',
-                            className: 'space-y-4'
+                            key: 'password-field'
                         }, [
-                            // 닉네임 (회원가입 시에만)
-                            authMode === 'signup' ? React.createElement('div', {
-                                key: 'nickname-group'
-                            }, [
-                                React.createElement('label', {
-                                    key: 'nickname-label',
-                                    className: 'block text-sm font-medium text-gray-700 mb-2'
-                                }, '닉네임'),
-                                React.createElement('input', {
-                                    key: 'nickname-input',
-                                    type: 'text',
-                                    value: nickname,
-                                    onChange: (e) => setNickname(e.target.value),
-                                    className: 'w-full px-4 py-3 border border-gray-300 rounded-lg text-base',
-                                    placeholder: '닉네임을 입력하세요'
-                                })
-                            ]) : null,
-                            
-                            // 이메일
-                            React.createElement('div', {
-                                key: 'email-group'
-                            }, [
-                                React.createElement('label', {
-                                    key: 'email-label',
-                                    className: 'block text-sm font-medium text-gray-700 mb-2'
-                                }, '이메일'),
-                                React.createElement('input', {
-                                    key: 'email-input',
-                                    type: 'email',
-                                    value: email,
-                                    onChange: (e) => setEmail(e.target.value),
-                                    className: 'w-full px-4 py-3 border border-gray-300 rounded-lg text-base',
-                                    placeholder: 'email@example.com'
-                                })
-                            ]),
-                            
-                            // 비밀번호
-                            React.createElement('div', {
-                                key: 'password-group'
-                            }, [
-                                React.createElement('label', {
-                                    key: 'password-label',
-                                    className: 'block text-sm font-medium text-gray-700 mb-2'
-                                }, '비밀번호'),
-                                React.createElement('input', {
-                                    key: 'password-input',
-                                    type: 'password',
-                                    value: password,
-                                    onChange: (e) => setPassword(e.target.value),
-                                    className: 'w-full px-4 py-3 border border-gray-300 rounded-lg text-base',
-                                    placeholder: '비밀번호를 입력하세요'
-                                })
-                            ])
+                            React.createElement('label', {
+                                key: 'password-label',
+                                className: 'block text-sm font-medium text-gray-700 mb-2'
+                            }, '비밀번호'),
+                            React.createElement('input', {
+                                key: 'password-input',
+                                type: 'password',
+                                value: password,
+                                onChange: (e) => setPassword(e.target.value),
+                                className: 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-base',
+                                placeholder: '비밀번호를 입력하세요',
+                                required: true,
+                                minLength: 6
+                            })
                         ]),
                         
+                        // 제출 버튼
+                        React.createElement('button', {
+                            key: 'submit-btn',
+                            type: 'submit',
+                            className: 'w-full btn-primary py-3 mt-6',
+                            disabled: isLoading
+                        }, isLoading ? '처리중...' : (authMode === 'login' ? '로그인' : '회원가입')),
+                        
+                        // 모드 전환
                         React.createElement('div', {
-                            key: 'buttons',
-                            className: 'space-y-4 mt-6'
+                            key: 'mode-switch',
+                            className: 'text-center mt-4'
                         }, [
+                            React.createElement('span', {
+                                key: 'switch-text',
+                                className: 'text-gray-600 text-sm'
+                            }, authMode === 'login' ? '아직 계정이 없으신가요? ' : '이미 계정이 있으신가요? '),
                             React.createElement('button', {
-                                key: 'submit-btn',
-                                className: 'w-full btn-primary py-3',
-                                onClick: () => {
-                                    if (authMode === 'login') {
-                                        handleLogin(email, password);
-                                    } else {
-                                        handleSignUp(email, password, nickname);
-                                    }
-                                }
-                            }, authMode === 'login' ? '로그인' : '회원가입'),
-                            
-                            React.createElement('button', {
-                                key: 'toggle-btn',
-                                className: 'w-full text-gray-600 hover:text-gray-800 py-2',
+                                key: 'switch-btn',
+                                type: 'button',
+                                className: 'text-green-600 hover:text-green-700 font-semibold text-sm',
                                 onClick: () => setAuthMode(authMode === 'login' ? 'signup' : 'login')
-                            }, authMode === 'login' ? '회원가입으로 전환' : '로그인으로 전환'),
-                            
-                            React.createElement('button', {
-                                key: 'back-btn',
-                                className: 'w-full text-gray-400 hover:text-gray-600 py-2',
-                                onClick: () => setCurrentView('home')
-                            }, '← 홈으로')
+                            }, authMode === 'login' ? '회원가입하기' : '로그인하기')
                         ])
                     ])
                 ])
@@ -2852,12 +2865,124 @@
             ]);
         };
 
+        // 취업경쟁력 계산 알고리즘
+        const calculateCareerScore = (data) => {
+            let totalScore = 0;
+            let details = {
+                basicInfo: 0,
+                skills: 0, 
+                experience: 0,
+                network: 0,
+                preparation: 0,
+                market: 0
+            };
+
+            // 1단계: 기본정보 (20점)
+            if (data.step1) {
+                let score = 0;
+                if (data.step1.age >= 22 && data.step1.age <= 28) score += 5;
+                if (data.step1.education === 'university' || data.step1.education === 'graduate') score += 8;
+                if (data.step1.major) score += 4;
+                if (data.step1.targetIndustry) score += 3;
+                details.basicInfo = Math.min(score, 20);
+            }
+
+            // 2단계: 스킬역량 (20점) 
+            if (data.step2) {
+                let score = 0;
+                if (data.step2.technicalSkills) score += 8;
+                if (data.step2.certifications) score += 4;
+                if (data.step2.languages) score += 4;
+                if (data.step2.portfolio) score += 4;
+                details.skills = Math.min(score, 20);
+            }
+
+            // 3단계: 경험분석 (20점)
+            if (data.step3) {
+                let score = 0;
+                if (data.step3.internships) score += 8;
+                if (data.step3.projects) score += 6;
+                if (data.step3.activities) score += 4;
+                if (data.step3.awards) score += 2;
+                details.experience = Math.min(score, 20);
+            }
+
+            // 4단계: 네트워크 (15점)
+            if (data.step4) {
+                let score = 0;
+                if (data.step4.connections) score += 6;
+                if (data.step4.recommendations) score += 5;
+                if (data.step4.mentors) score += 4;
+                details.network = Math.min(score, 15);
+            }
+
+            // 5단계: 준비현황 (15점)
+            if (data.step5) {
+                let score = 0;
+                if (data.step5.resume) score += 5;
+                if (data.step5.coverLetter) score += 4;
+                if (data.step5.interviewPrep) score += 3;
+                if (data.step5.applications) score += 3;
+                details.preparation = Math.min(score, 15);
+            }
+
+            // 6단계: 시장분석 (10점)
+            if (data.step6) {
+                let score = 0;
+                if (data.step6.marketResearch) score += 4;
+                if (data.step6.industryTrends) score += 3;
+                if (data.step6.competitionAnalysis) score += 3;
+                details.market = Math.min(score, 10);
+            }
+
+            totalScore = details.basicInfo + details.skills + details.experience + 
+                        details.network + details.preparation + details.market;
+
+            // 등급 계산
+            let grade;
+            if (totalScore >= 90) grade = 'S급';
+            else if (totalScore >= 80) grade = 'A급';
+            else if (totalScore >= 70) grade = 'B급';
+            else if (totalScore >= 60) grade = 'C급';
+            else if (totalScore >= 50) grade = 'D급';
+            else grade = 'F급';
+
+            return {
+                totalScore,
+                grade,
+                details,
+                recommendations: generateRecommendations(totalScore, details),
+                successRate: Math.min(Math.round(totalScore * 0.8), 95)
+            };
+        };
+
+        // 개선 추천사항 생성
+        const generateRecommendations = (totalScore, details) => {
+            const recommendations = [];
+            
+            if (details.skills < 15) {
+                recommendations.push('기술 스킬 강화를 위한 온라인 강의 수강을 추천합니다.');
+            }
+            if (details.experience < 15) {
+                recommendations.push('인턴십이나 프로젝트 경험을 늘려보세요.');
+            }
+            if (details.network < 10) {
+                recommendations.push('업계 네트워킹 이벤트에 적극 참여하세요.');
+            }
+            if (details.preparation < 10) {
+                recommendations.push('이력서와 자기소개서를 전문적으로 검토받아보세요.');
+            }
+            
+            return recommendations;
+        };
+
         // 인사이드잡 메인 앱 컴포넌트
         const InsideJobApp = () => {
             const [isLoading, setIsLoading] = React.useState(true);
             const [connectionStatus, setConnectionStatus] = React.useState('connecting');
             const [currentView, setCurrentView] = React.useState('home');
-            const [selectedBooking, setSelectedBooking] = React.useState(null); // home, calculator, auth, mypage, community, consultation, messages, admin
+            const [selectedBooking, setSelectedBooking] = React.useState(null);
+            const [authMode, setAuthMode] = React.useState('login'); // login, signup
             const [calculatorStep, setCalculatorStep] = React.useState(1);
             const [calculatorData, setCalculatorData] = React.useState({});
             const [currentUser, setCurrentUser] = React.useState(null);
@@ -3124,9 +3249,6 @@
             if (currentView === 'calculator') {
                 return renderCalculatorView();
             }
-            if (currentView === 'auth') {
-                return renderAuthView();
-            }
             if (currentView === 'community') {
                 return renderCommunityView();
             }
@@ -3146,9 +3268,8 @@
                 return renderConsultationChatView(selectedBooking);
             }
 
-            // 로그인하지 않은 경우 로그인 유도 화면 (플랜비 패턴)
-            // 단, 계산기는 게스트도 이용 가능
-            if (!isAuthenticated && currentView === 'home') {
+            // 랜딩 페이지 렌더링 함수
+            const renderLandingPage = () => {
                 return React.createElement('div', {
                     className: 'min-h-screen bg-gradient-to-br from-green-50 to-blue-50'
                 }, [
@@ -3206,163 +3327,143 @@
                         ])
                     ])),
 
-                    // 랜딩 메인 컨텐츠
+                    // 랜딩 메인 컨텐츠 (플랜비 스타일)
                     React.createElement('main', {
                         key: 'landing-main',
-                        className: 'max-w-4xl mx-auto px-4 py-12'
+                        className: 'max-w-6xl mx-auto px-4 py-8'
                     }, [
-                        // 히어로 섹션
+                        // 간단한 히어로 (플랜비 스타일)
                         React.createElement('div', {
                             key: 'hero-section',
-                            className: 'text-center mb-16'
+                            className: 'text-center mb-12'
+                        }, [
+                            React.createElement('h1', {
+                                key: 'hero-title',
+                                className: 'text-3xl md:text-4xl font-bold text-gray-900 mb-4'
+                            }, '🎯 인사이드잡'),
+                            React.createElement('p', {
+                                key: 'hero-subtitle',
+                                className: 'text-lg md:text-xl text-gray-600 mb-8'
+                            }, '현직자와 구직자를 연결하는 취업 멘토링 플랫폼')
+                        ]),
+
+                        // 핵심 3개 카드 (플랜비 패턴)
+                        React.createElement('div', {
+                            key: 'main-features',
+                            className: 'grid md:grid-cols-3 gap-8 mb-12'
+                        }, [
+                            // 1. 취업경쟁력 계산기 (무료 사용 가능)
+                            React.createElement('div', {
+                                key: 'calculator-card',
+                                className: 'card text-center hover:shadow-xl hover:-translate-y-2 transition-all duration-300 cursor-pointer border-2 border-green-200',
+                                onClick: () => setCurrentView('calculator')
+                            }, [
+                                React.createElement('div', {
+                                    key: 'calc-icon',
+                                    className: 'text-6xl mb-4'
+                                }, '🧮'),
+                                React.createElement('h3', {
+                                    key: 'calc-title',
+                                    className: 'text-2xl font-bold text-gray-800 mb-3'
+                                }, '취업경쟁력 진단'),
+                                React.createElement('p', {
+                                    key: 'calc-desc',
+                                    className: 'text-gray-600 mb-4 leading-relaxed'
+                                }, '6단계 정밀 분석으로 현재 취업 역량을 객관적으로 평가합니다'),
+                                React.createElement('div', {
+                                    key: 'calc-badge',
+                                    className: 'inline-block px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-semibold'
+                                }, '🆓 무료 이용'),
+                                React.createElement('div', {
+                                    key: 'calc-cta',
+                                    className: 'mt-4 btn-primary w-full py-3'
+                                }, '지금 진단하기')
+                            ]),
+
+                            // 2. 구직자 커뮤니티 (로그인 필요)
+                            React.createElement('div', {
+                                key: 'community-card',
+                                className: 'card text-center hover:shadow-xl hover:-translate-y-2 transition-all duration-300 cursor-pointer opacity-75',
+                                onClick: () => {
+                                    alert('🔐 구직자 커뮤니티는 무료 회원가입 후 이용가능합니다!');
+                                    setCurrentView('auth');
+                                }
+                            }, [
+                                React.createElement('div', {
+                                    key: 'community-icon',
+                                    className: 'text-6xl mb-4'
+                                }, '💬'),
+                                React.createElement('h3', {
+                                    key: 'community-title',
+                                    className: 'text-2xl font-bold text-gray-800 mb-3'
+                                }, '구직자 커뮤니티'),
+                                React.createElement('p', {
+                                    key: 'community-desc',
+                                    className: 'text-gray-600 mb-4 leading-relaxed'
+                                }, '같은 목표를 가진 구직자들과 정보 교환 및 네트워킹'),
+                                React.createElement('div', {
+                                    key: 'community-badge',
+                                    className: 'inline-block px-4 py-2 bg-orange-100 text-orange-700 rounded-full text-sm font-semibold'
+                                }, '🔒 로그인 필요'),
+                                React.createElement('div', {
+                                    key: 'community-cta',
+                                    className: 'mt-4 btn-secondary w-full py-3'
+                                }, '커뮤니티 참여')
+                            ]),
+
+                            // 3. 현직자 멘토링 (로그인 필요)
+                            React.createElement('div', {
+                                key: 'mentoring-card',
+                                className: 'card text-center hover:shadow-xl hover:-translate-y-2 transition-all duration-300 cursor-pointer opacity-75',
+                                onClick: () => {
+                                    alert('💼 현직자 멘토링은 무료 회원가입 후 이용가능합니다!');
+                                    setCurrentView('auth');
+                                }
+                            }, [
+                                React.createElement('div', {
+                                    key: 'mentoring-icon',
+                                    className: 'text-6xl mb-4'
+                                }, '👨‍💼'),
+                                React.createElement('h3', {
+                                    key: 'mentoring-title',
+                                    className: 'text-2xl font-bold text-gray-800 mb-3'
+                                }, '현직자 멘토링'),
+                                React.createElement('p', {
+                                    key: 'mentoring-desc',
+                                    className: 'text-gray-600 mb-4 leading-relaxed'
+                                }, '10분 단위 유연한 시간으로 실무 중심 1:1 상담'),
+                                React.createElement('div', {
+                                    key: 'mentoring-badge',
+                                    className: 'inline-block px-4 py-2 bg-orange-100 text-orange-700 rounded-full text-sm font-semibold'
+                                }, '🔒 로그인 필요'),
+                                React.createElement('div', {
+                                    key: 'mentoring-cta',
+                                    className: 'mt-4 btn-secondary w-full py-3 bg-purple-500 hover:bg-purple-600'
+                                }, '상담 예약하기')
+                            ])
+                        ]),
+
+                        // 전문가 등록 CTA (플랜비 스타일)
+                        React.createElement('div', {
+                            key: 'expert-cta',
+                            className: 'text-center bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-8 border border-blue-200'
                         }, [
                             React.createElement('h2', {
-                                key: 'hero-title',
-                                className: 'text-4xl md:text-5xl font-bold text-gray-900 mb-6'
-                            }, '현직자와 구직자를 연결하는'),
-                            React.createElement('h3', {
-                                key: 'hero-subtitle', 
-                                className: 'text-3xl md:text-4xl font-bold text-green-600 mb-8'
-                            }, '실무 중심 취업 멘토링 플랫폼'),
-                            React.createElement('p', {
-                                key: 'hero-description',
-                                className: 'text-lg md:text-xl text-gray-600 max-w-3xl mx-auto mb-8'
-                            }, '무료 취업경쟁력 진단부터 현직자 1:1 멘토링까지, 취업 성공을 위한 모든 것을 한 곳에서'),
-                            
-                            // 메인 CTA 버튼
-                            React.createElement('div', {
-                                key: 'cta-buttons',
-                                className: 'space-y-4 md:space-y-0 md:space-x-6 md:flex md:justify-center'
-                            }, [
-                                React.createElement('button', {
-                                    key: 'start-btn',
-                                    className: 'btn-primary text-lg px-8 py-4 w-full md:w-auto',
-                                    onClick: () => setCurrentView('calculator')
-                                }, '🧮 무료 취업경쟁력 진단 시작'),
-                                
-                                React.createElement('button', {
-                                    key: 'login-cta-btn',
-                                    className: 'btn-secondary text-lg px-8 py-4 w-full md:w-auto',
-                                    onClick: () => setCurrentView('auth')
-                                }, '🔐 로그인하고 모든 서비스 이용')
-                            ])
-                        ]),
-
-                        // 서비스 미리보기 (클릭 시 로그인 유도)
-                        React.createElement('div', {
-                            key: 'preview-section',
-                            className: 'mb-16'
-                        }, [
-                            React.createElement('h3', {
-                                key: 'preview-title',
-                                className: 'text-2xl font-bold text-center text-gray-800 mb-8'
-                            }, '🎯 로그인 후 이용 가능한 서비스'),
-                            
-                            React.createElement('div', {
-                                key: 'preview-cards',
-                                className: 'grid md:grid-cols-3 gap-6'
-                            }, [
-                                React.createElement('div', {
-                                    key: 'preview-community',
-                                    className: 'card text-center hover:shadow-lg transition-shadow cursor-pointer opacity-80',
-                                    onClick: () => {
-                                        alert('구직자 커뮤니티는 회원가입 후 이용가능합니다!');
-                                        setCurrentView('auth');
-                                    }
-                                }, [
-                                    React.createElement('div', {
-                                        key: 'icon',
-                                        className: 'text-4xl mb-4'
-                                    }, '💬'),
-                                    React.createElement('h4', {
-                                        key: 'title',
-                                        className: 'text-xl font-semibold mb-2'
-                                    }, '구직자 커뮤니티'),
-                                    React.createElement('p', {
-                                        key: 'desc',
-                                        className: 'text-gray-600'
-                                    }, '같은 목표를 가진 구직자들과의 정보 교환'),
-                                    React.createElement('div', {
-                                        key: 'login-required',
-                                        className: 'mt-4 px-3 py-1 bg-orange-100 text-orange-600 text-sm rounded-full'
-                                    }, '🔒 로그인 필요')
-                                ]),
-                                
-                                React.createElement('div', {
-                                    key: 'preview-mentoring',
-                                    className: 'card text-center hover:shadow-lg transition-shadow cursor-pointer opacity-80',
-                                    onClick: () => {
-                                        alert('전문가 멘토링은 회원가입 후 이용가능합니다!');
-                                        setCurrentView('auth');
-                                    }
-                                }, [
-                                    React.createElement('div', {
-                                        key: 'icon',
-                                        className: 'text-4xl mb-4'
-                                    }, '👨‍💼'),
-                                    React.createElement('h4', {
-                                        key: 'title',
-                                        className: 'text-xl font-semibold mb-2'
-                                    }, '현직자 멘토링'),
-                                    React.createElement('p', {
-                                        key: 'desc',
-                                        className: 'text-gray-600'
-                                    }, '10분 단위 유연한 시간의 1:1 실무 상담'),
-                                    React.createElement('div', {
-                                        key: 'login-required',
-                                        className: 'mt-4 px-3 py-1 bg-orange-100 text-orange-600 text-sm rounded-full'
-                                    }, '🔒 로그인 필요')
-                                ]),
-                                
-                                React.createElement('div', {
-                                    key: 'preview-messages',
-                                    className: 'card text-center hover:shadow-lg transition-shadow cursor-pointer opacity-80',
-                                    onClick: () => {
-                                        alert('쪽지 시스템은 회원가입 후 이용가능합니다!');
-                                        setCurrentView('auth');
-                                    }
-                                }, [
-                                    React.createElement('div', {
-                                        key: 'icon',
-                                        className: 'text-4xl mb-4'
-                                    }, '📩'),
-                                    React.createElement('h4', {
-                                        key: 'title',
-                                        className: 'text-xl font-semibold mb-2'
-                                    }, '쪽지 시스템'),
-                                    React.createElement('p', {
-                                        key: 'desc',
-                                        className: 'text-gray-600'
-                                    }, '회원 간 개인 메시지 교환 및 네트워킹'),
-                                    React.createElement('div', {
-                                        key: 'login-required',
-                                        className: 'mt-4 px-3 py-1 bg-orange-100 text-orange-600 text-sm rounded-full'
-                                    }, '🔒 로그인 필요')
-                                ])
-                            ])
-                        ]),
-
-                        // 전문가 등록 안내
-                        React.createElement('div', {
-                            key: 'expert-section',
-                            className: 'text-center bg-white rounded-2xl p-8 shadow-lg'
-                        }, [
-                            React.createElement('h3', {
                                 key: 'expert-title',
-                                className: 'text-2xl font-bold text-gray-800 mb-4'
+                                className: 'text-2xl font-bold text-gray-800 mb-3'
                             }, '👨‍💼 현직자이신가요?'),
                             React.createElement('p', {
                                 key: 'expert-desc',
-                                className: 'text-gray-600 mb-6'
-                            }, '후배 구직자들에게 실무 경험을 전수하고 추가 수입을 창출하세요'),
+                                className: 'text-gray-600 mb-6 max-w-2xl mx-auto'
+                            }, '후배 구직자들에게 실무 경험을 전수하고 추가 수입을 창출하세요. 10분 단위로 유연하게 상담하고 투명한 수익 정산을 받으실 수 있습니다.'),
                             React.createElement('button', {
                                 key: 'expert-btn',
-                                className: 'btn-secondary text-lg px-8 py-4',
+                                className: 'btn-secondary text-lg px-8 py-4 bg-indigo-500 hover:bg-indigo-600',
                                 onClick: () => {
-                                    alert('현직자 등록은 회원가입 후 가능합니다!');
+                                    alert('현직자 등록은 무료 회원가입 후 가능합니다!');
                                     setCurrentView('auth');
                                 }
-                            }, '전문가로 참여하기')
+                            }, '전문가로 참여하기 →')
                         ])
                     ]),
 
@@ -3382,6 +3483,19 @@
                             className: 'text-sm text-gray-400 mt-2'
                         }, `플랜비 검증 아키텍처 기반 • Supabase ${connectionStatus === 'connected' ? '연결됨' : '연결 오류'}`)
                     ]))
+                ]);
+            }
+
+            // 로그인하지 않은 경우
+            if (!isAuthenticated) {
+                const showAuthModal = currentView === 'auth';
+                
+                return React.createElement('div', {}, [
+                    // 기본 랜딩 화면
+                    renderLandingPage(),
+                    
+                    // 로그인 모달 (조건부 표시)
+                    showAuthModal ? renderAuthModal() : null
                 ]);
             }
 
