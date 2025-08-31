@@ -5700,13 +5700,19 @@
                                                 <label 
                                                     className="flex items-start cursor-pointer"
                                                     onClick={() => {
+                                                        console.log('Privacy checkbox clicked!', privacyConsent);
                                                         const newValue = !privacyConsent;
                                                         setPrivacyConsent(newValue);
+                                                        console.log('New privacy value:', newValue);
                                                         
                                                         // DOM 직접 조작으로 동기화
                                                         setTimeout(() => {
                                                             const checkbox = document.getElementById('privacy-consent-fixed');
-                                                            if (checkbox) checkbox.checked = newValue;
+                                                            console.log('Found checkbox element:', checkbox);
+                                                            if (checkbox) {
+                                                                checkbox.checked = newValue;
+                                                                console.log('Set checkbox.checked to:', newValue);
+                                                            }
                                                         }, 0);
                                                     }}
                                                 >
@@ -5724,13 +5730,19 @@
                                                 <label 
                                                     className="flex items-start cursor-pointer"
                                                     onClick={() => {
+                                                        console.log('Terms checkbox clicked!', termsConsent);
                                                         const newValue = !termsConsent;
                                                         setTermsConsent(newValue);
+                                                        console.log('New terms value:', newValue);
                                                         
                                                         // DOM 직접 조작으로 동기화
                                                         setTimeout(() => {
                                                             const checkbox = document.getElementById('terms-consent-fixed');
-                                                            if (checkbox) checkbox.checked = newValue;
+                                                            console.log('Found terms checkbox element:', checkbox);
+                                                            if (checkbox) {
+                                                                checkbox.checked = newValue;
+                                                                console.log('Set terms checkbox.checked to:', newValue);
+                                                            }
                                                         }, 0);
                                                     }}
                                                 >
