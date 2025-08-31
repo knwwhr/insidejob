@@ -100,7 +100,31 @@
         /* 체크박스 스타일 개선 */
         input[type="checkbox"] {
             accent-color: #3b82f6;
-            /* transform: scale(1.2); 클릭 문제로 임시 제거 */
+            width: 16px;
+            height: 16px;
+            border: 2px solid #d1d5db;
+            border-radius: 4px;
+            background-color: #ffffff;
+            cursor: pointer;
+            appearance: auto;
+            -webkit-appearance: checkbox;
+            -moz-appearance: checkbox;
+        }
+        
+        input[type="checkbox"]:checked {
+            accent-color: #3b82f6;
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+        }
+        
+        /* 커스텀 체크박스 스타일 */
+        .custom-checkbox {
+            appearance: auto !important;
+            -webkit-appearance: checkbox !important;
+            -moz-appearance: checkbox !important;
+            width: 16px !important;
+            height: 16px !important;
+            cursor: pointer !important;
         }
         
         /* 전문가 등록 체크박스 강제 스타일 */
@@ -5607,7 +5631,7 @@
                                         </div>
                                         
                                         {/* 개인정보 수집·이용 동의서 */}
-                                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
                                             <h4 className="text-sm font-medium text-gray-800 mb-3">개인정보 수집·이용 동의</h4>
                                             <div className="bg-white border border-gray-200 rounded p-3 text-xs text-gray-600 mb-3 max-h-40 overflow-y-auto">
                                                 <div className="space-y-3">
@@ -5632,28 +5656,60 @@
                                                     </div>
                                                 </div>
                                             </div>
+                                        </div>
+                                        
+                                        {/* 서비스 이용약관 동의서 */}
+                                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                                            <h4 className="text-sm font-medium text-gray-800 mb-3">서비스 이용약관</h4>
+                                            <div className="bg-white border border-gray-200 rounded p-3 text-xs text-gray-600 mb-3 max-h-40 overflow-y-auto">
+                                                <div className="space-y-3">
+                                                    <div>
+                                                        <strong className="text-gray-800">제1조 (목적)</strong>
+                                                        <p>본 약관은 인사이드잡(이하 "회사")이 제공하는 취업 멘토링 플랫폼 서비스 이용과 관련하여 회사와 이용자간의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.</p>
+                                                    </div>
+                                                    <div>
+                                                        <strong className="text-gray-800">제2조 (서비스 내용)</strong>
+                                                        <p>• 취업경쟁력 진단 서비스<br/>• 구직자 커뮤니티 운영<br/>• 현직자-구직자 멘토링 매칭<br/>• 실시간 채팅 상담 서비스<br/>• 기타 취업 관련 부가 서비스</p>
+                                                    </div>
+                                                    <div>
+                                                        <strong className="text-gray-800">제3조 (회원의 의무)</strong>
+                                                        <p>• 허위정보 제공 금지<br/>• 타인의 개인정보 침해 금지<br/>• 서비스 이용 규정 준수<br/>• 불법적·부적절한 콘텐츠 게시 금지</p>
+                                                    </div>
+                                                    <div>
+                                                        <strong className="text-gray-800">제4조 (현직자 멘토링)</strong>
+                                                        <p>• 현직자는 정확한 경력정보 제공 의무<br/>• 멘토링 시간 준수<br/>• 플랫폼 수수료 20% 동의<br/>• 세금 신고 의무 (개인 책임)</p>
+                                                    </div>
+                                                    <div>
+                                                        <strong className="text-gray-800">제5조 (금지행위)</strong>
+                                                        <p>• 플랫폼 외 직접 거래 유도<br/>• 허위 리뷰 작성<br/>• 스팸 또는 광고성 메시지 발송<br/>• 기타 서비스 운영에 방해되는 행위</p>
+                                                    </div>
+                                                    <div>
+                                                        <p>※ 본 약관에 동의하지 않을 경우 서비스 이용이 제한됩니다.</p>
+                                                    </div>
+                                                </div>
+                                            </div>
                                             <div className="space-y-3">
-                                                <div className="flex items-center">
+                                                <div className="flex items-start">
                                                     <input
-                                                        id="privacy-consent"
+                                                        id="privacy-consent-new"
                                                         type="checkbox"
                                                         checked={privacyConsent}
                                                         onChange={(e) => setPrivacyConsent(e.target.checked)}
-                                                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                                        className="custom-checkbox"
                                                     />
-                                                    <label htmlFor="privacy-consent" className="ml-2 text-sm text-gray-700">
+                                                    <label htmlFor="privacy-consent-new" className="ml-3 text-sm text-gray-700">
                                                         [필수] 개인정보 수집·이용 동의 <span className="text-red-500">*</span>
                                                     </label>
                                                 </div>
-                                                <div className="flex items-center">
+                                                <div className="flex items-start">
                                                     <input
-                                                        id="terms-consent"
+                                                        id="terms-consent-new"
                                                         type="checkbox"
                                                         checked={termsConsent}
                                                         onChange={(e) => setTermsConsent(e.target.checked)}
-                                                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                                        className="custom-checkbox"
                                                     />
-                                                    <label htmlFor="terms-consent" className="ml-2 text-sm text-gray-700">
+                                                    <label htmlFor="terms-consent-new" className="ml-3 text-sm text-gray-700">
                                                         [필수] 서비스 이용약관 동의 <span className="text-red-500">*</span>
                                                     </label>
                                                 </div>
