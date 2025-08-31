@@ -5700,14 +5700,20 @@
                                                 <label 
                                                     className="flex items-start cursor-pointer"
                                                     onClick={() => {
-                                                        setPrivacyConsent(!privacyConsent);
+                                                        const newValue = !privacyConsent;
+                                                        setPrivacyConsent(newValue);
+                                                        
+                                                        // DOM 직접 조작으로 동기화 (전문가 등록과 동일한 방식)
+                                                        setTimeout(() => {
+                                                            const checkbox = document.getElementById('privacy-consent-fixed');
+                                                            if (checkbox) checkbox.checked = newValue;
+                                                        }, 0);
                                                     }}
                                                 >
                                                     <input
                                                         id="privacy-consent-fixed"
                                                         type="checkbox"
-                                                        checked={privacyConsent}
-                                                        onChange={() => {}} // 빈 핸들러로 React 경고 방지
+                                                        readOnly
                                                         className="mt-1 w-4 h-4 pointer-events-none"
                                                         style={{ accentColor: '#3b82f6' }}
                                                     />
@@ -5718,14 +5724,20 @@
                                                 <label 
                                                     className="flex items-start cursor-pointer"
                                                     onClick={() => {
-                                                        setTermsConsent(!termsConsent);
+                                                        const newValue = !termsConsent;
+                                                        setTermsConsent(newValue);
+                                                        
+                                                        // DOM 직접 조작으로 동기화 (전문가 등록과 동일한 방식)
+                                                        setTimeout(() => {
+                                                            const checkbox = document.getElementById('terms-consent-fixed');
+                                                            if (checkbox) checkbox.checked = newValue;
+                                                        }, 0);
                                                     }}
                                                 >
                                                     <input
                                                         id="terms-consent-fixed"
                                                         type="checkbox"
-                                                        checked={termsConsent}
-                                                        onChange={() => {}} // 빈 핸들러로 React 경고 방지
+                                                        readOnly
                                                         className="mt-1 w-4 h-4 pointer-events-none"
                                                         style={{ accentColor: '#3b82f6' }}
                                                     />
