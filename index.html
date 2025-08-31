@@ -32,7 +32,7 @@
     <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
     
-    <!-- 인사이드잡 스타일 (플랜비 원본 기반) -->
+    <!-- 인사이드잡 스타일 -->
     <style>
         /* 인사이드잡 기본 스타일 */
         body { 
@@ -280,7 +280,7 @@
         class AnonymousSessionManager {
             constructor() {
                 this.currentSession = null;
-                this.tokenKey = 'planb_session_token';
+                this.tokenKey = 'insidejob_session_token';
             }
 
             // 보안 토큰 생성
@@ -320,9 +320,9 @@
             // 익명 닉네임 생성
             generateNickname(group) {
                 const groupNames = {
-                    'prudent': '알뜰라이프',
-                    'balanced': '밸런스라이프', 
-                    'premium': '프리미엄라이프'
+                    'prudent': '신중형',
+                    'balanced': '균형형', 
+                    'premium': '도전형'
                 };
                 const randomNum = Math.floor(Math.random() * 999) + 1;
                 return `${groupNames[group]}${randomNum.toString().padStart(3, '0')}`;
@@ -369,7 +369,7 @@
                         // 오프라인 모드: localStorage에 전체 데이터 저장
                         const fallbackSession = { ...sessionData, id: Date.now() };
                         localStorage.setItem(this.tokenKey, sessionToken);
-                        localStorage.setItem(`planb_session_${sessionToken}`, JSON.stringify(fallbackSession));
+                        localStorage.setItem(`insidejob_session_${sessionToken}`, JSON.stringify(fallbackSession));
                         this.currentSession = fallbackSession;
                         return this.currentSession;
                     }
@@ -419,7 +419,7 @@
                         return this.currentSession;
                     } else {
                         // 오프라인 모드: localStorage에서 복구
-                        const sessionData = localStorage.getItem(`planb_session_${token}`);
+                        const sessionData = localStorage.getItem(`insidejob_session_${token}`);
                         if (sessionData) {
                             this.currentSession = JSON.parse(sessionData);
                             return this.currentSession;
@@ -496,7 +496,7 @@
                     }
                     
                     localStorage.removeItem(this.tokenKey);
-                    localStorage.removeItem(`planb_session_${targetToken}`);
+                    localStorage.removeItem(`insidejob_session_${targetToken}`);
                     this.currentSession = null;
                 } catch (error) {
                     console.error('세션 삭제 실패:', error);
@@ -556,7 +556,7 @@
                 };
 
                 localStorage.setItem(this.tokenKey, token);
-                localStorage.setItem(`planb_session_${token}`, JSON.stringify(fallbackSession));
+                localStorage.setItem(`insidejob_session_${token}`, JSON.stringify(fallbackSession));
                 this.currentSession = fallbackSession;
                 
                 console.log(`로컬 폴백 세션 생성: ${nickname} (${assignedGroup} 그룹)`);
@@ -1699,7 +1699,7 @@
                             value: formData.keywords,
                             onChange: (e) => updateFormData('keywords', e.target.value),
                             className: 'w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500',
-                            placeholder: '예: 시니어여행, 해외거주경험, 문화해설 등'
+                            placeholder: '예: 웹개발, 데이터분석, 프로젝트관리 등'
                         }),
                         React.createElement('p', {
                             key: 'keywords-helper',
@@ -1786,7 +1786,7 @@
                         title: '경력 기반',
                         description: '구체적인 경력 내용 작성 + 관리자 검토 (7-10일 소요)',
                         inputLabel: '경력 상세 설명',
-                        inputPlaceholder: '예: OO여행사 시니어 여행 기획 5년, 해외 거주 경험 3년, 문화해설사 자격 보유 등',
+                        inputPlaceholder: '예: OO기업 웹개발 5년, 풀스택 개발 경험 3년, AWS 자격증 보유 등',
                         fieldName: 'experienceDescription',
                         needsFile: false
                     }
@@ -2431,7 +2431,7 @@
                         console.log('🔍 계산 이력 로딩 시작...', { currentUser: currentUser?.email });
                         
                         // 1. localStorage에서 현재 계산 결과 불러오기
-                        const savedLocal = localStorage.getItem('planb_calculation_result');
+                        const savedLocal = localStorage.getItem('insidejob_calculation_result');
                         console.log('📱 localStorage 데이터:', savedLocal ? 'Found' : 'Not found');
                         
                         if (savedLocal) {
@@ -2925,7 +2925,7 @@
                                                             <div>사용자: {currentUser?.email || '게스트'}</div>
                                                             <div>사용자 타입: {currentUser?.isGuest ? '게스트' : '회원'}</div>
                                                             <div>Supabase 연결: {supabase ? '연결됨' : '연결 안됨'}</div>
-                                                            <div>localStorage: {localStorage.getItem('planb_calculation_result') ? '데이터 있음' : '데이터 없음'}</div>
+                                                            <div>localStorage: {localStorage.getItem('insidejob_calculation_result') ? '데이터 있음' : '데이터 없음'}</div>
                                                         </div>
                                                     )}
                                                     
@@ -2989,7 +2989,7 @@
                                                             {/* 주요 결과 요약 */}
                                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                                                 <div className="bg-green-50 p-4 rounded-lg">
-                                                                    <div className="text-sm text-green-600 font-medium">월 생활비</div>
+                                                                    <div className="text-sm text-green-600 font-medium">월 활동비</div>
                                                                     <div className="text-xl font-bold text-green-900">
                                                                         {calculation.monthlyLivingCost 
                                                                             ? `${calculation.monthlyLivingCost.toLocaleString()}만원` 
@@ -3022,7 +3022,7 @@
                                                                             <span className="ml-1 font-medium">{(calculation.formData.financialAssets || 0).toLocaleString()}만원</span>
                                                                         </div>
                                                                         <div>
-                                                                            <span className="text-gray-600">퇴직금:</span>
+                                                                            <span className="text-gray-600">실무경험:</span>
                                                                             <span className="ml-1 font-medium">{(calculation.formData.severancePay || 0).toLocaleString()}만원</span>
                                                                         </div>
                                                                         <div>
@@ -3030,11 +3030,11 @@
                                                                             <span className="ml-1 font-medium">{(calculation.formData.debt || 0).toLocaleString()}만원</span>
                                                                         </div>
                                                                         <div>
-                                                                            <span className="text-gray-600">국민연금:</span>
+                                                                            <span className="text-gray-600">프리랜싱:</span>
                                                                             <span className="ml-1 font-medium">{(calculation.formData.nationalPension || 0).toLocaleString()}만원/월</span>
                                                                         </div>
                                                                         <div>
-                                                                            <span className="text-gray-600">사적연금:</span>
+                                                                            <span className="text-gray-600">사이드프로젝트:</span>
                                                                             <span className="ml-1 font-medium">{(calculation.formData.privatePension || 0).toLocaleString()}만원/월</span>
                                                                         </div>
                                                                         <div>
@@ -5249,7 +5249,7 @@
                         const result = await authManager.signUp(email, password, finalNickname);
                         if (result.success) {
                             setError('');
-                            showNotification('회원가입 완료!', `🎉 환영합니다, ${finalNickname}님!\n✨ 바로 서비스를 이용하실 수 있습니다.\n📊 은퇴생활비 계산과 커뮤니티 참여가 가능합니다.`, 'success');
+                            showNotification('회원가입 완료!', `🎉 환영합니다, ${finalNickname}님!\n✨ 바로 서비스를 이용하실 수 있습니다.\n🎯 취업경쟁력 진단과 커뮤니티 참여가 가능합니다.`, 'success');
                             setAuthMode('login');
                             setIsLogin(true);
                         } else {
@@ -5895,25 +5895,25 @@
             // 라이프스타일 그룹 정의 (중성적이고 포용적인 표현)
             const lifestyleGroups = {
                 'prudent': { 
-                    name: '알뜰 라이프', 
-                    description: '실속있는 은퇴생활을 추구하는 분들',
+                    name: '신중형', 
+                    description: '체계적인 취업준비를 추구하는 분들',
                     color: 'bg-blue-500', 
                     emoji: '🌱',
-                    tagline: '작은 것에서 찾는 큰 행복'
+                    tagline: '작은 준비에서 찾는 큰 성취'
                 },
                 'balanced': { 
-                    name: '밸런스 라이프', 
-                    description: '균형잡힌 은퇴생활을 원하는 분들',
+                    name: '균형형', 
+                    description: '일과 삶의 균형을 추구하는 분들',
                     color: 'bg-green-500', 
                     emoji: '⚖️',
-                    tagline: '안정과 여유의 조화'
+                    tagline: '성장과 여유의 조화'
                 },
                 'premium': { 
-                    name: '프리미엄 라이프', 
-                    description: '풍요로운 은퇴생활을 계획하는 분들',
+                    name: '도전형', 
+                    description: '적극적인 커리어 개발을 추구하는 분들',
                     color: 'bg-purple-500', 
                     emoji: '🌟',
-                    tagline: '꿈꾸던 은퇴의 실현'
+                    tagline: '꿈꾸던 커리어의 실현'
                 }
             };
 
@@ -5986,12 +5986,12 @@
                 },
                 {
                     id: '5',
-                    title: '실버보험 가입 필요할까요?',
-                    content: '60대 중반인데 실버보험 가입을 권유받았어요. 보험료가 만만치 않은데...',
+                    title: '신입 개발자 취업 준비 어떻게 시작할까요?',
+                    content: '20대 중반인데 개발자 취업을 준비하고 있어요. 어떤 것부터 시작해야 할지...',
                     topic: 'health',
                     asset_group: 'middle',
                     user_hash: 'user202',
-                    age_badge: '60-64세', 
+                    age_badge: '20-24세', 
                     asset_badge: '안정형',
                     is_hot: false,
                     replies_count: 4,
@@ -6001,14 +6001,14 @@
                 // 전문가 게시글 샘플
                 {
                     id: '6',
-                    title: '시니어 여행 계획, 이것만은 꼭 확인하세요!',
-                    content: '안녕하세요, 시니어 여행 전문 플래너 김여행입니다. 은퇴 후 첫 해외여행을 계획하시는 분들을 위한 체크리스트를 공유합니다...',
+                    title: '신입 개발자 취업 준비, 이것만은 꼭 확인하세요!',
+                    content: '안녕하세요, IT개발 현직자 김개발자입니다. 신입 개발자로 취업을 준비하시는 분들을 위한 체크리스트를 공유합니다...',
                     topic: 'expert',
                     expert_category: 'travel',
                     user_hash: 'expert_kim_travel',
                     expert_badge: '인증 전문가',
-                    expert_name: '김여행플래너',
-                    expert_title: '시니어 여행 전문 플래너',
+                    expert_name: '김개발자',
+                    expert_title: 'IT개발 현직자',
                     consultation_price: '60,000원/60분',
                     is_hot: true,
                     replies_count: 23,
@@ -6017,14 +6017,14 @@
                 },
                 {
                     id: '7', 
-                    title: '상속세 절세 전략 - 증여와 상속의 최적 타이밍',
-                    content: '상속세 전문 세무사 최세무입니다. 많은 분들이 궁금해하시는 증여와 상속의 최적 타이밍에 대해 설명드리겠습니다...',
+                    title: '회계 직무 준비 전략 - 자격증과 실무의 최적 밸런스',
+                    content: '회계/세무 현직자 최회계사입니다. 많은 분들이 궁금해하시는 회계 직무 준비 시 자격증과 실무 경험의 최적 밸런스에 대해 설명드리겠습니다...',
                     topic: 'expert',
                     expert_category: 'legal',
                     user_hash: 'expert_choi_tax',
                     expert_badge: '인증 전문가',
-                    expert_name: '최세무사',
-                    expert_title: '상속세 절세 전문 세무사',
+                    expert_name: '최회계사',
+                    expert_title: '회계/세무 현직자',
                     consultation_price: '100,000원/60분',
                     is_hot: true,
                     replies_count: 18,
@@ -6033,14 +6033,14 @@
                 },
                 {
                     id: '8',
-                    title: '은퇴 후 다운사이징, 성공적인 이사 가이드',
-                    content: '시니어 주거 전문 컨설턴트 윤부동산입니다. 은퇴 후 집을 줄이는 다운사이징에 대한 실전 가이드를 공유합니다...',
+                    title: '취업 후 커리어 로드맵, 성공적인 성장 가이드',
+                    content: '부동산/건설 현직자 윤부동산입니다. 취업 후 체계적인 커리어 성장에 대한 실전 가이드를 공유합니다...',
                     topic: 'expert',
                     expert_category: 'living',
                     user_hash: 'expert_yoon_housing',
                     expert_badge: '인증 전문가',
-                    expert_name: '윤부동산컨설턴트',
-                    expert_title: '시니어 주거 전문 컨설턴트',
+                    expert_name: '윤부동산',
+                    expert_title: '부동산/건설 현직자',
                     consultation_price: '80,000원/60분',
                     is_hot: false,
                     replies_count: 12,
@@ -6175,7 +6175,7 @@
                         topic: activeTopic,
                         author_nickname: userProfile?.nickname || '익명',
                         author_id: currentUser.id,
-                        age_badge: '60-64세', // 향후 프로필에서 가져올 수 있음
+                        age_badge: '20-24세', // 향후 프로필에서 가져올 수 있음
                         is_hot: false,
                         replies_count: 0,
                         likes_count: 0,
@@ -8579,7 +8579,7 @@
                                     type="text"
                                     value={formData.title}
                                     onChange={(e) => handleInputChange('title', e.target.value)}
-                                    placeholder="예: 은퇴 후 해외 장기체류 완전 가이드"
+                                    placeholder="예: 신입 개발자 취업 준비 완전 가이드"
                                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                     maxLength={100}
                                 />
@@ -11274,8 +11274,8 @@
                 'finance_consulting': [
                     {
                         id: 4,
-                        name: '최투자전문가',
-                        title: '삼성증권 • 투자상품팀 차장',
+                        name: '최금융전문가',
+                        title: '삼성증권 • 금융권 현직자',
                         experience: '18년 경력',
                         rating: 4.8,
                         reviews: 93,
@@ -11287,7 +11287,7 @@
                     {
                         id: 5,
                         name: '정컨설턴트',
-                        title: '맥킨지 • 시니어 컨설턴트',
+                        title: '맥킨지 • 전략 컨설턴트',
                         experience: '10년 경력',
                         rating: 4.9,
                         reviews: 76,
@@ -11863,7 +11863,7 @@
             return Math.round(annualPropertyTax / 12);
         };
 
-        // 원본 계산기 완전 통합 (planb-calculator.html에서 추출)
+        // 취업경쟁력 진단기 (커리어 멘토링 서비스)
         // 인사이드잡 취업경쟁력 계산기 (6단계 진단 시스템)
         const CareerCompetitivenessCalculator = ({ savedCalculations = [], onCalculationComplete, setCurrentView, currentUser, showNotification, setAuthMode, setShowSaveResultSignupModal }) => {
             const [calculatorStep, setCalculatorStep] = useState(1);
@@ -11942,7 +11942,7 @@
             
             // 컴포넌트 마운트시 저장된 데이터 확인만 (자동 불러오기 안함)
             useEffect(() => {
-                const saved = localStorage.getItem('planb_calculation_result');
+                const saved = localStorage.getItem('insidejob_calculation_result');
                 if (saved) {
                     // 저장된 데이터가 있다는 것만 확인, 자동 불러오기는 하지 않음
                     console.log('저장된 계산결과가 있습니다.');
@@ -11971,7 +11971,7 @@
                     if (age <= 25) basicScore += 15; // 신입 최적 연령
                     else if (age <= 30) basicScore += 12; // 경력직 시작
                     else if (age <= 35) basicScore += 8; // 중견급
-                    else basicScore += 5; // 시니어급
+                    else basicScore += 5; // 시니어급 경력
                 }
                 
                 // 2단계: 스킬역량 점수 (25점)
@@ -12186,7 +12186,7 @@
                                 food_expenses: parseInt(expenseData.food) || 0,
                                 communication_expenses: parseInt(expenseData.communication) || 0,
                                 utilities_expenses: parseInt(expenseData.utilities) || 0,
-                                living_expenses: parseInt(expenseData.etc) || 0, // 기타를 생활비로 매핑
+                                living_expenses: parseInt(expenseData.etc) || 0, // 기타를 활동비로 매핑
                                 medical_expenses: parseInt(expenseData.medical) || 0,
                                 leisure_expenses: parseInt(expenseData.hobby) || 0, // 취미·여가를 여가비로 매핑
                                 transportation_expenses: parseInt(expenseData.vehicle) || 0,
@@ -12236,7 +12236,7 @@
                     calculatedAt: new Date().toISOString()  // 마이페이지 호환성을 위해 추가
                 };
                 
-                localStorage.setItem('planb_calculation_result', JSON.stringify(savedResult));
+                localStorage.setItem('insidejob_calculation_result', JSON.stringify(savedResult));
                 setIsResultSaved(true);
                 
                 showNotification('저장 완료', '계산결과가 저장되었습니다! 💾\n언제든 다시 확인할 수 있습니다.', 'success');
@@ -12244,7 +12244,7 @@
             
             // 저장된 계산결과 불러오기 (localStorage)
             const loadCalculationResult = () => {
-                const saved = localStorage.getItem('planb_calculation_result');
+                const saved = localStorage.getItem('insidejob_calculation_result');
                 if (saved) {
                     try {
                         const savedData = JSON.parse(saved);
@@ -12304,7 +12304,7 @@
                 }
             }, [lifeExpectancy]);
 
-            // 다운사이징 옵션 변경 시 재계산
+            // 매각 옵션 변경 시 재계산
             useEffect(() => {
                 if (calculatorResult && calculatorStep === 7) {
                     // 진단 결과 업데이트
@@ -12504,7 +12504,7 @@
                                     />
 
                                     <AmountInput
-                                        label="💼 퇴직금 (은퇴시 받을 퇴직금 또는 현재 남아있는 퇴직금, 단위: 만원)"
+                                        label="💼 인턴십/아르바이트 경험 (경험을 통해 습득한 실무 스킬 점수, 1-100점)"
                                         value={formData.severancePay}
                                         onChange={(v) => handleInputChange('severancePay', v)}
                                         placeholder=""
@@ -12555,7 +12555,7 @@
                                                         {!formData.knowLoanEndYear && (
                                                             <p className="text-blue-700 text-sm">
                                                                 ℹ️ 체크하지 않으면 <strong>보수적으로 계산</strong>합니다.<br/>
-                                                                (은퇴 후에도 계속 상환한다고 가정)
+                                                                (취업 후에도 계속 상환한다고 가정)
                                                             </p>
                                                         )}
                                                     </div>
@@ -12756,7 +12756,7 @@
 
                                     <div className="mb-6">
                                         <div className="flex items-center gap-2 mb-3">
-                                            <label className="block text-xl font-semibold text-gray-800">👨‍👩‍👧‍👦 가족 증여 또는 상속 예정액 (단위: 만원)</label>
+                                            <label className="block text-xl font-semibold text-gray-800">👨‍👩‍👧‍👦 가족 지원 또는 후원 예정액 (단위: 만원)</label>
                                             <button
                                                 onClick={() => setShowInheritanceGuide(!showInheritanceGuide)}
                                                 className="text-blue-500 bg-blue-50 rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-blue-100"
@@ -12786,7 +12786,7 @@
                                                     <ul className="text-sm space-y-1">
                                                         <li>• <strong>생애 평균:</strong> 약 2,000만원 (한국조세재정연구원 2022)</li>
                                                         <li>• <strong>부모 1인당:</strong> 평균 1,000만원 내외</li>
-                                                        <li>• <strong>시기:</strong> 대부분 50-70대에 받음</li>
+                                                        <li>• <strong>시기:</strong> 대부분 20-30대에 지원받음</li>
                                                         <li>• <strong>형태:</strong> 현금, 부동산, 주식 등 다양</li>
                                                     </ul>
                                                     <p className="text-xs mt-2 text-yellow-700">
@@ -12841,7 +12841,7 @@
                             </div>
                             <div className="text-center mb-8">
                                 <h1 className="text-3xl font-bold text-gray-800 mb-3">📋 추가 수입·지출</h1>
-                                <p className="text-xl text-gray-600">매달 들어오는 연금이나 나가는 고정비용 (선택사항)</p>
+                                <p className="text-xl text-gray-600">매달 들어오는 부수입이나 나가는 고정비용 (선택사항)</p>
                                 <div className="w-full bg-gray-200 rounded-full h-4 mt-6 max-w-md mx-auto">
                                     <div className="bg-blue-600 h-4 rounded-full" style={{width: '50%'}}></div>
                                 </div>
@@ -12856,24 +12856,24 @@
                                     </p>
                                 </div>
 
-                                <h2 className="text-2xl font-bold mb-6 text-gray-800">📈 매달 받는 연금 (단위: 만원)</h2>
+                                <h2 className="text-2xl font-bold mb-6 text-gray-800">📈 매달 받는 부수입 (단위: 만원)</h2>
                                 
                                 <AmountInput
-                                    label="🏛️ 국민연금 (월 수령액)"
+                                    label="🏛️ 프리랜싱 (월 수입)"
                                     value={formData.nationalPension}
                                     onChange={(v) => handleInputChange('nationalPension', v)}
                                     placeholder=""
                                 />
                                 
                                 <AmountInput
-                                    label="💰 개인연금 (월 수령액)"
+                                    label="💰 사이드 프로젝트 (월 수입)"
                                     value={formData.privatePension}
                                     onChange={(v) => handleInputChange('privatePension', v)}
                                     placeholder=""
                                 />
                                 
                                 <AmountInput
-                                    label="🏠 주택연금 (월 수령액)"
+                                    label="🏠 부동산 임대 (월 수입)"
                                     value={formData.housingPension}
                                     onChange={(v) => handleInputChange('housingPension', v)}
                                     placeholder=""
@@ -12899,7 +12899,7 @@
                                 />
                                 
                                 <AmountInput
-                                    label="💰 금융소득 (배당금, 이자 등)"
+                                    label="💰 투자소득 (배당금, 이자 등)"
                                     value={formData.financialIncome}
                                     onChange={(v) => handleInputChange('financialIncome', v)}
                                     placeholder=""
@@ -12955,7 +12955,7 @@
                                 <div className="flex-1"></div>
                             </div>
                             <div className="text-center mb-8">
-                                <h1 className="text-3xl font-bold text-gray-800 mb-3">🎉 은퇴생활비 계산 완료!</h1>
+                                <h1 className="text-3xl font-bold text-gray-800 mb-3">🎉 취업경쟁력 진단 완료!</h1>
                             </div>
 
                             <div className="card mb-6">
@@ -12978,7 +12978,7 @@
                                     {/* 기대수명 조정 */}
                                     <div className="bg-blue-50 p-4 rounded-lg mb-4 max-w-md mx-auto">
                                         <div className="flex items-center justify-center gap-3 mb-2">
-                                            <span className="text-sm font-medium text-blue-800">기대수명:</span>
+                                            <span className="text-sm font-medium text-blue-800">취업목표기간:</span>
                                             <div className="flex items-center gap-2">
                                                 <button 
                                                     onClick={() => setLifeExpectancy(Math.max(70, lifeExpectancy - 5))}
@@ -13135,7 +13135,7 @@
                                                     <div className="font-bold text-blue-600">"어떤 서비스들을 실제로 이용하시나요?"</div>
                                                 </div>
                                                 <div className="bg-white p-2 rounded-lg text-center">
-                                                    <div className="font-bold text-blue-600">"은퇴 생활의 현실적인 팁들"</div>
+                                                    <div className="font-bold text-blue-600">"취업 생활의 현실적인 팁들"</div>
                                                 </div>
                                             </div>
                                             
@@ -13244,7 +13244,7 @@
                                 <h3 className="text-xl font-bold mb-4">📊 세부 계산결과</h3>
                                 <div className="space-y-3">
                                     <div className="flex justify-between items-center">
-                                        <span>자산을 활용한 생활비:</span>
+                                        <span>자산을 활용한 취업준비비:</span>
                                         <div className="flex items-center gap-2">
                                             <span className="font-bold">{formatResultAmount(calculatorResult.monthlyAmount)}/월</span>
                                             <button
@@ -13273,21 +13273,21 @@
                                                         <span className="font-medium">• 순 자산:</span>
                                                         <span className="font-bold">{formatResultAmount(calculatorResult.assetBreakdown?.totalAssets || 0)}</span>
                                                     </div>
-                                                    <p className="text-xs text-gray-600 mb-3">입력하신 모든 자산을 생활비로 쓸 수 있는 자산과 쓸 수 없는 자산으로 구분했습니다</p>
+                                                    <p className="text-xs text-gray-600 mb-3">입력하신 모든 자산을 취업준비에 활용할 수 있는 자산과 활용할 수 없는 자산으로 구분했습니다</p>
                                                     
                                                     {/* 자산 구분 테이블 */}
                                                     <div className="grid grid-cols-2 gap-3 text-xs">
                                                         {/* 돈이 나오는 자산 */}
                                                         <div className="bg-green-50 p-2 rounded border border-green-200">
-                                                            <div className="font-semibold text-green-800 mb-2">💰 생활비로 쓸 수 있는 자산</div>
+                                                            <div className="font-semibold text-green-800 mb-2">💰 취업준비에 활용할 수 있는 자산</div>
                                                             <div className="space-y-1 text-green-700">
                                                                 {parseInt(formData.financialAssets) > 0 && <div>• 현금성 자산: {formatResultAmount(parseInt(formData.financialAssets) * 10000)}</div>}
-                                                                {parseInt(formData.severancePay) > 0 && <div>• 퇴직금: {formatResultAmount(parseInt(formData.severancePay) * 10000)}</div>}
+                                                                {parseInt(formData.severancePay) > 0 && <div>• 실무경험: {parseInt(formData.severancePay)}점</div>}
                                                                 {formData.homeValue && parseInt(formData.homeValue) > 0 && enableDownsizing && (
                                                                     <div>• 주택 (매각): {formatResultAmount(calculatorResult.assetBreakdown?.realizedHousingAsset || 0)}</div>
                                                                 )}
                                                                 {parseInt(formData.housingPension) > 0 && (
-                                                                    <div>• 주택 (주택연금): {formatResultAmount(parseInt(formData.homeValue) * 10000)}</div>
+                                                                    <div>• 주택 (부동산 임대): {formatResultAmount(parseInt(formData.homeValue) * 10000)}</div>
                                                                 )}
                                                                 {formData.jeonseDeposit && parseInt(formData.jeonseDeposit) > 0 && <div>• 전세보증금: {formatResultAmount(parseInt(formData.jeonseDeposit) * 10000)}</div>}
                                                                 {formData.monthlyDeposit && parseInt(formData.monthlyDeposit) > 0 && <div>• 월세보증금: {formatResultAmount(parseInt(formData.monthlyDeposit) * 10000)}</div>}
@@ -13296,7 +13296,7 @@
                                                         
                                                         {/* 돈이 나오지 않는 자산 */}
                                                         <div className="bg-gray-50 p-2 rounded border border-gray-200">
-                                                            <div className="font-semibold text-gray-800 mb-2">🏠 생활비로 쓸 수 없는 자산</div>
+                                                            <div className="font-semibold text-gray-800 mb-2">🏠 취업준비에 활용할 수 없는 자산</div>
                                                             <div className="space-y-1 text-gray-600">
                                                                 {formData.homeValue && parseInt(formData.homeValue) > 0 && !enableDownsizing && !parseInt(formData.housingPension) && (
                                                                     <div>• {formData.housingType === 'owned_living' ? '거주용' : '임대용'} 주택: {formatResultAmount(parseInt(formData.homeValue) * 10000)}</div>
@@ -13305,7 +13305,7 @@
                                                                     <div>• 수익형 부동산: {formatResultAmount(parseInt(formData.investmentRealEstate) * 10000)}</div>
                                                                 )}
                                                                 {formData.currentDeposit && parseInt(formData.currentDeposit) > 0 && <div>• 거주지 보증금: {formatResultAmount(parseInt(formData.currentDeposit) * 10000)}</div>}
-                                                                {formData.inheritance && parseInt(formData.inheritance) > 0 && <div>• 증여/상속 예정: {formatResultAmount(parseInt(formData.inheritance) * 10000)}</div>}
+                                                                {formData.inheritance && parseInt(formData.inheritance) > 0 && <div>• 가족 지원/후원 예정: {formatResultAmount(parseInt(formData.inheritance) * 10000)}</div>}
                                                                 {(!formData.homeValue || parseInt(formData.homeValue) === 0 || 
                                                                   (formData.housingType === 'owned_living' && (enableDownsizing || parseInt(formData.housingPension))) ||
                                                                   (formData.housingType === 'owned_renting' && enableDownsizing)) && 
@@ -13344,11 +13344,11 @@
                                                                     onChange={(e) => setEnableDownsizing(e.target.checked)}
                                                                     className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
                                                                 />
-                                                                <span className="text-sm font-medium text-orange-800">매각했을 때 생활비 계산하기</span>
+                                                                <span className="text-sm font-medium text-orange-800">매각했을 때 취업준비비 계산하기</span>
                                                             </label>
                                                         </div>
                                                         <div className="text-xs text-orange-600">
-                                                            주택을 매각하면 더 많은 은퇴생활비를 확보할 수 있어요.
+                                                            부동산 지식을 활용하면 더 많은 취업 기회를 확보할 수 있어요.
                                                         </div>
                                                     </div>
                                                 )}
@@ -13363,10 +13363,10 @@
 
                                                 <div className="bg-white p-3 rounded-lg">
                                                     <div className="flex justify-between items-center mb-1">
-                                                        <span className="font-medium">• 생활비로 쓸 수 있는 자산:</span>
+                                                        <span className="font-medium">• 취업준비에 활용할 수 있는 자산:</span>
                                                         <span className="font-bold text-green-600">{formatResultAmount(calculatorResult.assetBreakdown?.availableAssets || 0)}</span>
                                                     </div>
-                                                    <p className="text-xs text-gray-600">비상자금까지 차감하고 기대수명까지 소비할 수 있는 자산입니다</p>
+                                                    <p className="text-xs text-gray-600">비상자금까지 차감하고 취업준비 기간 동안 활용할 수 있는 자산입니다</p>
                                                 </div>
 
                                                 <div className="bg-white p-3 rounded-lg">
@@ -13374,7 +13374,7 @@
                                                         <span className="font-medium">• 소비 예상 기간:</span>
                                                         <span className="font-bold text-blue-600">{calculatorResult.yearsToLive || 0}년</span>
                                                     </div>
-                                                    <p className="text-xs text-gray-600">현재 나이부터 기대수명까지 자산을 소비하는 기간입니다</p>
+                                                    <p className="text-xs text-gray-600">현재부터 취업 성공까지 자산을 활용하는 기간입니다</p>
                                                 </div>
 
                                                 <div className="bg-blue-100 p-3 rounded-lg border-t-2 border-blue-300">
@@ -13385,9 +13385,9 @@
                                             </div>
 
                                             <div className="text-xs text-blue-700 mt-3 p-3 bg-blue-100 rounded border-l-4 border-blue-400">
-                                                💡 <strong>계산 공식:</strong> 생활비로 쓸 수 있는 자산 ÷ 소비예상기간 ÷ 12개월 = 월 사용 가능 금액<br/>
+                                                💡 <strong>계산 공식:</strong> 취업준비에 활용할 수 있는 자산 ÷ 준비예상기간 ÷ 12개월 = 월 사용 가능 금액<br/>
                                                 <div className="mt-2 p-2 bg-yellow-50 rounded border border-yellow-200">
-                                                    <strong>⚠️ 중요:</strong> 이 계산은 <strong>{lifeExpectancy}세까지</strong> 자산을 소비한다고 가정하고 계산되었습니다.(투자수익률을 배제)
+                                                    <strong>⚠️ 중요:</strong> 이 계산은 <strong>{lifeExpectancy - (formData.age || 25)}년간</strong> 자산을 활용한다고 가정하고 계산되었습니다.(투자수익률을 배제)
                                                 </div>
                                             </div>
                                         </div>
@@ -13395,7 +13395,7 @@
 
                                     {calculatorResult.monthlyPension > 0 && (
                                         <div className="flex justify-between text-green-700">
-                                            <span>+ 연금 수입:</span>
+                                            <span>+ 부수입:</span>
                                             <span className="font-bold">+{formatResultAmount(calculatorResult.monthlyPension)}/월</span>
                                         </div>
                                     )}
@@ -13424,7 +13424,7 @@
                                         </div>
                                     )}
                                     <div className="flex justify-between font-bold pt-2 border-t border-blue-200 text-lg">
-                                        <span>월간 총 은퇴생활비:</span>
+                                        <span>총 경쟁력 점수:</span>
                                         <span className="text-blue-600">{formatResultAmount(calculatorResult.totalMonthlyAvailable)}/월</span>
                                     </div>
                                 </div>
@@ -13646,7 +13646,7 @@
                 isGuest: true,
                 createdAt: new Date().toISOString()
             };
-            localStorage.setItem('planb_guest_user', JSON.stringify(guestUser));
+            localStorage.setItem('insidejob_guest_user', JSON.stringify(guestUser));
             return guestUser;
         };
 
@@ -13761,8 +13761,8 @@
             const initializeApp = async () => {
                 try {
                     // 게스트 데이터 초기화 (일회성 사용)
-                    localStorage.removeItem('planb_guest_user');
-                    localStorage.removeItem('planb_calculation_result');
+                    localStorage.removeItem('insidejob_guest_user');
+                    localStorage.removeItem('insidejob_calculation_result');
                     
                     // 자동 로그인 기능 비활성화
                     // 항상 로그인 화면으로 시작
@@ -13776,7 +13776,7 @@
             // 인증 성공 핸들러
             const handleAuthSuccess = async (user) => {
                 // 로그인 성공시 로그아웃 플래그 제거
-                localStorage.removeItem('planb_user_logged_out');
+                localStorage.removeItem('insidejob_user_logged_out');
                 
                 // 사용자 프로필에서 닉네임 정보 가져오기
                 try {
@@ -13797,7 +13797,7 @@
                 }
                 
                 // 기존 게스트 데이터가 있다면 회원 계정으로 이관
-                const guestCalculation = localStorage.getItem('planb_calculation_result');
+                const guestCalculation = localStorage.getItem('insidejob_calculation_result');
                 
                 setCurrentUser(user);
                 setIsAuthenticated(true);
@@ -13821,11 +13821,11 @@
                         if (supabase) {
                             // 자동 연령대 계산
                             const getAgeGroup = (age) => {
-                                if (age < 50) return '50미만';
-                                if (age < 60) return '50대';
-                                if (age < 70) return '60대';
-                                if (age < 80) return '70대';
-                                return '80세이상';
+                                if (age < 25) return '20대';
+                                if (age < 30) return '20대 후반';
+                                if (age < 35) return '30대 초반';
+                                if (age < 40) return '30대 후반';
+                                return '40세이상';
                             };
                             
                             const saveData = {
@@ -13863,7 +13863,7 @@
                             } else {
                                 console.log('✅ 게스트 계산 결과 DB 저장 성공');
                                 // 성공적으로 저장된 후에만 localStorage 삭제
-                                localStorage.removeItem('planb_calculation_result');
+                                localStorage.removeItem('insidejob_calculation_result');
                                 console.log('🗑️ localStorage 계산 결과 삭제 완료');
                             }
                         }
@@ -13909,8 +13909,8 @@
             const handleLogout = async () => {
                 if (isGuest) {
                     // 게스트 모드 종료
-                    localStorage.removeItem('planb_guest_user');
-                    localStorage.removeItem('planb_calculation_result');
+                    localStorage.removeItem('insidejob_guest_user');
+                    localStorage.removeItem('insidejob_calculation_result');
                     setCurrentUser(null);
                     setIsGuest(false);
                     setCurrentView('login');
@@ -13920,13 +13920,13 @@
                     const result = await authManager.signOut();
                     if (result.success) {
                         // 로그아웃 상태를 localStorage에 저장
-                        localStorage.setItem('planb_user_logged_out', 'true');
+                        localStorage.setItem('insidejob_user_logged_out', 'true');
                         
                         setCurrentUser(null);
                         setIsAuthenticated(false);
                         setCurrentView('login');
                         setSavedCalculations([]);
-                        localStorage.removeItem('planb_calculation_result');
+                        localStorage.removeItem('insidejob_calculation_result');
                         console.log('로그아웃 완료 - 자동 로그인 비활성화');
                     }
                 }
@@ -13934,7 +13934,7 @@
             
             // 저장된 계산결과 불러오기
             const loadSavedCalculations = () => {
-                const saved = localStorage.getItem('planb_calculation_result');
+                const saved = localStorage.getItem('insidejob_calculation_result');
                 if (saved) {
                     // 저장된 계산 결과가 있으면 계산기 화면으로 이동하여 결과 표시
                     setSavedCalculations([JSON.parse(saved)]);
@@ -13955,7 +13955,7 @@
                             .upsert({
                                 user_id: currentUser.id,
                                 age: calculationResult.formData?.age,
-                                age_group: calculationResult.formData?.age >= 60 ? '60대' : '50대',
+                                age_group: getAgeGroup(calculationResult.formData?.age || 25),
                                 health_status: calculationResult.formData?.health,
                                 life_mode: calculationResult.formData?.lifeMode,
                                 housing_type: calculationResult.formData?.housingType,
@@ -14450,7 +14450,7 @@
                                 
                                 {/* 기능 카드들 - 핵심 서비스만 표시 */}
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 max-w-4xl mx-auto">
-                                    {/* 1. 은퇴생활비 계산기 */}
+                                    {/* 1. 취업경쟁력 진단기 */}
                                     <div className="card hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-2" 
                                          onClick={() => setCurrentView('calculator')}>
                                         <div className="text-5xl mb-4">🎯</div>
@@ -14523,7 +14523,7 @@
                                             <div className="text-center">
                                                 <div className="text-4xl mb-4">🔍</div>
                                                 <h3 className="text-lg font-bold text-gray-900 mb-3">
-                                                    궁금하시죠? <br/> 은퇴생활비를 먼저 계산해보세요 😊
+                                                    궁금하시죠? <br/> 취업경쟁력을 먼저 진단해보세요
                                                 </h3>
                                                 <p className="text-sm text-gray-600 mb-6 leading-relaxed">
                                                     <strong>자신의 상황을 알아야 현직자에게 더 나은 멘토링을 받을 수 있어요!</strong><br/><br/>
@@ -14639,10 +14639,10 @@
                                 <div className="text-center">
                                     <div className="text-4xl mb-4">🧮</div>
                                     <h3 className="text-lg font-bold text-gray-900 mb-3">
-                                        궁금하시죠? <br/> 은퇴생활비를 먼저 계산해보세요 😊
+                                        궁금하시죠? <br/> 취업경쟁력을 먼저 진단해보세요
                                     </h3>
                                     <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-                                        <strong>은퇴 후 생활비로 얼마씩 써야할까요?</strong><br/><br/>
+                                        <strong>나의 취업경쟁력은 얼마나 될까요?</strong><br/><br/>
                                         3분만 계산해보시면 더 재미있게<br/>
                                         커뮤니티를 이용하실 수 있어요!
                                     </p>
@@ -14827,7 +14827,7 @@
             });
             document.getElementById('root').innerHTML = `
                 <div style="padding: 40px; text-align: center; font-family: -apple-system, sans-serif;">
-                    <h1 style="color: #1f2937; margin-bottom: 20px;">플랜비</h1>
+                    <h1 style="color: #1f2937; margin-bottom: 20px;">인사이드잡</h1>
                     <p style="color: #dc2626; font-weight: bold; margin-bottom: 10px;">오류가 발생했습니다</p>
                     <p style="color: #374151; font-size: 14px; margin-bottom: 10px;">오류 내용: ${error.message}</p>
                     <p style="color: #6b7280; font-size: 12px; margin-bottom: 20px;">브라우저 콘솔을 확인해주세요 (F12)</p>
