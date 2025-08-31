@@ -5696,56 +5696,88 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="space-y-3">
-                                                <label 
-                                                    className="flex items-start cursor-pointer"
-                                                    onClick={() => {
+                                            {React.createElement('div', {
+                                                className: 'space-y-3'
+                                            }, [
+                                                React.createElement('div', {
+                                                    key: 'privacy-consent',
+                                                    className: 'p-3 border rounded-lg cursor-pointer',
+                                                    style: {
+                                                        borderColor: privacyConsent ? '#3b82f6' : '#d1d5db',
+                                                        backgroundColor: privacyConsent ? '#eff6ff' : 'white'
+                                                    },
+                                                    onClick: () => {
                                                         const newValue = !privacyConsent;
                                                         setPrivacyConsent(newValue);
                                                         
-                                                        // DOM 직접 조작으로 동기화 (전문가 등록과 동일한 방식)
+                                                        // DOM 직접 조작으로 강제 동기화
                                                         setTimeout(() => {
-                                                            const checkbox = document.getElementById('privacy-consent-fixed');
-                                                            if (checkbox) checkbox.checked = newValue;
+                                                            const checkbox = document.getElementById('privacy-consent-createElement');
+                                                            if (checkbox) {
+                                                                checkbox.checked = newValue;
+                                                                console.log('Privacy checkbox set to:', newValue);
+                                                            }
                                                         }, 0);
-                                                    }}
-                                                >
-                                                    <input
-                                                        id="privacy-consent-fixed"
-                                                        type="checkbox"
-                                                        readOnly
-                                                        className="mt-1 w-4 h-4 pointer-events-none"
-                                                        style={{ accentColor: '#3b82f6' }}
-                                                    />
-                                                    <span className="ml-3 text-sm text-gray-700">
-                                                        [필수] 개인정보 수집·이용 동의 <span className="text-red-500">*</span>
-                                                    </span>
-                                                </label>
-                                                <label 
-                                                    className="flex items-start cursor-pointer"
-                                                    onClick={() => {
+                                                    }
+                                                }, [
+                                                    React.createElement('label', {
+                                                        key: 'privacy-label',
+                                                        className: 'flex items-start cursor-pointer'
+                                                    }, [
+                                                        React.createElement('input', {
+                                                            key: 'privacy-input',
+                                                            id: 'privacy-consent-createElement',
+                                                            type: 'checkbox',
+                                                            readOnly: true,
+                                                            className: 'mt-1 w-4 h-4 pointer-events-none',
+                                                            style: { accentColor: '#3b82f6' }
+                                                        }),
+                                                        React.createElement('span', {
+                                                            key: 'privacy-text',
+                                                            className: 'ml-3 text-sm text-gray-700 font-medium select-none'
+                                                        }, '[필수] 개인정보 수집·이용 동의 *')
+                                                    ])
+                                                ]),
+                                                React.createElement('div', {
+                                                    key: 'terms-consent',
+                                                    className: 'p-3 border rounded-lg cursor-pointer',
+                                                    style: {
+                                                        borderColor: termsConsent ? '#3b82f6' : '#d1d5db',
+                                                        backgroundColor: termsConsent ? '#eff6ff' : 'white'
+                                                    },
+                                                    onClick: () => {
                                                         const newValue = !termsConsent;
                                                         setTermsConsent(newValue);
                                                         
-                                                        // DOM 직접 조작으로 동기화 (전문가 등록과 동일한 방식)
+                                                        // DOM 직접 조작으로 강제 동기화
                                                         setTimeout(() => {
-                                                            const checkbox = document.getElementById('terms-consent-fixed');
-                                                            if (checkbox) checkbox.checked = newValue;
+                                                            const checkbox = document.getElementById('terms-consent-createElement');
+                                                            if (checkbox) {
+                                                                checkbox.checked = newValue;
+                                                                console.log('Terms checkbox set to:', newValue);
+                                                            }
                                                         }, 0);
-                                                    }}
-                                                >
-                                                    <input
-                                                        id="terms-consent-fixed"
-                                                        type="checkbox"
-                                                        readOnly
-                                                        className="mt-1 w-4 h-4 pointer-events-none"
-                                                        style={{ accentColor: '#3b82f6' }}
-                                                    />
-                                                    <span className="ml-3 text-sm text-gray-700">
-                                                        [필수] 서비스 이용약관 동의 <span className="text-red-500">*</span>
-                                                    </span>
-                                                </label>
-                                            </div>
+                                                    }
+                                                }, [
+                                                    React.createElement('label', {
+                                                        key: 'terms-label',
+                                                        className: 'flex items-start cursor-pointer'
+                                                    }, [
+                                                        React.createElement('input', {
+                                                            key: 'terms-input',
+                                                            id: 'terms-consent-createElement',
+                                                            type: 'checkbox',
+                                                            readOnly: true,
+                                                            className: 'mt-1 w-4 h-4 pointer-events-none',
+                                                            style: { accentColor: '#3b82f6' }
+                                                        }),
+                                                        React.createElement('span', {
+                                                            key: 'terms-text',
+                                                            className: 'ml-3 text-sm text-gray-700 font-medium select-none'
+                                                        }, '[필수] 서비스 이용약관 동의 *')
+                                                    ])
+                                                ])
+                                            ])}
                                         </div>
                                     </>
                                 )}
