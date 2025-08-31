@@ -1003,23 +1003,27 @@
                             borderColor: checked ? '#ea580c' : '#d1d5db',
                             backgroundColor: checked ? '#fff7ed' : 'white'
                         }}>
-                            <label className="flex items-center space-x-3 cursor-pointer">
+                            <label 
+                                className="flex items-center space-x-3 cursor-pointer"
+                                onClick={() => {
+                                    const newValue = !checked;
+                                    if (onChange) {
+                                        onChange(newValue);
+                                    }
+                                    
+                                    // DOM 직접 조작으로 동기화
+                                    setTimeout(() => {
+                                        const checkbox = document.getElementById('expert-privacy-checkbox-fixed');
+                                        if (checkbox) checkbox.checked = newValue;
+                                    }, 0);
+                                }}
+                            >
                                 <input
+                                    id="expert-privacy-checkbox-fixed"
                                     type="checkbox"
-                                    checked={!!checked}
-                                    onClick={(e) => {
-                                        const newValue = !checked;
-                                        if (onChange) {
-                                            onChange(newValue);
-                                        }
-                                    }}
-                                    onChange={() => {
-                                        // onClick에서 처리하므로 빈 함수
-                                    }}
-                                    className="expert-checkbox mt-1 w-4 h-4 text-orange-600 border-2 border-gray-300 rounded focus:ring-orange-500 focus:ring-2 cursor-pointer"
-                                    style={{
-                                        accentColor: '#ea580c'
-                                    }}
+                                    readOnly
+                                    className="mt-1 w-4 h-4 pointer-events-none"
+                                    style={{ accentColor: '#ea580c' }}
                                 />
                                 <div className="flex-1 text-sm text-gray-800 font-medium select-none">
                                     [필수] 개인정보 수집·이용 동의
@@ -1031,23 +1035,27 @@
                             borderColor: termsChecked ? '#ea580c' : '#d1d5db',
                             backgroundColor: termsChecked ? '#fff7ed' : 'white'
                         }}>
-                            <label className="flex items-center space-x-3 cursor-pointer">
+                            <label 
+                                className="flex items-center space-x-3 cursor-pointer"
+                                onClick={() => {
+                                    const newValue = !termsChecked;
+                                    if (onTermsChange) {
+                                        onTermsChange(newValue);
+                                    }
+                                    
+                                    // DOM 직접 조작으로 동기화
+                                    setTimeout(() => {
+                                        const checkbox = document.getElementById('expert-terms-checkbox-fixed');
+                                        if (checkbox) checkbox.checked = newValue;
+                                    }, 0);
+                                }}
+                            >
                                 <input
+                                    id="expert-terms-checkbox-fixed"
                                     type="checkbox"
-                                    checked={!!termsChecked}
-                                    onClick={(e) => {
-                                        const newValue = !termsChecked;
-                                        if (onTermsChange) {
-                                            onTermsChange(newValue);
-                                        }
-                                    }}
-                                    onChange={() => {
-                                        // onClick에서 처리하므로 빈 함수
-                                    }}
-                                    className="expert-checkbox mt-1 w-4 h-4 text-orange-600 border-2 border-gray-300 rounded focus:ring-orange-500 focus:ring-2 cursor-pointer"
-                                    style={{
-                                        accentColor: '#ea580c'
-                                    }}
+                                    readOnly
+                                    className="mt-1 w-4 h-4 pointer-events-none"
+                                    style={{ accentColor: '#ea580c' }}
                                 />
                                 <div className="flex-1 text-sm text-gray-800 font-medium select-none">
                                     [필수] 현직자 서비스 약관 동의
@@ -5689,30 +5697,54 @@
                                                 </div>
                                             </div>
                                             <div className="space-y-3">
-                                                <div className="flex items-start">
+                                                <label 
+                                                    className="flex items-start cursor-pointer"
+                                                    onClick={() => {
+                                                        const newValue = !privacyConsent;
+                                                        setPrivacyConsent(newValue);
+                                                        
+                                                        // DOM 직접 조작으로 동기화
+                                                        setTimeout(() => {
+                                                            const checkbox = document.getElementById('privacy-consent-fixed');
+                                                            if (checkbox) checkbox.checked = newValue;
+                                                        }, 0);
+                                                    }}
+                                                >
                                                     <input
-                                                        id="privacy-consent-new"
+                                                        id="privacy-consent-fixed"
                                                         type="checkbox"
-                                                        checked={privacyConsent}
-                                                        onChange={(e) => setPrivacyConsent(e.target.checked)}
-                                                        className="custom-checkbox"
+                                                        readOnly
+                                                        className="mt-1 w-4 h-4 pointer-events-none"
+                                                        style={{ accentColor: '#3b82f6' }}
                                                     />
-                                                    <label htmlFor="privacy-consent-new" className="ml-3 text-sm text-gray-700">
+                                                    <span className="ml-3 text-sm text-gray-700">
                                                         [필수] 개인정보 수집·이용 동의 <span className="text-red-500">*</span>
-                                                    </label>
-                                                </div>
-                                                <div className="flex items-start">
+                                                    </span>
+                                                </label>
+                                                <label 
+                                                    className="flex items-start cursor-pointer"
+                                                    onClick={() => {
+                                                        const newValue = !termsConsent;
+                                                        setTermsConsent(newValue);
+                                                        
+                                                        // DOM 직접 조작으로 동기화
+                                                        setTimeout(() => {
+                                                            const checkbox = document.getElementById('terms-consent-fixed');
+                                                            if (checkbox) checkbox.checked = newValue;
+                                                        }, 0);
+                                                    }}
+                                                >
                                                     <input
-                                                        id="terms-consent-new"
+                                                        id="terms-consent-fixed"
                                                         type="checkbox"
-                                                        checked={termsConsent}
-                                                        onChange={(e) => setTermsConsent(e.target.checked)}
-                                                        className="custom-checkbox"
+                                                        readOnly
+                                                        className="mt-1 w-4 h-4 pointer-events-none"
+                                                        style={{ accentColor: '#3b82f6' }}
                                                     />
-                                                    <label htmlFor="terms-consent-new" className="ml-3 text-sm text-gray-700">
+                                                    <span className="ml-3 text-sm text-gray-700">
                                                         [필수] 서비스 이용약관 동의 <span className="text-red-500">*</span>
-                                                    </label>
-                                                </div>
+                                                    </span>
+                                                </label>
                                             </div>
                                         </div>
                                     </>
