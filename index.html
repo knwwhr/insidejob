@@ -892,7 +892,7 @@
         };
 
         // 전문가용 개인정보수집이용동의서 컴포넌트
-        const ExpertPrivacyConsentComponent = ({ checked, onChange }) => {
+        const ExpertPrivacyConsentComponent = ({ checked, onChange, termsChecked, onTermsChange }) => {
             const [showFullText, setShowFullText] = useState(false);
 
             return (
@@ -901,11 +901,11 @@
                         <h3 className="text-lg font-semibold text-gray-800 mb-2">개인정보 수집·이용 동의서</h3>
                         <div className="text-sm text-gray-700 space-y-2">
                             <div className="bg-white p-3 rounded border">
-                                <p><strong>• 수집항목:</strong> 성명, 이메일, 연락처, 전문분야, 자격증·경력정보, 사업자등록증</p>
-                                <p><strong>• 수집목적:</strong> 현직자 신원확인, 자격검증, 멘토링서비스 제공, 수수료 정산</p>
-                                <p><strong>• 보유기간:</strong> 서비스 탈퇴 후 3년 (전자상거래법)</p>
-                                <p><strong>• 제3자 제공:</strong> 상담 매칭을 위한 최소정보만 고객에게 제공</p>
-                                <p className="text-red-600"><strong>• 동의거부권:</strong> 동의를 거부할 수 있으나, 서비스 이용이 제한됩니다</p>
+                                <p><strong>• 수집항목:</strong> 성명, 이메일, 연락처, 회사명, 직무분야, 경력정보, 재직증명서</p>
+                                <p><strong>• 수집목적:</strong> 현직자 신원확인, 자격검증, 취업멘토링 서비스 제공, 수수료 정산</p>
+                                <p><strong>• 보유기간:</strong> 서비스 탈퇴 후 5년 (소득세법, 전자상거래법)</p>
+                                <p><strong>• 제3자 제공:</strong> 멘토링 매칭을 위한 최소정보만 구직자에게 제공</p>
+                                <p className="text-red-600"><strong>• 동의거부권:</strong> 동의를 거부할 수 있으나, 현직자 등록이 제한됩니다</p>
                             </div>
                             
                             <button
@@ -974,33 +974,63 @@
                         </div>
                     </div>
                     
-                    <div className="p-3 border rounded-lg" style={{
-                        borderColor: checked ? '#ea580c' : '#d1d5db',
-                        backgroundColor: checked ? '#fff7ed' : 'white'
-                    }}>
-                        <label className="flex items-center space-x-3 cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={!!checked}
-                                onClick={(e) => {
-                                    const newValue = !checked;
-                                    if (onChange) {
-                                        onChange(newValue);
-                                    }
-                                }}
-                                onChange={() => {
-                                    // onClick에서 처리하므로 빈 함수
-                                }}
-                                className="expert-checkbox mt-1 w-4 h-4 text-orange-600 border-2 border-gray-300 rounded focus:ring-orange-500 focus:ring-2 cursor-pointer"
-                                style={{
-                                    accentColor: '#ea580c'
-                                }}
-                            />
-                            <div className="flex-1 text-sm text-gray-800 font-medium select-none">
-                                위 개인정보 수집·이용에 동의합니다
-                                <span className="text-red-500 ml-1">*</span>
-                            </div>
-                        </label>
+                    <div className="space-y-3">
+                        <div className="p-3 border rounded-lg" style={{
+                            borderColor: checked ? '#ea580c' : '#d1d5db',
+                            backgroundColor: checked ? '#fff7ed' : 'white'
+                        }}>
+                            <label className="flex items-center space-x-3 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={!!checked}
+                                    onClick={(e) => {
+                                        const newValue = !checked;
+                                        if (onChange) {
+                                            onChange(newValue);
+                                        }
+                                    }}
+                                    onChange={() => {
+                                        // onClick에서 처리하므로 빈 함수
+                                    }}
+                                    className="expert-checkbox mt-1 w-4 h-4 text-orange-600 border-2 border-gray-300 rounded focus:ring-orange-500 focus:ring-2 cursor-pointer"
+                                    style={{
+                                        accentColor: '#ea580c'
+                                    }}
+                                />
+                                <div className="flex-1 text-sm text-gray-800 font-medium select-none">
+                                    [필수] 개인정보 수집·이용 동의
+                                    <span className="text-red-500 ml-1">*</span>
+                                </div>
+                            </label>
+                        </div>
+                        <div className="p-3 border rounded-lg" style={{
+                            borderColor: termsChecked ? '#ea580c' : '#d1d5db',
+                            backgroundColor: termsChecked ? '#fff7ed' : 'white'
+                        }}>
+                            <label className="flex items-center space-x-3 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={!!termsChecked}
+                                    onClick={(e) => {
+                                        const newValue = !termsChecked;
+                                        if (onTermsChange) {
+                                            onTermsChange(newValue);
+                                        }
+                                    }}
+                                    onChange={() => {
+                                        // onClick에서 처리하므로 빈 함수
+                                    }}
+                                    className="expert-checkbox mt-1 w-4 h-4 text-orange-600 border-2 border-gray-300 rounded focus:ring-orange-500 focus:ring-2 cursor-pointer"
+                                    style={{
+                                        accentColor: '#ea580c'
+                                    }}
+                                />
+                                <div className="flex-1 text-sm text-gray-800 font-medium select-none">
+                                    [필수] 현직자 서비스 약관 동의
+                                    <span className="text-red-500 ml-1">*</span>
+                                </div>
+                            </label>
+                        </div>
                     </div>
                 </div>
             );
@@ -5071,7 +5101,9 @@
             const [customNickname, setCustomNickname] = useState('');
             const [useCustomNickname, setUseCustomNickname] = useState(false);
             const [privacyConsent, setPrivacyConsent] = useState(false);
+            const [termsConsent, setTermsConsent] = useState(false); // 서비스 이용약관 동의
             const [expertPrivacyConsent, setExpertPrivacyConsent] = useState(false); // 전문가 등록 전용
+            const [expertTermsConsent, setExpertTermsConsent] = useState(false); // 전문가 약관 동의
             
             // 전문가 등록 관련 상태
             const [expertProfile, setExpertProfile] = useState({
@@ -5177,6 +5209,10 @@
                             setError('개인정보 수집·이용에 동의해주세요');
                             return;
                         }
+                        if (!termsConsent) {
+                            setError('서비스 이용약관에 동의해주세요');
+                            return;
+                        }
 
                         const result = await authManager.signUp(email, password, finalNickname);
                         if (result.success) {
@@ -5210,6 +5246,10 @@
                     }
                     if (!expertPrivacyConsent) {
                         setError('개인정보 수집·이용에 동의해주세요');
+                        return;
+                    }
+                    if (!expertTermsConsent) {
+                        setError('서비스 이용약관에 동의해주세요');
                         return;
                     }
                     if (!expertProfile.phone) {
@@ -5569,34 +5609,55 @@
                                         {/* 개인정보 수집·이용 동의서 */}
                                         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                                             <h4 className="text-sm font-medium text-gray-800 mb-3">개인정보 수집·이용 동의</h4>
-                                            <div className="bg-white border border-gray-200 rounded p-3 text-xs text-gray-600 mb-3 max-h-32 overflow-y-auto">
-                                                <div className="space-y-2">
+                                            <div className="bg-white border border-gray-200 rounded p-3 text-xs text-gray-600 mb-3 max-h-40 overflow-y-auto">
+                                                <div className="space-y-3">
                                                     <div>
-                                                        <strong className="text-gray-800">■ 수집하는 개인정보 항목</strong>
-                                                        <p>- 이메일 주소, 닉네임</p>
+                                                        <strong className="text-gray-800">■ 개인정보 수집·이용 목적</strong>
+                                                        <p>• 회원 가입 및 본인 확인<br/>• 취업경쟁력 진단 서비스 제공<br/>• 구직자 커뮤니티 운영<br/>• 현직자 멘토링 매칭 서비스<br/>• 고객 상담 및 불만 처리</p>
                                                     </div>
                                                     <div>
-                                                        <strong className="text-gray-800">■ 개인정보 수집 및 이용목적</strong>
-                                                        <p>- 회원 가입 및 관리</p>
-                                                        <p>- 서비스 제공 및 본인확인</p>
-                                                        <p>- 계산 결과 저장 및 커뮤니티 이용</p>
+                                                        <strong className="text-gray-800">■ 수집하는 개인정보 항목</strong>
+                                                        <p>• 필수항목: 이메일, 닉네임, 비밀번호<br/>• 선택항목: 나이, 학력, 전공, 취업경쟁력 진단결과<br/>• 자동수집: 접속IP, 이용기록, 쿠키정보</p>
                                                     </div>
                                                     <div>
                                                         <strong className="text-gray-800">■ 개인정보 보유 및 이용기간</strong>
-                                                        <p>- 회원탈퇴 시까지</p>
-                                                        <p>- 단, 관계법령에 의해 보존할 필요가 있는 경우 해당 기간까지</p>
+                                                        <p>• 회원탈퇴 시까지<br/>• 관계법령에 따른 보존: 최대 5년<br/>• 진단결과: 회원탈퇴 후 즉시 삭제</p>
                                                     </div>
                                                     <div>
-                                                        <strong className="text-gray-800">■ 동의 거부 권리</strong>
-                                                        <p>- 개인정보 수집·이용에 대한 동의를 거부할 권리가 있습니다</p>
-                                                        <p>- 다만, 동의 거부 시 서비스 이용이 제한될 수 있습니다</p>
+                                                        <strong className="text-gray-800">■ 개인정보 제3자 제공</strong>
+                                                        <p>• 원칙적으로 제3자 제공하지 않음<br/>• 법령에 의한 경우에만 예외적 제공</p>
+                                                    </div>
+                                                    <div>
+                                                        <p>※ 개인정보 수집·이용에 대한 동의를 거부할 권리가 있으나, 서비스 이용이 제한될 수 있습니다.</p>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <PrivacyConsentCheckbox 
-                                                checked={privacyConsent}
-                                                onChange={setPrivacyConsent}
-                                            />
+                                            <div className="space-y-3">
+                                                <div className="flex items-center">
+                                                    <input
+                                                        id="privacy-consent"
+                                                        type="checkbox"
+                                                        checked={privacyConsent}
+                                                        onChange={(e) => setPrivacyConsent(e.target.checked)}
+                                                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                                    />
+                                                    <label htmlFor="privacy-consent" className="ml-2 text-sm text-gray-700">
+                                                        [필수] 개인정보 수집·이용 동의 <span className="text-red-500">*</span>
+                                                    </label>
+                                                </div>
+                                                <div className="flex items-center">
+                                                    <input
+                                                        id="terms-consent"
+                                                        type="checkbox"
+                                                        checked={termsConsent}
+                                                        onChange={(e) => setTermsConsent(e.target.checked)}
+                                                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                                    />
+                                                    <label htmlFor="terms-consent" className="ml-2 text-sm text-gray-700">
+                                                        [필수] 서비스 이용약관 동의 <span className="text-red-500">*</span>
+                                                    </label>
+                                                </div>
+                                            </div>
                                         </div>
                                     </>
                                 )}
