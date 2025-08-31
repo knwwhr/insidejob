@@ -5696,112 +5696,81 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            {React.createElement('div', {
-                                                className: 'space-y-3'
-                                            }, [
-                                                React.createElement('div', {
-                                                    key: 'privacy-consent',
-                                                    className: 'p-3 border rounded-lg cursor-pointer',
-                                                    style: {
-                                                        borderColor: privacyConsent ? '#3b82f6' : '#d1d5db',
-                                                        backgroundColor: privacyConsent ? '#eff6ff' : 'white'
-                                                    },
-                                                    onClick: () => {
-                                                        const newValue = !privacyConsent;
-                                                        setPrivacyConsent(newValue);
-                                                        
-                                                        // DOM 직접 조작으로 강제 동기화 (다중 방식)
-                                                        setTimeout(() => {
-                                                            const checkbox = document.getElementById('privacy-consent-createElement');
-                                                            if (checkbox) {
-                                                                checkbox.checked = newValue;
-                                                                checkbox.setAttribute('checked', newValue ? 'checked' : '');
-                                                                if (newValue) {
-                                                                    checkbox.setAttribute('aria-checked', 'true');
-                                                                    checkbox.style.accentColor = '#3b82f6';
-                                                                } else {
-                                                                    checkbox.removeAttribute('aria-checked');
-                                                                    checkbox.style.accentColor = '#d1d5db';
+                                            <div className="space-y-3">
+                                                <div key="privacy-consent">
+                                                    <div 
+                                                        className="flex items-center space-x-3 cursor-pointer p-3 border rounded-lg"
+                                                        style={{
+                                                            borderColor: privacyConsent ? '#3b82f6' : '#d1d5db',
+                                                            backgroundColor: privacyConsent ? '#eff6ff' : 'white'
+                                                        }}
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                            const newValue = !privacyConsent;
+                                                            setPrivacyConsent(newValue);
+                                                            
+                                                            // DOM 직접 조작으로 동기화
+                                                            setTimeout(() => {
+                                                                const checkbox = document.getElementById('general-privacy-checkbox');
+                                                                if (checkbox) {
+                                                                    checkbox.checked = newValue;
+                                                                    console.log('General privacy checkbox set to:', newValue);
                                                                 }
-                                                                // 브라우저 강제 리렌더링
-                                                                checkbox.style.display = 'none';
-                                                                checkbox.offsetHeight; // 강제 reflow
-                                                                checkbox.style.display = 'block';
-                                                                console.log('Privacy checkbox set to:', newValue, 'DOM checked:', checkbox.checked);
-                                                            }
-                                                        }, 0);
-                                                    }
-                                                }, [
-                                                    React.createElement('label', {
-                                                        key: 'privacy-label',
-                                                        className: 'flex items-start cursor-pointer'
-                                                    }, [
-                                                        React.createElement('input', {
-                                                            key: 'privacy-input',
-                                                            id: 'privacy-consent-createElement',
-                                                            type: 'checkbox',
-                                                            readOnly: true,
-                                                            className: 'mt-1 w-4 h-4 pointer-events-none',
-                                                            style: { accentColor: '#3b82f6' }
-                                                        }),
-                                                        React.createElement('span', {
-                                                            key: 'privacy-text',
-                                                            className: 'ml-3 text-sm text-gray-700 font-medium select-none'
-                                                        }, '[필수] 개인정보 수집·이용 동의 *')
-                                                    ])
-                                                ]),
-                                                React.createElement('div', {
-                                                    key: 'terms-consent',
-                                                    className: 'p-3 border rounded-lg cursor-pointer',
-                                                    style: {
-                                                        borderColor: termsConsent ? '#3b82f6' : '#d1d5db',
-                                                        backgroundColor: termsConsent ? '#eff6ff' : 'white'
-                                                    },
-                                                    onClick: () => {
-                                                        const newValue = !termsConsent;
-                                                        setTermsConsent(newValue);
-                                                        
-                                                        // DOM 직접 조작으로 강제 동기화 (다중 방식)
-                                                        setTimeout(() => {
-                                                            const checkbox = document.getElementById('terms-consent-createElement');
-                                                            if (checkbox) {
-                                                                checkbox.checked = newValue;
-                                                                checkbox.setAttribute('checked', newValue ? 'checked' : '');
-                                                                if (newValue) {
-                                                                    checkbox.setAttribute('aria-checked', 'true');
-                                                                    checkbox.style.accentColor = '#3b82f6';
-                                                                } else {
-                                                                    checkbox.removeAttribute('aria-checked');
-                                                                    checkbox.style.accentColor = '#d1d5db';
+                                                            }, 0);
+                                                        }}
+                                                    >
+                                                        <input
+                                                            id="general-privacy-checkbox"
+                                                            type="checkbox"
+                                                            readOnly
+                                                            className="mt-1 w-4 h-4 pointer-events-none expert-checkbox"
+                                                            style={{ accentColor: '#3b82f6' }}
+                                                        />
+                                                        <div className="flex-1 text-sm text-gray-700 font-medium select-none">
+                                                            [필수] 개인정보 수집·이용 동의
+                                                            <span className="text-red-500 ml-1">*</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div key="terms-consent">
+                                                    <div 
+                                                        className="flex items-center space-x-3 cursor-pointer p-3 border rounded-lg"
+                                                        style={{
+                                                            borderColor: termsConsent ? '#3b82f6' : '#d1d5db',
+                                                            backgroundColor: termsConsent ? '#eff6ff' : 'white'
+                                                        }}
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                            const newValue = !termsConsent;
+                                                            setTermsConsent(newValue);
+                                                            
+                                                            // DOM 직접 조작으로 동기화
+                                                            setTimeout(() => {
+                                                                const checkbox = document.getElementById('general-terms-checkbox');
+                                                                if (checkbox) {
+                                                                    checkbox.checked = newValue;
+                                                                    console.log('General terms checkbox set to:', newValue);
                                                                 }
-                                                                // 브라우저 강제 리렌더링
-                                                                checkbox.style.display = 'none';
-                                                                checkbox.offsetHeight; // 강제 reflow
-                                                                checkbox.style.display = 'block';
-                                                                console.log('Terms checkbox set to:', newValue, 'DOM checked:', checkbox.checked);
-                                                            }
-                                                        }, 0);
-                                                    }
-                                                }, [
-                                                    React.createElement('label', {
-                                                        key: 'terms-label',
-                                                        className: 'flex items-start cursor-pointer'
-                                                    }, [
-                                                        React.createElement('input', {
-                                                            key: 'terms-input',
-                                                            id: 'terms-consent-createElement',
-                                                            type: 'checkbox',
-                                                            readOnly: true,
-                                                            className: 'mt-1 w-4 h-4 pointer-events-none',
-                                                            style: { accentColor: '#3b82f6' }
-                                                        }),
-                                                        React.createElement('span', {
-                                                            key: 'terms-text',
-                                                            className: 'ml-3 text-sm text-gray-700 font-medium select-none'
-                                                        }, '[필수] 서비스 이용약관 동의 *')
-                                                    ])
-                                                ])
-                                            ])}
+                                                            }, 0);
+                                                        }}
+                                                    >
+                                                        <input
+                                                            id="general-terms-checkbox"
+                                                            type="checkbox"
+                                                            readOnly
+                                                            className="mt-1 w-4 h-4 pointer-events-none expert-checkbox"
+                                                            style={{ accentColor: '#3b82f6' }}
+                                                        />
+                                                        <div className="flex-1 text-sm text-gray-700 font-medium select-none">
+                                                            [필수] 서비스 이용약관 동의
+                                                            <span className="text-red-500 ml-1">*</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </>
                                 )}
