@@ -1,12 +1,73 @@
--- 커리어코치 (CareerCoach) 데이터베이스 스키마
+-- 인사이드잡 (InsideJob) 데이터베이스 스키마 v3.0
 -- 기반: 플랜비(Plan B) 데이터베이스 구조 확장 및 변환
--- 작성일: 2025년 8월 29일
+-- 최종 업데이트: 2025년 8월 31일
+
+-- ==============================================
+-- 0. 기존 데이터베이스 정리 (안전한 업데이트)
+-- ==============================================
+
+-- 기존 정책들 삭제 (존재하는 경우만)
+DROP POLICY IF EXISTS "Users can view own profile" ON user_profiles;
+DROP POLICY IF EXISTS "Users can update own profile" ON user_profiles;
+DROP POLICY IF EXISTS "Anyone can create profile" ON user_profiles;
+DROP POLICY IF EXISTS "Users can view own calculations" ON career_calculations;
+DROP POLICY IF EXISTS "Anyone can create calculations" ON career_calculations;
+DROP POLICY IF EXISTS "Users can update own calculations" ON career_calculations;
+DROP POLICY IF EXISTS "Anyone can view posts" ON job_seeker_posts;
+DROP POLICY IF EXISTS "Members can create posts" ON job_seeker_posts;
+DROP POLICY IF EXISTS "Users can update own posts" ON job_seeker_posts;
+DROP POLICY IF EXISTS "Users can view own professional requests" ON professional_requests;
+DROP POLICY IF EXISTS "Anyone can create professional requests" ON professional_requests;
+DROP POLICY IF EXISTS "Admins can manage all professional requests" ON professional_requests;
+DROP POLICY IF EXISTS "Users can view own bookings" ON consultation_bookings;
+DROP POLICY IF EXISTS "Job seekers can create bookings" ON consultation_bookings;
+DROP POLICY IF EXISTS "Participants can update bookings" ON consultation_bookings;
+DROP POLICY IF EXISTS "Anyone can view active announcements" ON announcements;
+DROP POLICY IF EXISTS "Admins can manage announcements" ON announcements;
+DROP POLICY IF EXISTS "Admins can manage system settings" ON system_settings;
+DROP POLICY IF EXISTS "Users can view own messages" ON member_messages;
+DROP POLICY IF EXISTS "Users can send messages" ON member_messages;
+DROP POLICY IF EXISTS "Users can update own messages" ON member_messages;
+DROP POLICY IF EXISTS "Consultation participants can view chat messages" ON chat_messages;
+DROP POLICY IF EXISTS "Consultation participants can send messages" ON chat_messages;
+-- 새로운 테이블 정책들은 테이블이 존재할 때만 삭제
+DO $$ 
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'chat_files') THEN
+        DROP POLICY IF EXISTS "Users can view shared files in their chat rooms" ON chat_files;
+        DROP POLICY IF EXISTS "Users can upload files to their chat rooms" ON chat_files;
+    END IF;
+    
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'user_documents') THEN
+        DROP POLICY IF EXISTS "Users can view own documents" ON user_documents;
+        DROP POLICY IF EXISTS "Users can upload own documents" ON user_documents;
+        DROP POLICY IF EXISTS "Users can update own documents" ON user_documents;
+    END IF;
+END $$;
+
+-- 새로운 테이블들만 삭제 (기존 core 테이블은 보존)
+DROP TABLE IF EXISTS chat_files CASCADE;
+DROP TABLE IF EXISTS user_documents CASCADE;
+
+-- 기존 트리거들 삭제 (존재하는 테이블만)
+DROP TRIGGER IF EXISTS update_user_profiles_updated_at ON user_profiles;
+DROP TRIGGER IF EXISTS update_career_calculations_updated_at ON career_calculations;
+DROP TRIGGER IF EXISTS update_job_seeker_posts_updated_at ON job_seeker_posts;
+DROP TRIGGER IF EXISTS update_professional_requests_updated_at ON professional_requests;
+DROP TRIGGER IF EXISTS update_consultation_bookings_updated_at ON consultation_bookings;
+DROP TRIGGER IF EXISTS calculate_consultation_fees ON consultation_bookings;
+DROP TRIGGER IF EXISTS update_comment_count ON post_comments;
+
+-- 기존 함수들 삭제
+DROP FUNCTION IF EXISTS update_updated_at_column();
+DROP FUNCTION IF EXISTS calculate_consultation_fees();
+DROP FUNCTION IF EXISTS update_post_comment_count();
 
 -- ==============================================
 -- 1. 사용자 프로필 (플랜비 구조 그대로 활용)
 -- ==============================================
 
-CREATE TABLE user_profiles (
+CREATE TABLE IF NOT EXISTS user_profiles (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE,
     nickname TEXT NOT NULL,
@@ -34,7 +95,7 @@ CREATE TABLE user_profiles (
 -- 2. 취업경쟁력 계산 결과 (플랜비 계산 결과 구조 변환)
 -- ==============================================
 
-CREATE TABLE career_calculations (
+CREATE TABLE IF NOT EXISTS career_calculations (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     
@@ -75,7 +136,7 @@ CREATE TABLE career_calculations (
 -- 3. 구직자 커뮤니티 (플랜비 커뮤니티 구조 확장)
 -- ==============================================
 
-CREATE TABLE job_seeker_posts (
+CREATE TABLE IF NOT EXISTS job_seeker_posts (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     
@@ -110,7 +171,7 @@ CREATE TABLE job_seeker_posts (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
-CREATE TABLE post_comments (
+CREATE TABLE IF NOT EXISTS post_comments (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     post_id UUID REFERENCES job_seeker_posts(id) ON DELETE CASCADE,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -130,7 +191,7 @@ CREATE TABLE post_comments (
 -- 4. 현직자 등록 시스템 (플랜비 전문가 등록 구조 활용)
 -- ==============================================
 
-CREATE TABLE professional_requests (
+CREATE TABLE IF NOT EXISTS professional_requests (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     
@@ -194,7 +255,7 @@ CREATE TABLE professional_requests (
 -- 5. 매칭 및 상담 예약 시스템
 -- ==============================================
 
-CREATE TABLE consultation_bookings (
+CREATE TABLE IF NOT EXISTS consultation_bookings (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     
     -- 매칭 정보
@@ -248,12 +309,13 @@ CREATE TABLE consultation_bookings (
         'no_show'           -- 노쇼
     )),
     
-    -- 상담 내용 (전문가 후기 제거)
+    -- 상담 내용 및 완료 정보
     consultation_notes TEXT,            -- 상담 노트 (전문가 작성)
     job_seeker_feedback TEXT,           -- 구직자 후기
     job_seeker_rating INTEGER CHECK (job_seeker_rating BETWEEN 1 AND 5),
+    completed_at TIMESTAMP WITH TIME ZONE, -- 상담 완료 시각
     
-    -- 연락처 교환 기능 제거 (불필요한 기능)
+    -- 연락처 교환 기능 제거 (사용자 자율 교환으로 단순화)
     
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
@@ -263,7 +325,7 @@ CREATE TABLE consultation_bookings (
 -- 6. 결제 및 정산 시스템 (플랜비 구조 확장)
 -- ==============================================
 
-CREATE TABLE payment_transactions (
+CREATE TABLE IF NOT EXISTS payment_transactions (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     booking_id UUID REFERENCES consultation_bookings(id) ON DELETE CASCADE,
     
@@ -292,7 +354,7 @@ CREATE TABLE payment_transactions (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
-CREATE TABLE professional_settlements (
+CREATE TABLE IF NOT EXISTS professional_settlements (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     professional_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     
@@ -327,11 +389,37 @@ CREATE TABLE professional_settlements (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
+-- 개별 상담 정산 테이블 (간단한 상담별 정산 처리용)
+CREATE TABLE IF NOT EXISTS fee_settlements (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    booking_id UUID REFERENCES consultation_bookings(id) ON DELETE CASCADE,
+    expert_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    
+    -- 정산 금액
+    total_revenue INTEGER NOT NULL,     -- 총 수익 (상담료)
+    platform_fee INTEGER NOT NULL,     -- 플랫폼 수수료 (20%)
+    expert_payout INTEGER NOT NULL,    -- 현직자 수령액 (80%)
+    
+    -- 정산 상태
+    settlement_status TEXT DEFAULT 'completed' CHECK (settlement_status IN (
+        'pending',      -- 정산 대기
+        'completed',    -- 정산 완료
+        'paid',         -- 지급 완료
+        'disputed'      -- 분쟁
+    )),
+    
+    completed_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    paid_date TIMESTAMP WITH TIME ZONE,
+    
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+);
+
 -- ==============================================
 -- 7. 시스템 설정 (관리자 전용)
 -- ==============================================
 
-CREATE TABLE system_settings (
+CREATE TABLE IF NOT EXISTS system_settings (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     setting_key TEXT NOT NULL UNIQUE,
     setting_value TEXT NOT NULL,
@@ -351,7 +439,7 @@ CREATE TABLE system_settings (
 -- 8. 공지사항 및 관리 (플랜비 구조 그대로)
 -- ==============================================
 
-CREATE TABLE announcements (
+CREATE TABLE IF NOT EXISTS announcements (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     title TEXT NOT NULL,
     content TEXT NOT NULL,
@@ -379,7 +467,7 @@ CREATE TABLE announcements (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
-CREATE TABLE announcement_views (
+CREATE TABLE IF NOT EXISTS announcement_views (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     announcement_id UUID REFERENCES announcements(id) ON DELETE CASCADE,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -392,7 +480,7 @@ CREATE TABLE announcement_views (
 -- 8. 쪽지 시스템 (일반 회원 간 메시지)
 -- ==============================================
 
-CREATE TABLE member_messages (
+CREATE TABLE IF NOT EXISTS member_messages (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     sender_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     receiver_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -418,7 +506,7 @@ CREATE TABLE member_messages (
 -- 9. 실시간 채팅 시스템 (전문가 상담 전용)
 -- ==============================================
 
-CREATE TABLE chat_rooms (
+CREATE TABLE IF NOT EXISTS chat_rooms (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     name TEXT NOT NULL,
     description TEXT,
@@ -430,7 +518,7 @@ CREATE TABLE chat_rooms (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
-CREATE TABLE chat_messages (
+CREATE TABLE IF NOT EXISTS chat_messages (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     room_id UUID REFERENCES chat_rooms(id) ON DELETE CASCADE,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -447,7 +535,7 @@ CREATE TABLE chat_messages (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
-CREATE TABLE chat_participants (
+CREATE TABLE IF NOT EXISTS chat_participants (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     room_id UUID REFERENCES chat_rooms(id) ON DELETE CASCADE,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -460,38 +548,109 @@ CREATE TABLE chat_participants (
 );
 
 -- ==============================================
+-- 10. 파일 저장 시스템 (채팅 파일 공유용)
+-- ==============================================
+
+CREATE TABLE IF NOT EXISTS chat_files (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    room_id UUID REFERENCES chat_rooms(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    
+    -- 파일 정보
+    original_filename TEXT NOT NULL,
+    stored_filename TEXT NOT NULL,
+    file_size INTEGER NOT NULL,
+    mime_type TEXT NOT NULL,
+    
+    -- Supabase Storage 정보
+    storage_bucket TEXT DEFAULT 'chat-files',
+    storage_path TEXT NOT NULL,
+    public_url TEXT,
+    
+    -- 메타데이터
+    upload_status TEXT DEFAULT 'pending' CHECK (upload_status IN ('pending', 'completed', 'failed')),
+    download_count INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT TRUE,
+    
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+);
+
+-- 이력서/포트폴리오 저장 테이블
+CREATE TABLE IF NOT EXISTS user_documents (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    
+    -- 문서 타입
+    document_type TEXT NOT NULL CHECK (document_type IN (
+        'resume',           -- 이력서
+        'cover_letter',     -- 자기소개서
+        'portfolio',        -- 포트폴리오
+        'certificate',      -- 자격증
+        'verification'      -- 검증 서류
+    )),
+    
+    -- 파일 정보 (chat_files와 동일 구조)
+    original_filename TEXT NOT NULL,
+    stored_filename TEXT NOT NULL,
+    file_size INTEGER NOT NULL,
+    mime_type TEXT NOT NULL,
+    
+    -- Supabase Storage 정보
+    storage_bucket TEXT DEFAULT 'user-documents',
+    storage_path TEXT NOT NULL,
+    public_url TEXT,
+    
+    -- 접근 권한
+    is_public BOOLEAN DEFAULT FALSE,
+    shared_with_experts BOOLEAN DEFAULT FALSE,
+    
+    -- 메타데이터
+    upload_status TEXT DEFAULT 'pending' CHECK (upload_status IN ('pending', 'completed', 'failed')),
+    is_active BOOLEAN DEFAULT TRUE,
+    
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+);
+
+-- ==============================================
 -- 인덱스 생성 (성능 최적화)
 -- ==============================================
 
 -- 사용자 프로필 인덱스
-CREATE INDEX idx_user_profiles_role ON user_profiles(role);
-CREATE INDEX idx_user_profiles_career_status ON user_profiles(career_status);
-CREATE INDEX idx_user_profiles_target_industry ON user_profiles(target_industry);
+CREATE INDEX IF NOT EXISTS idx_user_profiles_role ON user_profiles(role);
+CREATE INDEX IF NOT EXISTS idx_user_profiles_career_status ON user_profiles(career_status);
+CREATE INDEX IF NOT EXISTS idx_user_profiles_target_industry ON user_profiles(target_industry);
 
 -- 계산 결과 인덱스
-CREATE INDEX idx_career_calculations_user_id ON career_calculations(user_id);
-CREATE INDEX idx_career_calculations_total_score ON career_calculations(total_score DESC);
-CREATE INDEX idx_career_calculations_created_at ON career_calculations(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_career_calculations_user_id ON career_calculations(user_id);
+CREATE INDEX IF NOT EXISTS idx_career_calculations_total_score ON career_calculations(total_score DESC);
+CREATE INDEX IF NOT EXISTS idx_career_calculations_created_at ON career_calculations(created_at DESC);
 
 -- 커뮤니티 인덱스
-CREATE INDEX idx_job_seeker_posts_category ON job_seeker_posts(category);
-CREATE INDEX idx_job_seeker_posts_created_at ON job_seeker_posts(created_at DESC);
-CREATE INDEX idx_job_seeker_posts_view_count ON job_seeker_posts(view_count DESC);
+CREATE INDEX IF NOT EXISTS idx_job_seeker_posts_category ON job_seeker_posts(category);
+CREATE INDEX IF NOT EXISTS idx_job_seeker_posts_created_at ON job_seeker_posts(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_job_seeker_posts_view_count ON job_seeker_posts(view_count DESC);
 
 -- 전문가 등록 인덱스
-CREATE INDEX idx_professional_requests_status ON professional_requests(status);
-CREATE INDEX idx_professional_requests_industry ON professional_requests(industry);
-CREATE INDEX idx_professional_requests_created_at ON professional_requests(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_professional_requests_status ON professional_requests(status);
+CREATE INDEX IF NOT EXISTS idx_professional_requests_industry ON professional_requests(industry);
+CREATE INDEX IF NOT EXISTS idx_professional_requests_created_at ON professional_requests(created_at DESC);
 
 -- 예약 및 결제 인덱스
-CREATE INDEX idx_consultation_bookings_job_seeker ON consultation_bookings(job_seeker_id);
-CREATE INDEX idx_consultation_bookings_professional ON consultation_bookings(professional_id);
-CREATE INDEX idx_consultation_bookings_scheduled_date ON consultation_bookings(scheduled_date);
-CREATE INDEX idx_consultation_bookings_status ON consultation_bookings(booking_status);
+CREATE INDEX IF NOT EXISTS idx_consultation_bookings_job_seeker ON consultation_bookings(job_seeker_id);
+CREATE INDEX IF NOT EXISTS idx_consultation_bookings_professional ON consultation_bookings(professional_id);
+CREATE INDEX IF NOT EXISTS idx_consultation_bookings_scheduled_date ON consultation_bookings(scheduled_date);
+CREATE INDEX IF NOT EXISTS idx_consultation_bookings_status ON consultation_bookings(booking_status);
 
 -- 채팅 인덱스
-CREATE INDEX idx_chat_messages_room_id ON chat_messages(room_id);
-CREATE INDEX idx_chat_messages_created_at ON chat_messages(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_room_id ON chat_messages(room_id);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_created_at ON chat_messages(created_at DESC);
+
+-- 파일 인덱스
+CREATE INDEX IF NOT EXISTS idx_chat_files_room_id ON chat_files(room_id);
+CREATE INDEX IF NOT EXISTS idx_chat_files_user_id ON chat_files(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_documents_user_id ON user_documents(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_documents_type ON user_documents(document_type);
 
 -- ==============================================
 -- RLS (Row Level Security) 정책 설정
@@ -513,6 +672,8 @@ ALTER TABLE member_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE chat_rooms ENABLE ROW LEVEL SECURITY;
 ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE chat_participants ENABLE ROW LEVEL SECURITY;
+ALTER TABLE chat_files ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_documents ENABLE ROW LEVEL SECURITY;
 
 -- 사용자 프로필 정책
 CREATE POLICY "Users can view own profile"
@@ -659,6 +820,42 @@ CREATE POLICY "Consultation participants can send messages"
         )
     );
 
+-- 파일 저장 정책
+CREATE POLICY "Users can view shared files in their chat rooms"
+    ON chat_files FOR SELECT
+    USING (
+        EXISTS (
+            SELECT 1 FROM chat_participants
+            WHERE room_id = chat_files.room_id
+            AND user_id = auth.uid()
+            AND is_active = true
+        )
+    );
+
+CREATE POLICY "Users can upload files to their chat rooms"
+    ON chat_files FOR INSERT
+    WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM chat_participants
+            WHERE room_id = chat_files.room_id
+            AND user_id = auth.uid()
+            AND is_active = true
+        ) AND auth.uid() = chat_files.user_id
+    );
+
+-- 사용자 문서 정책
+CREATE POLICY "Users can view own documents"
+    ON user_documents FOR SELECT
+    USING (auth.uid() = user_id OR is_public = true);
+
+CREATE POLICY "Users can upload own documents"
+    ON user_documents FOR INSERT
+    WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own documents"
+    ON user_documents FOR UPDATE
+    USING (auth.uid() = user_id);
+
 -- ==============================================
 -- 함수 및 트리거 설정
 -- ==============================================
@@ -695,6 +892,11 @@ CREATE TRIGGER update_professional_requests_updated_at
 
 CREATE TRIGGER update_consultation_bookings_updated_at
     BEFORE UPDATE ON consultation_bookings
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_user_documents_updated_at
+    BEFORE UPDATE ON user_documents
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
@@ -743,21 +945,27 @@ CREATE TRIGGER update_comment_count
 -- 초기 데이터 삽입
 -- ==============================================
 
--- 시스템 기본 설정
+-- 시스템 기본 설정 (중복 방지)
 INSERT INTO system_settings (setting_key, setting_value, description, setting_type) VALUES
 ('platform_commission_rate', '0.20', '플랫폼 수수료율 (기본 20%)', 'number'),
 ('min_consultation_minutes', '10', '최소 상담 시간 (분)', 'number'),
 ('max_consultation_minutes', '60', '최대 상담 시간 (분)', 'number'),
 ('consultation_time_units', '[10,20,30,40,50,60]', '예약 가능한 상담 시간 단위 (분)', 'json'),
 ('payment_methods', '["kakaopay","tosspay","card"]', '지원하는 결제 방식', 'json'),
-('expert_approval_required', 'true', '전문가 등록 시 관리자 승인 필요 여부', 'boolean');
+('expert_approval_required', 'true', '전문가 등록 시 관리자 승인 필요 여부', 'boolean')
+ON CONFLICT (setting_key) DO NOTHING;
 
--- 기본 공지사항
-INSERT INTO announcements (title, content, category, is_important, author_id) VALUES
-('인사이드잡 서비스 오픈 안내', '현직자-구직자 매칭 플랫폼 인사이드잡이 정식 오픈했습니다.', 'general', true, NULL),
-('취업경쟁력 계산기 이용 안내', '무료 취업경쟁력 진단을 통해 나의 현재 수준을 확인해보세요.', 'service_notice', false, NULL),
-('현직자 등록 모집 안내', '후배 구직자들을 위한 멘토링에 참여해주세요.', 'event', false, NULL),
-('새로운 상담 시스템 안내', '10분 단위로 유연하게 상담 시간을 선택할 수 있습니다.', 'service_notice', false, NULL);
+-- 기본 공지사항 (중복 방지: title 기준)
+INSERT INTO announcements (title, content, category, is_important, author_id) 
+SELECT title, content, category, is_important, author_id::UUID FROM (VALUES
+    ('인사이드잡 서비스 오픈 안내', '현직자-구직자 매칭 플랫폼 인사이드잡이 정식 오픈했습니다.', 'general', true, NULL),
+    ('취업경쟁력 계산기 이용 안내', '무료 취업경쟁력 진단을 통해 나의 현재 수준을 확인해보세요.', 'service_notice', false, NULL),
+    ('현직자 등록 모집 안내', '후배 구직자들을 위한 멘토링에 참여해주세요.', 'event', false, NULL),
+    ('새로운 상담 시스템 안내', '10분 단위로 유연하게 상담 시간을 선택할 수 있습니다.', 'service_notice', false, NULL)
+) AS new_announcements(title, content, category, is_important, author_id)
+WHERE NOT EXISTS (
+    SELECT 1 FROM announcements WHERE announcements.title = new_announcements.title
+);
 
 -- 완료
 COMMENT ON TABLE user_profiles IS '사용자 프로필 - 3단계 역할 시스템 (관리자/일반회원/전문가)';
@@ -771,7 +979,12 @@ COMMENT ON TABLE system_settings IS '시스템 설정 - 관리자가 수수료�
 COMMENT ON TABLE member_messages IS '일반 회원 간 쪽지 시스템';
 COMMENT ON TABLE chat_rooms IS '실시간 채팅방 - 전문가 상담 전용';
 COMMENT ON TABLE chat_messages IS '채팅 메시지 - 전문가 상담에서만 사용';
+COMMENT ON TABLE chat_files IS '채팅 파일 공유 - Supabase Storage 연동';
+COMMENT ON TABLE user_documents IS '사용자 문서 저장 - 이력서, 포트폴리오 등';
 
--- 스키마 버전 정보
-INSERT INTO announcements (title, content, category) VALUES
-('데이터베이스 스키마 v2.0', '인사이드잡 플랫폼 새로운 상담 시스템이 적용되었습니다.', 'system_update');
+-- 스키마 버전 정보 (중복 방지)
+INSERT INTO announcements (title, content, category) 
+SELECT '데이터베이스 스키마 v3.0', '인사이드잡 플랫폼 파일 공유 시스템이 추가되었습니다.', 'system_update'
+WHERE NOT EXISTS (
+    SELECT 1 FROM announcements WHERE title = '데이터베이스 스키마 v3.0'
+);
