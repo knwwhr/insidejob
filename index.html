@@ -5710,12 +5710,24 @@
                                                         const newValue = !privacyConsent;
                                                         setPrivacyConsent(newValue);
                                                         
-                                                        // DOM 직접 조작으로 강제 동기화
+                                                        // DOM 직접 조작으로 강제 동기화 (다중 방식)
                                                         setTimeout(() => {
                                                             const checkbox = document.getElementById('privacy-consent-createElement');
                                                             if (checkbox) {
                                                                 checkbox.checked = newValue;
-                                                                console.log('Privacy checkbox set to:', newValue);
+                                                                checkbox.setAttribute('checked', newValue ? 'checked' : '');
+                                                                if (newValue) {
+                                                                    checkbox.setAttribute('aria-checked', 'true');
+                                                                    checkbox.style.accentColor = '#3b82f6';
+                                                                } else {
+                                                                    checkbox.removeAttribute('aria-checked');
+                                                                    checkbox.style.accentColor = '#d1d5db';
+                                                                }
+                                                                // 브라우저 강제 리렌더링
+                                                                checkbox.style.display = 'none';
+                                                                checkbox.offsetHeight; // 강제 reflow
+                                                                checkbox.style.display = 'block';
+                                                                console.log('Privacy checkbox set to:', newValue, 'DOM checked:', checkbox.checked);
                                                             }
                                                         }, 0);
                                                     }
@@ -5749,12 +5761,24 @@
                                                         const newValue = !termsConsent;
                                                         setTermsConsent(newValue);
                                                         
-                                                        // DOM 직접 조작으로 강제 동기화
+                                                        // DOM 직접 조작으로 강제 동기화 (다중 방식)
                                                         setTimeout(() => {
                                                             const checkbox = document.getElementById('terms-consent-createElement');
                                                             if (checkbox) {
                                                                 checkbox.checked = newValue;
-                                                                console.log('Terms checkbox set to:', newValue);
+                                                                checkbox.setAttribute('checked', newValue ? 'checked' : '');
+                                                                if (newValue) {
+                                                                    checkbox.setAttribute('aria-checked', 'true');
+                                                                    checkbox.style.accentColor = '#3b82f6';
+                                                                } else {
+                                                                    checkbox.removeAttribute('aria-checked');
+                                                                    checkbox.style.accentColor = '#d1d5db';
+                                                                }
+                                                                // 브라우저 강제 리렌더링
+                                                                checkbox.style.display = 'none';
+                                                                checkbox.offsetHeight; // 강제 reflow
+                                                                checkbox.style.display = 'block';
+                                                                console.log('Terms checkbox set to:', newValue, 'DOM checked:', checkbox.checked);
                                                             }
                                                         }, 0);
                                                     }
