@@ -6818,6 +6818,12 @@
 
             const filteredPosts = getFilteredPosts();
 
+            // 현재 커뮤니티 그룹 정의
+            const currentGroup = {
+                name: '구직자',
+                emoji: '🎯'
+            };
+
             // 시간 포맷팅 (블라인드식)
             const formatTime = (dateString) => {
                 const now = new Date();
@@ -6833,7 +6839,7 @@
             };
 
             const createPost = async () => {
-                if (!userSession) {
+                if (!currentUser) {
                     showNotification('로그인 필요', '게시글 작성을 위해 로그인이 필요합니다.', 'warning');
                     return;
                 }
