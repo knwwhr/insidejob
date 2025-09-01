@@ -2446,10 +2446,10 @@
                             onClose: onClose
                         }),
                     activeTab === 'chat' && !isCurrentUserGuest && 
-                        React.createElement(ChatHistoryComponent, { 
-                            key: 'chat-tab',
-                            currentUser: currentUser 
-                        }),
+                        <ChatHistoryComponent 
+                            key='chat-tab'
+                            currentUser={currentUser}
+                        />,
                     activeTab === 'expert' && userType === 'expert' && 
                         React.createElement(ExpertTab, { 
                             key: 'expert-tab',
@@ -3244,11 +3244,11 @@
                         </div>
 
                         <div className="p-6">
-                            {activeSection === 'dashboard' && React.createElement(AdminDashboard, { stats: stats, setActiveSection: setActiveSection })}
-                            {activeSection === 'settlements' && React.createElement(FeeManagementSection, { currentUser: currentUser })}
-                            {activeSection === 'experts' && React.createElement(ExpertManagementSection, { currentUser: currentUser })}
-                            {activeSection === 'users' && React.createElement(UserManagementSection, { currentUser: currentUser })}
-                            {activeSection === 'settings' && React.createElement(SystemSettingsSection, { currentUser: currentUser })}
+                            {activeSection === 'dashboard' && <AdminDashboard stats={stats} setActiveSection={setActiveSection} />}
+                            {activeSection === 'settlements' && <FeeManagementSection currentUser={currentUser} />}
+                            {activeSection === 'experts' && <ExpertManagementSection currentUser={currentUser} />}
+                            {activeSection === 'users' && <UserManagementSection currentUser={currentUser} />}
+                            {activeSection === 'settings' && <SystemSettingsSection currentUser={currentUser} />}
                         </div>
                     </div>
                 </div>
@@ -6123,14 +6123,14 @@
                     
                     {/* 현직자 멘토링 예약 모달 */}
                     {showExpertBookingModal && selectedExpertFromPost && 
-                        React.createElement(ConsultationBookingComponent, {
-                            expert: selectedExpertFromPost,
-                            currentUser: currentUser,
-                            onClose: () => {
+                        <ConsultationBookingComponent
+                            expert={selectedExpertFromPost}
+                            currentUser={currentUser}
+                            onClose={() => {
                                 setShowExpertBookingModal(false);
                                 setSelectedExpertFromPost(null);
-                            }
-                        })}
+                            }}
+                        />}
                 </div>
             );
         };
@@ -6930,27 +6930,27 @@
 
                     {/* 채팅 모달 */}
                     {showChatModal && selectedConsultation && (
-                        React.createElement(ExpertChatComponent, {
-                            consultation: selectedConsultation,
-                            currentUser: currentUser,
-                            onClose: () => {
+                        <ExpertChatComponent
+                            consultation={selectedConsultation}
+                            currentUser={currentUser}
+                            onClose={() => {
                                 setShowChatModal(false);
                                 setSelectedConsultation(null);
-                            },
-                            userType: userType
-                        })
+                            }}
+                            userType={userType}
+                        />
                     )}
 
                     {/* 상담 완료 평점/리뷰 모달 */}
-                    showCompletionModal && selectedConsultation && 
-                        React.createElement(ConsultationCompletionModal, {
-                            consultation: selectedConsultation,
-                            onComplete: completeConsultation,
-                            onClose: () => {
+                    {showCompletionModal && selectedConsultation && 
+                        <ConsultationCompletionModal
+                            consultation={selectedConsultation}
+                            onComplete={completeConsultation}
+                            onClose={() => {
                                 setShowCompletionModal(false);
                                 setSelectedConsultation(null);
-                            }
-                        })
+                            }}
+                        />}
                 </div>
             );
         };
@@ -14129,29 +14129,29 @@
 
             // 로그인 화면 (기본 화면)
             if (currentView === 'login') {
-                return React.createElement(AuthComponent, {
-                    onAuthSuccess: handleAuthSuccess,
-                    initialMode: authMode,
-                    generateGuestUser: createGuestUser
-                });
+                return <AuthComponent 
+                    onAuthSuccess={handleAuthSuccess}
+                    initialMode={authMode}
+                    generateGuestUser={createGuestUser}
+                />;
             }
 
 
             // 마이페이지
             if (currentView === 'mypage') {
-                return React.createElement(MyPageComponent, {
-                    currentUser: currentUser,
-                    onClose: () => setCurrentView('main'),
-                    getUserType: getUserType,
-                    getUserTypeName: getUserTypeName,
-                    isAdminUser: isAdminUser,
-                    isGuest: isGuest,
-                    setCurrentView: setCurrentView,
-                    setFormData: setFormData,
-                    setCalculatorResult: setCalculatorResult,
-                    setCalculatorStep: setCalculatorStep,
-                    showNotification: showNotification
-                });
+                return <MyPageComponent 
+                    currentUser={currentUser}
+                    onClose={() => setCurrentView('main')}
+                    getUserType={getUserType}
+                    getUserTypeName={getUserTypeName}
+                    isAdminUser={isAdminUser}
+                    isGuest={isGuest}
+                    setCurrentView={setCurrentView}
+                    setFormData={setFormData}
+                    setCalculatorResult={setCalculatorResult}
+                    setCalculatorStep={setCalculatorStep}
+                    showNotification={showNotification}
+                />;
             }
             
 
@@ -14589,23 +14589,27 @@
                             ) : (
                                 <div className="max-w-6xl mx-auto">
                                     <div className="card">
-                                        React.createElement(ExpertFinderComponent, { currentUser: currentUser, isAdminUser: isAdminUser, setShowSignupModal: setShowSignupModal })
+                                        <ExpertFinderComponent currentUser={currentUser} isAdminUser={isAdminUser} setShowSignupModal={setShowSignupModal} />
                                     </div>
                                 </div>
                             )
                         )}
 
-                        // 공지사항 페이지 - 모든 사용자 접근 가능
-                        currentView === 'announcements' && React.createElement('div', { className: "max-w-6xl mx-auto" }, 
-                            React.createElement('div', { className: "card" }, 
-                                React.createElement(AnnouncementComponent, { currentUser: currentUser, isAdminUser: isAdminUser })
-                            )
-                        )
+                        {/* 공지사항 페이지 - 모든 사용자 접근 가능 */}
+                        {currentView === 'announcements' && (
+                            <div className="max-w-6xl mx-auto">
+                                <div className="card">
+                                    <AnnouncementComponent currentUser={currentUser} isAdminUser={isAdminUser} />
+                                </div>
+                            </div>
+                        )}
 
-                        // 쪽지 시스템 페이지 - 회원만 접근 가능
-                        currentView === 'messages' && React.createElement('div', { className: "max-w-6xl mx-auto" }, 
-                            React.createElement(MessagesComponent, { currentUser: currentUser, isAdminUser: isAdminUser })
-                        )
+                        {/* 쪽지 시스템 페이지 - 회원만 접근 가능 */}
+                        {currentView === 'messages' && (
+                            <div className="max-w-6xl mx-auto">
+                                <MessagesComponent currentUser={currentUser} isAdminUser={isAdminUser} />
+                            </div>
+                        )}
                     </main>
                     
                     {/* 커뮤니티 접근 제한 모달 */}
