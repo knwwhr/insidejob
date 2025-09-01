@@ -2322,126 +2322,151 @@
                 ...(userType === 'admin' ? [{ id: 'admin', name: '관리자', icon: '👑' }] : [])
             ];
 
-            return (
-                <div className="min-h-screen bg-gray-50">
-                    {/* 헤더 */}
-                    <div className="bg-white shadow-sm border-b border-gray-200">
-                        <div className="max-w-4xl mx-auto px-4 py-6">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-4">
-                                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
-                                        <span className="text-white font-bold text-lg">
-                                            {userType === 'admin' ? '👑' : userType === 'expert' ? '🎯' : '👤'}
-                                        </span>
-                                    </div>
-                                    <div>
-                                        <h1 className="text-2xl font-bold text-gray-800">마이페이지</h1>
-                                        <div className="flex items-center space-x-2">
-                                            <span className="text-gray-600">{currentUser?.nickname || currentUser?.email}</span>
-                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                userType === 'admin' ? 'bg-red-100 text-red-800' :
-                                                userType === 'expert' ? 'bg-orange-100 text-orange-800' :
-                                                'bg-blue-100 text-blue-800'
-                                            }`}>
-                                                {userTypeName}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={onClose}
-                                    className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                                >
-                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+            return React.createElement('div', { className: "min-h-screen bg-gray-50" }, [
+                // 헤더
+                React.createElement('div', {
+                    key: 'header',
+                    className: "bg-white shadow-sm border-b border-gray-200"
+                }, React.createElement('div', {
+                    className: "max-w-4xl mx-auto px-4 py-6"
+                }, React.createElement('div', {
+                    className: "flex items-center justify-between"
+                }, [
+                    React.createElement('div', {
+                        key: 'header-left',
+                        className: "flex items-center space-x-4"
+                    }, [
+                        React.createElement('div', {
+                            key: 'avatar',
+                            className: "w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center"
+                        }, React.createElement('span', {
+                            className: "text-white font-bold text-lg"
+                        }, userType === 'admin' ? '👑' : userType === 'expert' ? '🎯' : '👤')),
+                        React.createElement('div', { key: 'user-info' }, [
+                            React.createElement('h1', {
+                                key: 'title',
+                                className: "text-2xl font-bold text-gray-800"
+                            }, '마이페이지'),
+                            React.createElement('div', {
+                                key: 'user-details',
+                                className: "flex items-center space-x-2"
+                            }, [
+                                React.createElement('span', {
+                                    key: 'user-name',
+                                    className: "text-gray-600"
+                                }, currentUser?.nickname || currentUser?.email),
+                                React.createElement('span', {
+                                    key: 'user-badge',
+                                    className: `px-2 py-1 rounded-full text-xs font-medium ${
+                                        userType === 'admin' ? 'bg-red-100 text-red-800' :
+                                        userType === 'expert' ? 'bg-orange-100 text-orange-800' :
+                                        'bg-blue-100 text-blue-800'
+                                    }`
+                                }, userTypeName)
+                            ])
+                        ])
+                    ]),
+                    React.createElement('button', {
+                        key: 'close-btn',
+                        onClick: onClose,
+                        className: "p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                    }, React.createElement('svg', {
+                        className: "w-6 h-6",
+                        fill: "none",
+                        stroke: "currentColor",
+                        viewBox: "0 0 24 24"
+                    }, React.createElement('path', {
+                        strokeLinecap: "round",
+                        strokeLinejoin: "round",
+                        strokeWidth: 2,
+                        d: "M6 18L18 6M6 6l12 12"
+                    })))
+                ]))),
 
-                    {/* 탭 메뉴 */}
-                    <div className="bg-white border-b border-gray-200">
-                        <div className="max-w-4xl mx-auto px-4">
-                            <div className="flex space-x-8">
-                                {tabs.map((tab) => (
-                                    <button
-                                        key={tab.id}
-                                        onClick={() => setActiveTab(tab.id)}
-                                        className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${
-                                            activeTab === tab.id
-                                                ? 'border-blue-500 text-blue-600'
-                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                        }`}
-                                    >
-                                        {tab.icon} {tab.name}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
+                // 탭 메뉴
+                React.createElement('div', {
+                    key: 'tab-menu',
+                    className: "bg-white border-b border-gray-200"
+                }, React.createElement('div', {
+                    className: "max-w-4xl mx-auto px-4"
+                }, React.createElement('div', {
+                    className: "flex space-x-8"
+                }, tabs.map((tab) => 
+                    React.createElement('button', {
+                        key: tab.id,
+                        onClick: () => setActiveTab(tab.id),
+                        className: `py-4 px-2 border-b-2 font-medium text-sm transition-colors ${
+                            activeTab === tab.id
+                                ? 'border-blue-500 text-blue-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        }`
+                    }, `${tab.icon} ${tab.name}`)
+                ))),
 
-                    // 탭 컨텐츠
-                    React.createElement('div', { className: "max-w-4xl mx-auto px-4 py-8" }, [
-                        // 프로필 탭
-                        activeTab === 'profile' && 
-                            React.createElement(ProfileTab, { 
-                                key: 'profile-tab',
-                                currentUser: currentUser, 
-                                userType: userType, 
-                                userTypeName: userTypeName 
-                            }),
-                        // 게스트가 아니거나 전문가/관리자인 경우에만 표시
-                        activeTab === 'activity' && !isCurrentUserGuest && 
-                            React.createElement(ActivityTab, { 
-                                key: 'activity-tab',
-                                currentUser: currentUser,
-                                userType: userType,
-                                setCurrentView: setCurrentView,
-                                setFormData: setFormData,
-                                setCalculatorResult: setCalculatorResult,
-                                setCalculatorStep: setCalculatorStep,
-                                showNotification: showNotification,
-                                onClose: onClose
-                            }),
-                        activeTab === 'chat' && !isCurrentUserGuest && 
-                            React.createElement(ChatHistoryComponent, { 
-                                key: 'chat-tab',
-                                currentUser: currentUser 
-                            }),
-                        activeTab === 'expert' && userType === 'expert' && 
-                            React.createElement(ExpertTab, { 
-                                key: 'expert-tab',
-                                currentUser: currentUser 
-                            }),
-                        activeTab === 'admin' && userType === 'admin' && 
-                            React.createElement(AdminTab, { 
-                                key: 'admin-tab',
-                                currentUser: currentUser 
-                            })
-                    ].filter(Boolean))
+                // 탭 컨텐츠
+                React.createElement('div', {
+                    key: 'tab-content',
+                    className: "max-w-4xl mx-auto px-4 py-8"
+                }, [
+                    // 프로필 탭
+                    activeTab === 'profile' && 
+                        React.createElement(ProfileTab, { 
+                            key: 'profile-tab',
+                            currentUser: currentUser, 
+                            userType: userType, 
+                            userTypeName: userTypeName 
+                        }),
+                    // 게스트가 아니거나 전문가/관리자인 경우에만 표시
+                    activeTab === 'activity' && !isCurrentUserGuest && 
+                        React.createElement(ActivityTab, { 
+                            key: 'activity-tab',
+                            currentUser: currentUser,
+                            userType: userType,
+                            setCurrentView: setCurrentView,
+                            setFormData: setFormData,
+                            setCalculatorResult: setCalculatorResult,
+                            setCalculatorStep: setCalculatorStep,
+                            showNotification: showNotification,
+                            onClose: onClose
+                        }),
+                    activeTab === 'chat' && !isCurrentUserGuest && 
+                        React.createElement(ChatHistoryComponent, { 
+                            key: 'chat-tab',
+                            currentUser: currentUser 
+                        }),
+                    activeTab === 'expert' && userType === 'expert' && 
+                        React.createElement(ExpertTab, { 
+                            key: 'expert-tab',
+                            currentUser: currentUser 
+                        }),
+                    activeTab === 'admin' && userType === 'admin' && 
+                        React.createElement(AdminTab, { 
+                            key: 'admin-tab',
+                            currentUser: currentUser 
+                        })
+                ].filter(Boolean)),
                         
-                        // 게스트가 제한된 탭에 접근한 경우 안내 메시지
-                        isCurrentUserGuest && (activeTab === 'activity' || activeTab === 'chat') && 
-                            React.createElement('div', { className: "text-center py-12" },
-                                React.createElement('div', { className: "bg-amber-50 border border-amber-200 rounded-lg p-8 max-w-md mx-auto" }, [
-                                    React.createElement('div', { key: 'icon', className: "text-4xl mb-4" }, '🚫'),
-                                    React.createElement('h3', { key: 'title', className: "text-lg font-semibold text-amber-800 mb-2" }, '게스트 사용 제한'),
-                                    React.createElement('p', { key: 'message', className: "text-amber-600 mb-4" }, '이 기능은 정식 회원만 사용할 수 있습니다.'),
-                                    React.createElement('button', { 
-                                        key: 'signup-btn',
-                                        onClick: () => {
-                                            setAuthMode('signup');
-                                            setCurrentView('login');
-                                            setShowAuthForm(true);
-                                        },
-                                        className: "bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                                    }, '회원가입하기')
-                                ])
-                            )
-                    </div>
-                </div>
-            );
+                // 게스트가 제한된 탭에 접근한 경우 안내 메시지
+                isCurrentUserGuest && (activeTab === 'activity' || activeTab === 'chat') && 
+                    React.createElement('div', {
+                        key: 'guest-restriction',
+                        className: "text-center py-12"
+                    }, React.createElement('div', {
+                        className: "bg-amber-50 border border-amber-200 rounded-lg p-8 max-w-md mx-auto"
+                    }, [
+                        React.createElement('div', { key: 'icon', className: "text-4xl mb-4" }, '🚫'),
+                        React.createElement('h3', { key: 'title', className: "text-lg font-semibold text-amber-800 mb-2" }, '게스트 사용 제한'),
+                        React.createElement('p', { key: 'message', className: "text-amber-600 mb-4" }, '이 기능은 정식 회원만 사용할 수 있습니다.'),
+                        React.createElement('button', { 
+                            key: 'signup-btn',
+                            onClick: () => {
+                                // TODO: setAuthMode와 setShowAuthForm props 추가 필요
+                                setCurrentView('login');
+                            },
+                            className: "bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                        }, '회원가입하기')
+                    ]))
+            ].filter(Boolean));
         };
 
         // 내 정보 탭
