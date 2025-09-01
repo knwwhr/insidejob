@@ -2381,13 +2381,20 @@
                         </div>
                     </div>
 
-                    {/* 탭 컨텐츠 */}
-                    <div className="max-w-4xl mx-auto px-4 py-8">
+                    // 탭 컨텐츠
+                    React.createElement('div', { className: "max-w-4xl mx-auto px-4 py-8" }, [
+                        // 프로필 탭
                         activeTab === 'profile' && 
-                            React.createElement(ProfileTab, { currentUser: currentUser, userType: userType, userTypeName: userTypeName })
+                            React.createElement(ProfileTab, { 
+                                key: 'profile-tab',
+                                currentUser: currentUser, 
+                                userType: userType, 
+                                userTypeName: userTypeName 
+                            }),
                         // 게스트가 아니거나 전문가/관리자인 경우에만 표시
                         activeTab === 'activity' && !isCurrentUserGuest && 
                             React.createElement(ActivityTab, { 
+                                key: 'activity-tab',
                                 currentUser: currentUser,
                                 userType: userType,
                                 setCurrentView: setCurrentView,
@@ -2396,35 +2403,42 @@
                                 setCalculatorStep: setCalculatorStep,
                                 showNotification: showNotification,
                                 onClose: onClose
-                            })
+                            }),
                         activeTab === 'chat' && !isCurrentUserGuest && 
-                            React.createElement(ChatHistoryComponent, { currentUser: currentUser })
+                            React.createElement(ChatHistoryComponent, { 
+                                key: 'chat-tab',
+                                currentUser: currentUser 
+                            }),
                         activeTab === 'expert' && userType === 'expert' && 
-                            React.createElement(ExpertTab, { currentUser: currentUser })
+                            React.createElement(ExpertTab, { 
+                                key: 'expert-tab',
+                                currentUser: currentUser 
+                            }),
                         activeTab === 'admin' && userType === 'admin' && 
-                            React.createElement(AdminTab, { currentUser: currentUser })
-                        )}
+                            React.createElement(AdminTab, { 
+                                key: 'admin-tab',
+                                currentUser: currentUser 
+                            })
+                    ].filter(Boolean))
                         
-                        {/* 게스트가 제한된 탭에 접근한 경우 안내 메시지 */}
-                        {isCurrentUserGuest && (activeTab === 'activity' || activeTab === 'chat') && (
-                            <div className="text-center py-12">
-                                <div className="bg-amber-50 border border-amber-200 rounded-lg p-8 max-w-md mx-auto">
-                                    <div className="text-4xl mb-4">🚫</div>
-                                    <h3 className="text-lg font-semibold text-amber-800 mb-2">게스트 사용 제한</h3>
-                                    <p className="text-amber-600 mb-4">이 기능은 정식 회원만 사용할 수 있습니다.</p>
-                                    <button 
-                                        onClick={() => {
+                        // 게스트가 제한된 탭에 접근한 경우 안내 메시지
+                        isCurrentUserGuest && (activeTab === 'activity' || activeTab === 'chat') && 
+                            React.createElement('div', { className: "text-center py-12" },
+                                React.createElement('div', { className: "bg-amber-50 border border-amber-200 rounded-lg p-8 max-w-md mx-auto" }, [
+                                    React.createElement('div', { key: 'icon', className: "text-4xl mb-4" }, '🚫'),
+                                    React.createElement('h3', { key: 'title', className: "text-lg font-semibold text-amber-800 mb-2" }, '게스트 사용 제한'),
+                                    React.createElement('p', { key: 'message', className: "text-amber-600 mb-4" }, '이 기능은 정식 회원만 사용할 수 있습니다.'),
+                                    React.createElement('button', { 
+                                        key: 'signup-btn',
+                                        onClick: () => {
                                             setAuthMode('signup');
                                             setCurrentView('login');
                                             setShowAuthForm(true);
-                                        }}
-                                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                                    >
-                                        회원가입하기
-                                    </button>
-                                </div>
-                            </div>
-                        )}
+                                        },
+                                        className: "bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                                    }, '회원가입하기')
+                                ])
+                            )
                     </div>
                 </div>
             );
