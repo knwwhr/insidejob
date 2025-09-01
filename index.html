@@ -11925,31 +11925,28 @@
                     </div>
                     
                     {/* 모달들 */}
-                    <>
-                        {/* 예약 모달 */}
-                        {showBookingModal && selectedExpert && (
-                            <ConsultationBookingComponent
-                                expert={selectedExpert}
-                                currentUser={currentUser}
-                                onClose={() => {
-                                    setShowBookingModal(false);
-                                    setSelectedExpert(null);
-                                }}
-                            />
-                        )}
+                    {/* 예약 모달 */}
+                    {showBookingModal && selectedExpert && (
+                        <ConsultationBookingComponent
+                            expert={selectedExpert}
+                            currentUser={currentUser}
+                            onClose={() => {
+                                setShowBookingModal(false);
+                                setSelectedExpert(null);
+                            }}
+                        />
+                    )}
 
-                        {/* 전문가 글쓰기 모달 */}
-                        {showWriteModal && (
-                            <ExpertPostWriteModal
-                                isOpen={showWriteModal}
-                                onClose={() => setShowWriteModal(false)}
-                                currentUser={currentUser}
-                                onSuccess={handleWriteSuccess}
-                                isAdminUser={isAdminUser}
-                            />
-                        )}
-                    </>
-                    </div>
+                    {/* 전문가 글쓰기 모달 */}
+                    {showWriteModal && (
+                        <ExpertPostWriteModal
+                            isOpen={showWriteModal}
+                            onClose={() => setShowWriteModal(false)}
+                            currentUser={currentUser}
+                            onSuccess={handleWriteSuccess}
+                            isAdminUser={isAdminUser}
+                        />
+                    )}
                 </div>
             );
         };
