@@ -5030,15 +5030,17 @@
                                             )}
                                             
                                             {expert.expert_status === 'rejected' && (
-                                                <button
-                                                    onClick={() => handleExpertAction(expert.user_id, 'approve')}
-                                                        disabled={processingId === expert.user_id}
-                                                        className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm rounded-lg transition-colors disabled:bg-gray-400"
-                                                    >
-                                                        {processingId === expert.user_id ? '처리중...' : '✅ 승인'}
-                                                    </button>
-                                                <div className="px-4 py-2 bg-orange-50 text-orange-700 text-sm rounded-lg text-center">
-                                                    💭 재검토 가능
+                                                <div className="flex flex-col space-y-2">
+                                                    <button
+                                                        onClick={() => handleExpertAction(expert.user_id, 'approve')}
+                                                            disabled={processingId === expert.user_id}
+                                                            className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm rounded-lg transition-colors disabled:bg-gray-400"
+                                                        >
+                                                            {processingId === expert.user_id ? '처리중...' : '✅ 승인'}
+                                                        </button>
+                                                    <div className="px-4 py-2 bg-orange-50 text-orange-700 text-sm rounded-lg text-center">
+                                                        💭 재검토 가능
+                                                    </div>
                                                 </div>
                                     </div>
                                 </div>
@@ -6500,6 +6502,18 @@
             const [showExpertBookingModal, setShowExpertBookingModal] = useState(false);
             const [selectedExpertFromPost, setSelectedExpertFromPost] = useState(null);
 
+            // 🔍 커뮤니티 검색 및 정렬 상태 추가
+            const [searchKeyword, setSearchKeyword] = useState('');
+            const [searchLoading, setSearchLoading] = useState(false);
+            const [searchDebounceTimer, setSearchDebounceTimer] = useState(null);
+            const [searchFilters, setSearchFilters] = useState({
+                sortBy: 'latest', // latest, popular, replies
+                showAdvancedFilters: false,
+                filterByReplies: 0, // 최소 댓글 수
+                filterByDate: 'all', // all, today, week, month
+                filterByType: 'all' // all, general, expert
+            });
+
             // 전문가 게시글에서 전문가 정보 추출
             const getExpertFromPost = (post) => {
                 if (post.topic !== 'expert') return null;
@@ -6710,12 +6724,99 @@
                 return 'middle';
             };
 
-            // 게시글 필터링 (현재 선택된 자산그룹과 토픽)
-            const getFilteredPosts = () => {
-                return posts.filter(post => 
-                    post.topic === activeTopic
-                );
+            // 🔍 검색 입력 처리 (디바운스 적용)
+            const handleSearchInput = (value) => {
+                setSearchKeyword(value);
+                setSearchLoading(true);
+                
+                // 기존 타이머 클리어
+                if (searchDebounceTimer) {
+                    clearTimeout(searchDebounceTimer);
+                }
+                
+                // 새 타이머 설정 (500ms 디바운스)
+                const newTimer = setTimeout(() => {
+                    setSearchLoading(false);
+                }, 500);
+                
+                setSearchDebounceTimer(newTimer);
             };
+
+            // 게시글 필터링 및 검색
+            const getFilteredPosts = () => {
+                let filtered = posts.filter(post => post.topic === activeTopic);
+                
+                // 1. 텍스트 검색 필터링
+                if (searchKeyword.trim()) {
+                    const keyword = searchKeyword.toLowerCase();
+                    filtered = filtered.filter(post => {
+                        return (
+                            post.title?.toLowerCase().includes(keyword) ||
+                            post.content?.toLowerCase().includes(keyword) ||
+                            post.expert_name?.toLowerCase().includes(keyword) ||
+                            post.expert_title?.toLowerCase().includes(keyword)
+                        );
+                    });
+                }
+                
+                // 2. 유형 필터링 (일반 글 vs 전문가 글)
+                if (searchFilters.filterByType !== 'all') {
+                    filtered = filtered.filter(post => {
+                        if (searchFilters.filterByType === 'expert') {
+                            return post.topic === 'expert';
+                        } else if (searchFilters.filterByType === 'general') {
+                            return post.topic !== 'expert';
+                        }
+                        return true;
+                    });
+                }
+                
+                // 3. 댓글 수 필터링
+                if (searchFilters.filterByReplies > 0) {
+                    filtered = filtered.filter(post => {
+                        const replies = post.replies_count || 0;
+                        return replies >= searchFilters.filterByReplies;
+                    });
+                }
+                
+                // 4. 날짜 필터링
+                if (searchFilters.filterByDate !== 'all') {
+                    const now = new Date();
+                    filtered = filtered.filter(post => {
+                        const postDate = new Date(post.created_at);
+                        const diffMs = now - postDate;
+                        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                        
+                        switch (searchFilters.filterByDate) {
+                            case 'today':
+                                return diffDays === 0;
+                            case 'week':
+                                return diffDays <= 7;
+                            case 'month':
+                                return diffDays <= 30;
+                            default:
+                                return true;
+                        }
+                    });
+                }
+                
+                // 5. 정렬
+                filtered.sort((a, b) => {
+                    switch (searchFilters.sortBy) {
+                        case 'popular':
+                            return (b.likes_count || 0) - (a.likes_count || 0);
+                        case 'replies':
+                            return (b.replies_count || 0) - (a.replies_count || 0);
+                        case 'latest':
+                        default:
+                            return new Date(b.created_at) - new Date(a.created_at);
+                    }
+                });
+                
+                return filtered;
+            };
+
+            const filteredPosts = getFilteredPosts();
 
             // 시간 포맷팅 (블라인드식)
             const formatTime = (dateString) => {
@@ -6939,7 +7040,7 @@
 
                     {/* 현재 선택된 토픽 정보 */}
                     <div className="bg-white rounded-lg shadow-md p-4">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center space-x-3">
                                 <span className="text-lg">{topics[activeTopic].icon}</span>
                                 <div>
@@ -6948,16 +7049,160 @@
                                 </div>
                             </div>
                             <div className="text-right text-sm text-gray-500">
-                                <p>게시글 {posts.length}개</p>
+                                <p>게시글 {filteredPosts.length}개 (전체 {posts.length}개)</p>
                                 <p>{topics[activeTopic].description}</p>
                             </div>
+                        </div>
+
+                        {/* 🔍 커뮤니티 검색 및 필터 섹션 */}
+                        <div className="bg-gray-50 p-4 rounded-lg space-y-4">
+                            {/* 검색 바 */}
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    placeholder="게시글 제목, 내용, 전문가명 검색..."
+                                    value={searchKeyword}
+                                    onChange={(e) => handleSearchInput(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                />
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    {searchLoading ? (
+                                        <div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                                    ) : (
+                                        <span className="text-gray-400">🔍</span>
+                                    )}
+                                </div>
+                                {searchKeyword && (
+                                    <button
+                                        onClick={() => {
+                                            setSearchKeyword('');
+                                            if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+                                        }}
+                                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                                    >
+                                        ✕
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* 필터 및 정렬 */}
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                {/* 정렬 옵션 */}
+                                <div className="flex items-center space-x-2">
+                                    <span className="text-sm text-gray-600">정렬:</span>
+                                    <select
+                                        value={searchFilters.sortBy}
+                                        onChange={(e) => setSearchFilters({...searchFilters, sortBy: e.target.value})}
+                                        className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500"
+                                    >
+                                        <option value="latest">최신순</option>
+                                        <option value="popular">인기순</option>
+                                        <option value="replies">댓글많은순</option>
+                                    </select>
+                                </div>
+
+                                {/* 고급 필터 토글 */}
+                                <button
+                                    onClick={() => setSearchFilters({...searchFilters, showAdvancedFilters: !searchFilters.showAdvancedFilters})}
+                                    className={`px-3 py-1 text-sm font-medium rounded transition-colors ${
+                                        searchFilters.showAdvancedFilters 
+                                            ? 'bg-blue-100 text-blue-700 border border-blue-300' 
+                                            : 'bg-gray-100 text-gray-600 border border-gray-300'
+                                    }`}
+                                >
+                                    🎛️ 상세 필터 {searchFilters.showAdvancedFilters ? '접기' : '펼치기'}
+                                </button>
+
+                                {/* 검색 결과 수 */}
+                                <div className="text-sm text-gray-600">
+                                    {searchKeyword && ` (검색어: "${searchKeyword}")`}
+                                </div>
+                            </div>
+
+                            {/* 고급 필터 패널 */}
+                            {searchFilters.showAdvancedFilters && (
+                                <div className="bg-white p-3 rounded border space-y-3">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                        {/* 글 유형 필터 */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                글 유형
+                                            </label>
+                                            <select
+                                                value={searchFilters.filterByType}
+                                                onChange={(e) => setSearchFilters({...searchFilters, filterByType: e.target.value})}
+                                                className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                                            >
+                                                <option value="all">전체</option>
+                                                <option value="general">일반 글</option>
+                                                <option value="expert">전문가 글</option>
+                                            </select>
+                                        </div>
+
+                                        {/* 댓글 수 필터 */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                최소 댓글 수: {searchFilters.filterByReplies}개
+                                            </label>
+                                            <input
+                                                type="range"
+                                                min="0"
+                                                max="20"
+                                                value={searchFilters.filterByReplies}
+                                                onChange={(e) => setSearchFilters({...searchFilters, filterByReplies: parseInt(e.target.value)})}
+                                                className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                            />
+                                            <div className="flex justify-between text-xs text-gray-500">
+                                                <span>전체</span>
+                                                <span>20개+</span>
+                                            </div>
+                                        </div>
+
+                                        {/* 날짜 필터 */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                작성 기간
+                                            </label>
+                                            <select
+                                                value={searchFilters.filterByDate}
+                                                onChange={(e) => setSearchFilters({...searchFilters, filterByDate: e.target.value})}
+                                                className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                                            >
+                                                <option value="all">전체 기간</option>
+                                                <option value="today">오늘</option>
+                                                <option value="week">일주일</option>
+                                                <option value="month">한 달</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    {/* 필터 초기화 */}
+                                    <div className="flex justify-end">
+                                        <button
+                                            onClick={() => {
+                                                setSearchFilters({
+                                                    sortBy: 'latest',
+                                                    showAdvancedFilters: searchFilters.showAdvancedFilters,
+                                                    filterByReplies: 0,
+                                                    filterByDate: 'all',
+                                                    filterByType: 'all'
+                                                });
+                                                setSearchKeyword('');
+                                            }}
+                                            className="px-3 py-1 bg-gray-600 text-white text-sm rounded hover:bg-gray-700 transition-colors"
+                                        >
+                                            🔄 필터 초기화
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 
 
                     {/* 게시글 목록 - 블라인드식 */}
                     <div className="space-y-2">
-                                {posts.map(post => (
+                                {filteredPosts.map(post => (
                                     <div key={post.id} className={`rounded-lg shadow-md hover:shadow-lg transition-shadow ${
                                         post.topic === 'expert' ? 'bg-gradient-to-r from-orange-50 to-red-50 border-l-4 border-orange-500' : 'bg-white'
                                     }`}>
@@ -7064,23 +7309,62 @@
                                     </div>
                                 ))}
                                 
-                                {posts.length === 0 && (
+                                {filteredPosts.length === 0 && (
                                     <div className="bg-white rounded-lg p-12 text-center">
-                                        <div className="text-6xl mb-4">📝</div>
-                                        <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                                            {currentGroup.name}의 {topics[activeTopic].name}
-                                        </h3>
-                                        <p className="text-gray-600 mb-4">아직 게시글이 없습니다.</p>
-                                        <button
-                                            onClick={() => {
-                                                if (checkCalculationForInteraction()) {
-                                                    setShowWriteForm(true);
-                                                }
-                                            }}
-                                            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg"
-                                        >
-                                            첫 번째 글 작성하기 ✍️
-                                        </button>
+                                        {searchKeyword || searchFilters.filterByType !== 'all' || searchFilters.filterByReplies > 0 || searchFilters.filterByDate !== 'all' ? (
+                                            <>
+                                                <div className="text-6xl mb-4">🔍</div>
+                                                <h3 className="text-lg font-semibold text-gray-800 mb-2">검색 결과가 없습니다</h3>
+                                                <p className="text-gray-600 mb-4">
+                                                    {searchKeyword && `"${searchKeyword}"에 대한 검색 결과가 없습니다.`}
+                                                    {!searchKeyword && "설정한 필터 조건에 맞는 게시글이 없습니다."}
+                                                </p>
+                                                <div className="space-y-2">
+                                                    <button
+                                                        onClick={() => {
+                                                            setSearchKeyword('');
+                                                            setSearchFilters({
+                                                                ...searchFilters,
+                                                                filterByReplies: 0,
+                                                                filterByDate: 'all',
+                                                                filterByType: 'all'
+                                                            });
+                                                        }}
+                                                        className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg mr-2"
+                                                    >
+                                                        🔄 검색 초기화
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            if (checkCalculationForInteraction()) {
+                                                                setShowWriteForm(true);
+                                                            }
+                                                        }}
+                                                        className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
+                                                    >
+                                                        ✍️ 새 글 작성하기
+                                                    </button>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <div className="text-6xl mb-4">📝</div>
+                                                <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                                                    {currentGroup.name}의 {topics[activeTopic].name}
+                                                </h3>
+                                                <p className="text-gray-600 mb-4">아직 게시글이 없습니다.</p>
+                                                <button
+                                                    onClick={() => {
+                                                        if (checkCalculationForInteraction()) {
+                                                            setShowWriteForm(true);
+                                                        }
+                                                    }}
+                                                    className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg"
+                                                >
+                                                    첫 번째 글 작성하기 ✍️
+                                                </button>
+                                            </>
+                                        )}
                                     </div>
                                 )}
                     </div>
@@ -12159,6 +12443,18 @@
             const [selectedExpert, setSelectedExpert] = useState(null);
             const [showWriteModal, setShowWriteModal] = useState(false);
             const [isExpert, setIsExpert] = useState(false);
+            
+            // 🔍 검색 및 필터링 상태
+            const [searchKeyword, setSearchKeyword] = useState('');
+            const [searchFilters, setSearchFilters] = useState({
+                minExperience: 0,
+                maxPrice: 500000,
+                minRating: 0,
+                sortBy: 'rating', // rating, price, experience, reviews
+                showAdvancedFilters: false
+            });
+            const [searchLoading, setSearchLoading] = useState(false);
+            const [searchDebounceTimer, setSearchDebounceTimer] = useState(null);
 
             // 전문가 여부 확인 (관리자는 모든 권한 보유)
             useEffect(() => {
@@ -12466,7 +12762,90 @@
                 loadExperts();
             }, []);
 
-            const currentExperts = expertData[activeCategory] || [];
+            // 🔍 검색 디바운싱 함수
+            const handleSearchInput = (value) => {
+                setSearchKeyword(value);
+                setSearchLoading(true);
+                
+                // 기존 타이머 클리어
+                if (searchDebounceTimer) {
+                    clearTimeout(searchDebounceTimer);
+                }
+                
+                // 500ms 후 검색 실행
+                const timer = setTimeout(() => {
+                    setSearchLoading(false);
+                }, 500);
+                
+                setSearchDebounceTimer(timer);
+            };
+            
+            // 🎯 현직자 필터링 및 정렬 함수
+            const getFilteredAndSortedExperts = () => {
+                let experts = expertData[activeCategory] || [];
+                
+                // 1. 텍스트 검색 필터링
+                if (searchKeyword.trim()) {
+                    const keyword = searchKeyword.toLowerCase();
+                    experts = experts.filter(expert => {
+                        return (
+                            expert.name?.toLowerCase().includes(keyword) ||
+                            expert.title?.toLowerCase().includes(keyword) ||
+                            expert.company?.toLowerCase().includes(keyword) ||
+                            expert.specialties?.some(s => s.toLowerCase().includes(keyword))
+                        );
+                    });
+                }
+                
+                // 2. 경력 필터링
+                if (searchFilters.minExperience > 0) {
+                    experts = experts.filter(expert => {
+                        const years = expert.experience_years || 
+                                    (expert.experience?.match(/\d+/) ? parseInt(expert.experience.match(/\d+/)[0]) : 0);
+                        return years >= searchFilters.minExperience;
+                    });
+                }
+                
+                // 3. 가격 필터링
+                if (searchFilters.maxPrice < 500000) {
+                    experts = experts.filter(expert => {
+                        const price = expert.hourly_rate || 
+                                    (expert.price?.match(/[\d,]+/) ? parseInt(expert.price.replace(/,/g, '').match(/\d+/)[0]) : 0);
+                        return price <= searchFilters.maxPrice;
+                    });
+                }
+                
+                // 4. 평점 필터링
+                if (searchFilters.minRating > 0) {
+                    experts = experts.filter(expert => {
+                        const rating = expert.rating || expert.rating_average || 0;
+                        return rating >= searchFilters.minRating;
+                    });
+                }
+                
+                // 5. 정렬
+                experts.sort((a, b) => {
+                    switch (searchFilters.sortBy) {
+                        case 'price':
+                            const priceA = a.hourly_rate || (a.price?.match(/[\d,]+/) ? parseInt(a.price.replace(/,/g, '').match(/\d+/)[0]) : 0);
+                            const priceB = b.hourly_rate || (b.price?.match(/[\d,]+/) ? parseInt(b.price.replace(/,/g, '').match(/\d+/)[0]) : 0);
+                            return priceA - priceB;
+                        case 'experience':
+                            const expA = a.experience_years || (a.experience?.match(/\d+/) ? parseInt(a.experience.match(/\d+/)[0]) : 0);
+                            const expB = b.experience_years || (b.experience?.match(/\d+/) ? parseInt(b.experience.match(/\d+/)[0]) : 0);
+                            return expB - expA;
+                        case 'reviews':
+                            return (b.reviews || b.review_count || 0) - (a.reviews || a.review_count || 0);
+                        case 'rating':
+                        default:
+                            return (b.rating || b.rating_average || 0) - (a.rating || a.rating_average || 0);
+                    }
+                });
+                
+                return experts;
+            };
+
+            const currentExperts = getFilteredAndSortedExperts();
             const currentCategory = expertCategories[activeCategory];
 
             // 로딩 상태 렌더링
@@ -12495,6 +12874,162 @@
                                     🎯 관심있는 분야의 현직자에게 정보를 얻으세요!
                                 </h3>
                             </div>
+
+                            {/* 🔍 검색 및 필터 섹션 */}
+                            <div className="bg-white p-4 rounded-lg shadow-sm border space-y-4">
+                                {/* 검색 바 */}
+                                <div className="relative">
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            placeholder="현직자 이름, 회사, 전문분야 검색..."
+                                            value={searchKeyword}
+                                            onChange={(e) => handleSearchInput(e.target.value)}
+                                            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                        />
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            {searchLoading ? (
+                                                <div className="animate-spin w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                                            ) : (
+                                                <span className="text-gray-400">🔍</span>
+                                            )}
+                                        </div>
+                                        {searchKeyword && (
+                                            <button
+                                                onClick={() => {
+                                                    setSearchKeyword('');
+                                                    if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+                                                }}
+                                                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                                            >
+                                                ✕
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* 필터 및 정렬 */}
+                                <div className="flex flex-wrap items-center justify-between gap-3">
+                                    {/* 정렬 옵션 */}
+                                    <div className="flex items-center space-x-2">
+                                        <span className="text-sm text-gray-600">정렬:</span>
+                                        <select
+                                            value={searchFilters.sortBy}
+                                            onChange={(e) => setSearchFilters({...searchFilters, sortBy: e.target.value})}
+                                            className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500"
+                                        >
+                                            <option value="rating">평점순</option>
+                                            <option value="price">가격낮은순</option>
+                                            <option value="experience">경력많은순</option>
+                                            <option value="reviews">후기많은순</option>
+                                        </select>
+                                    </div>
+
+                                    {/* 고급 필터 토글 */}
+                                    <button
+                                        onClick={() => setSearchFilters({...searchFilters, showAdvancedFilters: !searchFilters.showAdvancedFilters})}
+                                        className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                                            searchFilters.showAdvancedFilters 
+                                                ? 'bg-blue-100 text-blue-700 border border-blue-300' 
+                                                : 'bg-gray-100 text-gray-600 border border-gray-300'
+                                        }`}
+                                    >
+                                        🎛️ 상세 필터 {searchFilters.showAdvancedFilters ? '접기' : '펼치기'}
+                                    </button>
+
+                                    {/* 검색 결과 수 */}
+                                    <div className="text-sm text-gray-600">
+                                        총 <span className="font-semibold text-blue-600">{currentExperts.length}</span>명
+                                        {searchKeyword && ` (검색어: "${searchKeyword}")`}
+                                    </div>
+                                </div>
+
+                                {/* 고급 필터 패널 */}
+                                {searchFilters.showAdvancedFilters && (
+                                    <div className="bg-gray-50 p-4 rounded-md space-y-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            {/* 경력 필터 */}
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    최소 경력: {searchFilters.minExperience}년
+                                                </label>
+                                                <input
+                                                    type="range"
+                                                    min="0"
+                                                    max="20"
+                                                    value={searchFilters.minExperience}
+                                                    onChange={(e) => setSearchFilters({...searchFilters, minExperience: parseInt(e.target.value)})}
+                                                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                                />
+                                                <div className="flex justify-between text-xs text-gray-500">
+                                                    <span>신입</span>
+                                                    <span>20년+</span>
+                                                </div>
+                                            </div>
+
+                                            {/* 가격 필터 */}
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    최대 상담료: {searchFilters.maxPrice.toLocaleString()}원
+                                                </label>
+                                                <input
+                                                    type="range"
+                                                    min="30000"
+                                                    max="500000"
+                                                    step="10000"
+                                                    value={searchFilters.maxPrice}
+                                                    onChange={(e) => setSearchFilters({...searchFilters, maxPrice: parseInt(e.target.value)})}
+                                                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                                />
+                                                <div className="flex justify-between text-xs text-gray-500">
+                                                    <span>3만원</span>
+                                                    <span>50만원+</span>
+                                                </div>
+                                            </div>
+
+                                            {/* 평점 필터 */}
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    최소 평점: {searchFilters.minRating === 0 ? '전체' : `${searchFilters.minRating}점`}
+                                                </label>
+                                                <input
+                                                    type="range"
+                                                    min="0"
+                                                    max="5"
+                                                    step="0.5"
+                                                    value={searchFilters.minRating}
+                                                    onChange={(e) => setSearchFilters({...searchFilters, minRating: parseFloat(e.target.value)})}
+                                                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                                />
+                                                <div className="flex justify-between text-xs text-gray-500">
+                                                    <span>전체</span>
+                                                    <span>5점</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* 필터 초기화 */}
+                                        <div className="flex justify-end">
+                                            <button
+                                                onClick={() => {
+                                                    setSearchFilters({
+                                                        minExperience: 0,
+                                                        maxPrice: 500000,
+                                                        minRating: 0,
+                                                        sortBy: 'rating',
+                                                        showAdvancedFilters: searchFilters.showAdvancedFilters
+                                                    });
+                                                    setSearchKeyword('');
+                                                }}
+                                                className="px-4 py-2 bg-gray-600 text-white text-sm rounded-md hover:bg-gray-700 transition-colors"
+                                            >
+                                                🔄 필터 초기화
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                         
                         {/* 전문가 전용 서비스 게시 섹션 */}
                         {isExpert && (
