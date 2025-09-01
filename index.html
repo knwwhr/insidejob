@@ -3244,11 +3244,11 @@
                         </div>
 
                         <div className="p-6">
-                            activeSection === 'dashboard' && React.createElement(AdminDashboard, { stats: stats, setActiveSection: setActiveSection })
-                            activeSection === 'settlements' && React.createElement(FeeManagementSection, { currentUser: currentUser })
-                            activeSection === 'experts' && React.createElement(ExpertManagementSection, { currentUser: currentUser })
-                            activeSection === 'users' && React.createElement(UserManagementSection, { currentUser: currentUser })
-                            activeSection === 'settings' && React.createElement(SystemSettingsSection, { currentUser: currentUser })
+                            {activeSection === 'dashboard' && React.createElement(AdminDashboard, { stats: stats, setActiveSection: setActiveSection })}
+                            {activeSection === 'settlements' && React.createElement(FeeManagementSection, { currentUser: currentUser })}
+                            {activeSection === 'experts' && React.createElement(ExpertManagementSection, { currentUser: currentUser })}
+                            {activeSection === 'users' && React.createElement(UserManagementSection, { currentUser: currentUser })}
+                            {activeSection === 'settings' && React.createElement(SystemSettingsSection, { currentUser: currentUser })}
                         </div>
                     </div>
                 </div>
