@@ -6122,7 +6122,7 @@
                     </div>
                     
                     {/* 현직자 멘토링 예약 모달 */}
-                    showExpertBookingModal && selectedExpertFromPost && 
+                    {showExpertBookingModal && selectedExpertFromPost && 
                         React.createElement(ConsultationBookingComponent, {
                             expert: selectedExpertFromPost,
                             currentUser: currentUser,
@@ -6130,7 +6130,7 @@
                                 setShowExpertBookingModal(false);
                                 setSelectedExpertFromPost(null);
                             }
-                        })
+                        })}
                 </div>
             );
         };
