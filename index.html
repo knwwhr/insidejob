@@ -3474,14 +3474,20 @@
             }, []);
 
             if (loading) {
-                return (
-                    <div className="flex items-center justify-center py-12">
-                        <div className="text-center">
-                            <div className="text-4xl mb-4">💰</div>
-                            <p className="text-gray-500">정산 데이터를 불러오는 중...</p>
-                        </div>
-                    </div>
-                );
+                return React.createElement('div', {
+                    className: "flex items-center justify-center py-12"
+                }, React.createElement('div', {
+                    className: "text-center"
+                }, [
+                    React.createElement('div', {
+                        key: 'icon',
+                        className: "text-4xl mb-4"
+                    }, '💰'),
+                    React.createElement('p', {
+                        key: 'text',
+                        className: "text-gray-500"
+                    }, '정산 데이터를 불러오는 중...')
+                ]));
             }
 
             return (
@@ -4032,11 +4038,9 @@
                     'guest': { bg: 'bg-gray-100', text: 'text-gray-800', label: '게스트' }
                 };
                 const badge = badges[role] || badges['member'];
-                return (
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${badge.bg} ${badge.text}`}>
-                        {badge.label}
-                    </span>
-                );
+                return React.createElement('span', {
+                    className: `px-2 py-1 rounded-full text-xs font-medium ${badge.bg} ${badge.text}`
+                }, badge.label);
             };
 
             return (
