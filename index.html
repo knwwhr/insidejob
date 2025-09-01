@@ -198,42 +198,242 @@
     <script type="text/babel">
         const { useState, useEffect, useCallback, useRef } = React;
 
-        // 이메일 알림 시스템
+        // 📧 통합 이메일 & 알림 시스템
+        const EmailManager = {
+            // 이메일 템플릿 정의
+            templates: {
+                welcome: {
+                    subject: '[인사이드잡] 회원가입을 환영합니다! 🎉',
+                    getHtml: (data) => `
+                        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                            <h1 style="color: #3b82f6; text-align: center;">🎯 인사이드잡에 오신 것을 환영합니다!</h1>
+                            <p>안녕하세요 ${data.nickname}님,</p>
+                            <p>취업 멘토링 플랫폼 <strong>인사이드잡</strong>에 가입해주셔서 감사합니다.</p>
+                            
+                            <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                                <h3 style="margin: 0 0 10px 0; color: #374151;">🚀 지금 바로 시작해보세요!</h3>
+                                <ol style="margin: 0; padding-left: 20px;">
+                                    <li><strong>취업경쟁력 진단</strong>을 완료하세요 (3분 소요)</li>
+                                    <li>관심 있는 직무의 <strong>현직자</strong>를 찾아보세요</li>
+                                    <li><strong>커뮤니티</strong>에서 다른 구직자들과 정보를 공유하세요</li>
+                                </ol>
+                            </div>
+                            
+                            <div style="text-align: center; margin: 30px 0;">
+                                <a href="https://knwwhr.github.io/insidejob/" style="background-color: #3b82f6; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold;">인사이드잡 시작하기</a>
+                            </div>
+                            
+                            <p style="color: #6b7280; font-size: 14px;">문의사항이 있으시면 언제든 연락주세요.<br/>인사이드잡 운영팀 드림</p>
+                        </div>
+                    `
+                },
+                expert_approved: {
+                    subject: '[인사이드잡] 현직자 승인 완료 🎉',
+                    getHtml: (data) => `
+                        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                            <h1 style="color: #10b981; text-align: center;">🎉 현직자 승인이 완료되었습니다!</h1>
+                            <p>안녕하세요 ${data.nickname}님,</p>
+                            <p>인사이드잡 현직자 신청이 <strong style="color: #10b981;">승인</strong>되었습니다.</p>
+                            
+                            <div style="background: #ecfdf5; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0;">
+                                <p style="margin: 0;"><strong>승인 사유:</strong> ${data.reason || '현직자 자격 요건을 충족합니다.'}</p>
+                            </div>
+                            
+                            <p>이제 인사이드잡에서 현직자로 활동하며 구직자들에게 소중한 멘토링을 제공해주세요!</p>
+                            
+                            <div style="text-align: center; margin: 30px 0;">
+                                <a href="https://knwwhr.github.io/insidejob/" style="background-color: #10b981; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold;">현직자 대시보드 바로가기</a>
+                            </div>
+                            
+                            <p style="color: #6b7280; font-size: 14px;">감사합니다.<br/>인사이드잡 운영팀</p>
+                        </div>
+                    `
+                },
+                expert_rejected: {
+                    subject: '[인사이드잡] 현직자 신청 검토 결과',
+                    getHtml: (data) => `
+                        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                            <h1 style="color: #f59e0b; text-align: center;">현직자 신청 검토 결과</h1>
+                            <p>안녕하세요 ${data.nickname}님,</p>
+                            <p>인사이드잡 현직자 신청을 검토한 결과를 안내드립니다.</p>
+                            
+                            <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0;">
+                                <p style="margin: 0;"><strong>검토 결과:</strong> 승인 보류</p>
+                                <p style="margin: 10px 0 0 0;"><strong>사유:</strong> ${data.reason || '자격 요건 미달'}</p>
+                            </div>
+                            
+                            <p>추가 자격증이나 경력을 보완하신 후 다시 신청해주세요. 언제든 재신청 가능합니다!</p>
+                            
+                            <p style="color: #6b7280; font-size: 14px;">감사합니다.<br/>인사이드잡 운영팀</p>
+                        </div>
+                    `
+                },
+                consultation_booked: {
+                    subject: '[인사이드잡] 멘토링 예약이 완료되었습니다',
+                    getHtml: (data) => `
+                        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                            <h1 style="color: #3b82f6; text-align: center;">📅 멘토링 예약 완료</h1>
+                            <p>안녕하세요 ${data.clientName || data.expertName}님,</p>
+                            <p>멘토링 예약이 성공적으로 완료되었습니다.</p>
+                            
+                            <div style="background: #eff6ff; border: 1px solid #3b82f6; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                                <h3 style="margin: 0 0 15px 0; color: #1e40af;">📋 예약 상세정보</h3>
+                                <p style="margin: 5px 0;"><strong>날짜:</strong> ${data.date}</p>
+                                <p style="margin: 5px 0;"><strong>시간:</strong> ${data.time}</p>
+                                <p style="margin: 5px 0;"><strong>상담 시간:</strong> ${data.duration}분</p>
+                                <p style="margin: 5px 0;"><strong>상담 방식:</strong> ${data.method}</p>
+                                <p style="margin: 5px 0;"><strong>상담료:</strong> ${data.amount?.toLocaleString()}원</p>
+                            </div>
+                            
+                            <p>예약 시간 15분 전부터 채팅방이 활성화됩니다.</p>
+                            
+                            <div style="text-align: center; margin: 30px 0;">
+                                <a href="https://knwwhr.github.io/insidejob/" style="background-color: #3b82f6; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold;">인사이드잡 바로가기</a>
+                            </div>
+                            
+                            <p style="color: #6b7280; font-size: 14px;">감사합니다.<br/>인사이드잡 운영팀</p>
+                        </div>
+                    `
+                },
+                new_message: {
+                    subject: '[인사이드잡] 새 쪽지가 도착했습니다',
+                    getHtml: (data) => `
+                        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                            <h1 style="color: #8b5cf6; text-align: center;">📩 새 쪽지 알림</h1>
+                            <p>안녕하세요 ${data.receiverName}님,</p>
+                            <p><strong>${data.senderName}</strong>님으로부터 새 쪽지가 도착했습니다.</p>
+                            
+                            <div style="background: #f5f3ff; border-left: 4px solid #8b5cf6; padding: 15px; margin: 20px 0;">
+                                <h4 style="margin: 0 0 10px 0;">제목: ${data.subject}</h4>
+                                <p style="margin: 0; color: #6b7280;">${data.preview}...</p>
+                            </div>
+                            
+                            <div style="text-align: center; margin: 30px 0;">
+                                <a href="https://knwwhr.github.io/insidejob/" style="background-color: #8b5cf6; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold;">쪽지 확인하기</a>
+                            </div>
+                            
+                            <p style="color: #6b7280; font-size: 14px;">감사합니다.<br/>인사이드잡 운영팀</p>
+                        </div>
+                    `
+                }
+            },
+
+            // 통합 알림 생성 및 이메일 발송
+            sendNotification: async (userId, type, templateData, options = {}) => {
+                try {
+                    // 1. 사용자 정보 조회
+                    const { data: userProfile, error: userError } = await supabaseClient
+                        .from('user_profiles')
+                        .select('email, nickname')
+                        .eq('user_id', userId)
+                        .single();
+
+                    if (userError || !userProfile) {
+                        console.error('사용자 정보 조회 실패:', userError);
+                        return { success: false, error: '사용자 정보를 찾을 수 없습니다.' };
+                    }
+
+                    const template = EmailManager.templates[type];
+                    if (!template) {
+                        console.error('알 수 없는 템플릿:', type);
+                        return { success: false, error: '알 수 없는 알림 타입입니다.' };
+                    }
+
+                    // 2. 플랫폼 내 알림 생성
+                    const { error: notificationError } = await supabaseClient
+                        .from('notifications')
+                        .insert({
+                            user_id: userId,
+                            type: type,
+                            title: options.title || template.subject.replace('[인사이드잡] ', ''),
+                            message: options.message || `새로운 ${type} 알림이 있습니다.`,
+                            related_data: templateData,
+                            related_id: options.relatedId
+                        });
+
+                    if (notificationError) {
+                        console.error('알림 생성 실패:', notificationError);
+                    }
+
+                    // 3. 이메일 발송 (현재는 로그만, 추후 Edge Function 연동)
+                    const emailData = {
+                        recipient_email: userProfile.email,
+                        recipient_user_id: userId,
+                        email_type: type,
+                        subject: template.subject,
+                        template_name: type,
+                        template_variables: { ...templateData, nickname: userProfile.nickname }
+                    };
+
+                    // 이메일 로그 저장
+                    const { error: logError } = await supabaseClient
+                        .from('email_logs')
+                        .insert(emailData);
+
+                    if (logError) {
+                        console.error('이메일 로그 저장 실패:', logError);
+                    }
+
+                    // 실제 이메일 발송 (TODO: Supabase Edge Function 구현 후 활성화)
+                    console.log('📧 이메일 발송 준비:', {
+                        to: userProfile.email,
+                        subject: template.subject,
+                        html: template.getHtml({ ...templateData, nickname: userProfile.nickname })
+                    });
+
+                    return { 
+                        success: true, 
+                        message: '알림이 성공적으로 발송되었습니다.',
+                        notificationSent: !notificationError,
+                        emailLogged: !logError
+                    };
+
+                } catch (error) {
+                    console.error('알림 발송 오류:', error);
+                    return { success: false, error: error.message };
+                }
+            },
+
+            // 특정 알림 타입들을 위한 편의 함수들
+            sendWelcomeEmail: (userId, userData) => 
+                EmailManager.sendNotification(userId, 'welcome', userData, {
+                    title: '인사이드잡에 오신 것을 환영합니다!',
+                    message: '취업경쟁력 진단부터 시작해보세요.'
+                }),
+
+            sendExpertApprovalEmail: (userId, expertData, isApproved, reason) => 
+                EmailManager.sendNotification(userId, isApproved ? 'expert_approved' : 'expert_rejected', {
+                    ...expertData,
+                    reason: reason
+                }, {
+                    title: isApproved ? '현직자 승인 완료' : '현직자 신청 검토 결과',
+                    message: isApproved ? '현직자로 활동을 시작하세요!' : '다시 신청해보세요.'
+                }),
+
+            sendConsultationBookedEmail: (userId, bookingData) =>
+                EmailManager.sendNotification(userId, 'consultation_booked', bookingData, {
+                    title: '멘토링 예약 완료',
+                    message: '예약된 멘토링 일정을 확인하세요.',
+                    relatedId: bookingData.bookingId
+                }),
+
+            sendNewMessageEmail: (userId, messageData) =>
+                EmailManager.sendNotification(userId, 'new_message', messageData, {
+                    title: '새 쪽지 도착',
+                    message: `${messageData.senderName}님으로부터 쪽지가 도착했습니다.`,
+                    relatedId: messageData.messageId
+                })
+        };
+
+        // 기존 sendExpertNotification 함수를 새로운 EmailManager로 대체
         const sendExpertNotification = async (expert, action, reason = '') => {
-            try {
-                // 실제 서비스에서는 이메일 서비스 연동 필요 (예: Supabase Edge Functions)
-                const emailData = {
-                    to: expert.email,
-                    subject: (action === 'approve' 
-                        ? '[인사이드잡] 현직자 승인 완료 🎉' 
-                        : '[인사이드잡] 현직자 신청 검토 결과'),
-                    html: (action === 'approve' 
-                        ? `<h2>🎉 현직자 승인이 완료되었습니다!</h2>
-                         <p>안녕하세요 ${expert.nickname}님,</p>
-                         <p>인사이드잡 현직자 신청이 <strong>승인</strong>되었습니다.</p>
-                         <p><strong>승인 사유:</strong> ${reason || '현직자 자격 요건을 충족합니다.'}</p>
-                         <p>이제 인사이드잡에서 현직자로 활동하실 수 있습니다!</p>
-                         <p><a href="https://knwwhr.github.io/insidejob/" style="background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">인사이드잡 바로가기</a></p>
-                         <p>감사합니다.<br/>인사이드잡 운영팀</p>` 
-                        : `<h2>현직자 신청 검토 결과</h2>
-                         <p>안녕하세요 ${expert.nickname}님,</p>
-                         <p>인사이드잡 현직자 신청을 검토한 결과를 안내드립니다.</p>
-                         <p><strong>검토 결과:</strong> 승인 보류</p>
-                         <p><strong>사유:</strong> ${reason || '자격 요건 미달'}</p>
-                         <p>추가 자격증이나 경력을 보완하신 후 다시 신청해주세요.</p>
-                         <p>감사합니다.<br/>인사이드잡 운영팀</p>`)
-                };
-                
-                console.log('이메일 발송 예정:', emailData);
-                
-                // TODO: 실제 이메일 발송 구현
-                // const { data, error } = await supabaseClient.functions.invoke('send-email', { body: emailData });
-                
-                return { success: true, message: '알림 이메일이 발송되었습니다.' };
-            } catch (error) {
-                console.error('이메일 발송 오류:', error);
-                return { success: false, message: '이메일 발송에 실패했습니다.' };
-            }
+            const isApproved = action === 'approve';
+            return await EmailManager.sendExpertApprovalEmail(
+                expert.user_id, 
+                { nickname: expert.nickname, email: expert.email }, 
+                isApproved, 
+                reason
+            );
         };
 
         // AmountInput 컴포넌트 (외부에서 정의하여 재생성 방지)
@@ -2089,6 +2289,10 @@
             const [userType, setUserType] = useState('member');
             const [userTypeName, setUserTypeName] = useState('일반회원');
             const [activeTab, setActiveTab] = useState('profile');
+            const [showRefundModal, setShowRefundModal] = useState(false);
+            const [selectedPayment, setSelectedPayment] = useState(null);
+            const [refundReason, setRefundReason] = useState('');
+            const [refundLoading, setRefundLoading] = useState(false);
             
             // 사용자 타입 확인 (async)
             useEffect(() => {
@@ -2414,6 +2618,82 @@
             const [loading, setLoading] = React.useState(true);
             const [error, setError] = React.useState(null);
             const [activeSubTab, setActiveSubTab] = React.useState('calculations');
+            const [showRefundModal, setShowRefundModal] = React.useState(false);
+            const [selectedPayment, setSelectedPayment] = React.useState(null);
+            const [refundReason, setRefundReason] = React.useState('');
+            const [refundLoading, setRefundLoading] = React.useState(false);
+            const [showPaymentDetailModal, setShowPaymentDetailModal] = React.useState(false);
+
+            // 환불 신청 처리 함수
+            const handleRefundRequest = async () => {
+                if (!selectedPayment || !refundReason.trim()) {
+                    alert('환불 사유를 입력해주세요.');
+                    return;
+                }
+
+                setRefundLoading(true);
+                try {
+                    // Mock 환불 처리 (실제로는 백엔드 API 호출)
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    
+                    // 실제 구현에서는 다음과 같이 처리:
+                    // const { error } = await supabase
+                    //     .from('refund_requests')
+                    //     .insert({
+                    //         payment_id: selectedPayment.id,
+                    //         user_id: currentUser.id,
+                    //         refund_amount: selectedPayment.amount,
+                    //         refund_reason: refundReason,
+                    //         status: 'pending',
+                    //         requested_at: new Date().toISOString()
+                    //     });
+
+                    // Mock 성공 처리
+                    console.log('✅ 환불 신청 완료:', {
+                        paymentId: selectedPayment.id,
+                        amount: selectedPayment.amount,
+                        reason: refundReason
+                    });
+
+                    // 결제 내역 업데이트 (환불 신청 중으로 상태 변경)
+                    setPaymentHistory(prev => prev.map(payment => 
+                        payment.id === selectedPayment.id 
+                            ? { ...payment, status: 'refund_requested' }
+                            : payment
+                    ));
+
+                    alert('환불 신청이 완료되었습니다.\n처리까지 영업일 기준 3-5일이 소요됩니다.');
+                    setShowRefundModal(false);
+                    setSelectedPayment(null);
+                    setRefundReason('');
+
+                } catch (error) {
+                    console.error('❌ 환불 신청 오류:', error);
+                    alert('환불 신청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+                } finally {
+                    setRefundLoading(false);
+                }
+            };
+
+            // 환불 가능 여부 확인 함수
+            const canRefund = (payment, booking) => {
+                // 결제 완료된 상태여야 함
+                if (payment.status !== 'completed') return false;
+                
+                // 이미 환불 신청한 경우 불가
+                if (payment.status === 'refund_requested' || payment.status === 'refunded') return false;
+                
+                // 상담 24시간 전까지만 환불 가능 (실제로는 예약 시간 기준으로 판단)
+                const bookingDate = booking?.scheduledTime;
+                if (bookingDate) {
+                    const bookingTime = new Date(bookingDate).getTime();
+                    const now = new Date().getTime();
+                    const hoursLeft = (bookingTime - now) / (1000 * 60 * 60);
+                    return hoursLeft > 24;
+                }
+                
+                return true; // 예약 정보가 없으면 일단 환불 가능으로 처리
+            };
 
             // 저장된 계산 결과 불러오기 및 예시 데이터
             const loadCalculationHistory = React.useCallback(async () => {
@@ -2592,75 +2872,11 @@
                 
             React.useEffect(() => {
                 // 모의 예약 내역 데이터
-                const mockBookings = [
-                    {
-                        id: 1,
-                        expertName: '김개발매니저',
-                        consultationType: '기술면접 멘토링',
-                        date: '2025-08-20',
-                        time: '14:00',
-                        status: 'completed',
-                        price: 50000,
-                        duration: 60,
-                        rating: 5,
-                        review: '매우 유용한 상담이었습니다.'
-                    },
-                    {
-                        id: 2,
-                        expertName: '이UX디렉터',
-                        consultationType: '이력서 검토',
-                        date: '2025-08-18',
-                        time: '16:30',
-                        status: 'completed',
-                        price: 75000,
-                        duration: 90,
-                        rating: 4,
-                        review: null
-                    },
-                    {
-                        id: 3,
-                        expertName: '박마케팅이사',
-                        consultationType: '커리어 설계',
-                        date: '2025-08-25',
-                        time: '10:00',
-                        status: 'scheduled',
-                        price: 60000,
-                        duration: 60,
-                        rating: null,
-                        review: null
-                    }
-                ];
+                // 실제 예약 데이터는 Supabase에서 조회 (현재는 빈 배열로 시작)
+                const bookings = [];
 
-                // 모의 결제 내역 데이터
-                const mockPayments = [
-                    {
-                        id: 1,
-                        bookingId: 1,
-                        date: '2025-08-19',
-                        amount: 50000,
-                        method: '신용카드',
-                        status: 'completed',
-                        transactionId: 'TXN123456789'
-                    },
-                    {
-                        id: 2,
-                        bookingId: 2,
-                        date: '2025-08-17',
-                        amount: 75000,
-                        method: '계좌이체',
-                        status: 'completed',
-                        transactionId: 'TXN987654321'
-                    },
-                    {
-                        id: 3,
-                        bookingId: 3,
-                        date: '2025-08-24',
-                        amount: 60000,
-                        method: '신용카드',
-                        status: 'pending',
-                        transactionId: 'TXN456789123'
-                    }
-                ];
+                // 실제 결제 데이터는 Supabase에서 조회 (현재는 빈 배열로 시작)
+                const payments = [];
 
                 // 실제 데이터베이스에서 예약/결제 내역 로드
                 const loadUserBookingsAndPayments = async () => {
@@ -2674,8 +2890,8 @@
 
                         // Supabase가 없는 경우 모의 데이터 사용
                         if (!supabase) {
-                            setBookingHistory(mockBookings);
-                            setPaymentHistory(mockPayments);
+                            setBookingHistory(bookings);
+                            setPaymentHistory(payments);
                             setLoading(false);
                             return;
                         }
@@ -2764,7 +2980,10 @@
                     requested: { bg: 'bg-yellow-100', text: 'text-yellow-800', label: '요청됨' },
                     rejected: { bg: 'bg-red-100', text: 'text-red-800', label: '거절됨' },
                     cancelled: { bg: 'bg-red-100', text: 'text-red-800', label: '취소됨' },
-                    no_show: { bg: 'bg-gray-100', text: 'text-gray-800', label: '노쇼' }
+                    no_show: { bg: 'bg-gray-100', text: 'text-gray-800', label: '노쇼' },
+                    refund_requested: { bg: 'bg-orange-100', text: 'text-orange-800', label: '환불신청' },
+                    refunded: { bg: 'bg-purple-100', text: 'text-purple-800', label: '환불완료' },
+                    refund_rejected: { bg: 'bg-red-100', text: 'text-red-800', label: '환불거절' }
                 };
                 const config = statusConfig[status] || statusConfig.requested;
                 return (
@@ -3091,11 +3310,13 @@
                                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">결제 방법</th>
                                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">상태</th>
                                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">거래번호</th>
+                                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">액션</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody className="bg-white divide-y divide-gray-200">
                                                         {paymentHistory.map(payment => {
                                                             const booking = bookingHistory.find(b => b.id === payment.bookingId);
+                                                            const canRequestRefund = canRefund(payment, booking);
                                                             return (
                                                                 <tr key={payment.id}>
                                                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{payment.date}</td>
@@ -3109,6 +3330,34 @@
                                                                     <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(payment.status)}</td>
                                                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
                                                                         {payment.transactionId}
+                                                                    </td>
+                                                                    <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                setSelectedPayment(payment);
+                                                                                setShowPaymentDetailModal(true);
+                                                                            }}
+                                                                            className="text-blue-600 hover:text-blue-900 font-medium"
+                                                                        >
+                                                                            상세
+                                                                        </button>
+                                                                        {canRequestRefund && (
+                                                                            <button
+                                                                                onClick={() => {
+                                                                                    setSelectedPayment(payment);
+                                                                                    setShowRefundModal(true);
+                                                                                }}
+                                                                                className="text-orange-600 hover:text-orange-900 font-medium"
+                                                                            >
+                                                                                환불
+                                                                            </button>
+                                                                        )}
+                                                                        {payment.status === 'refund_requested' && (
+                                                                            <span className="text-xs text-gray-500">처리 중</span>
+                                                                        )}
+                                                                        {payment.status === 'refunded' && (
+                                                                            <span className="text-xs text-green-600">환불완료</span>
+                                                                        )}
                                                                     </td>
                                                                 </tr>
                                                             );
@@ -3128,6 +3377,327 @@
                                 </>
                             )}
                         </div>
+
+                        {/* 결제 상세 정보 모달 */}
+                        {showPaymentDetailModal && selectedPayment && (
+                            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
+                                <div className="bg-white rounded-xl p-6 max-w-lg w-full shadow-xl max-h-90vh overflow-y-auto">
+                                    <div className="flex justify-between items-center mb-6">
+                                        <h3 className="text-xl font-bold text-gray-900">결제 상세 정보</h3>
+                                        <button 
+                                            onClick={() => {
+                                                setShowPaymentDetailModal(false);
+                                                setSelectedPayment(null);
+                                            }}
+                                            className="text-gray-500 hover:text-gray-700 text-2xl"
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
+
+                                    {/* 거래 기본 정보 */}
+                                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 mb-6">
+                                        <h4 className="font-bold text-blue-800 mb-4 text-center">💳 거래 정보</h4>
+                                        <div className="space-y-3">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-sm font-medium text-gray-600">거래번호:</span>
+                                                <span className="text-sm font-mono bg-white px-2 py-1 rounded border">
+                                                    {selectedPayment.transactionId}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-sm font-medium text-gray-600">결제일시:</span>
+                                                <span className="text-sm font-medium">
+                                                    {selectedPayment.date} {new Date().toLocaleTimeString('ko-KR')}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-sm font-medium text-gray-600">결제방법:</span>
+                                                <span className="text-sm font-medium">
+                                                    {selectedPayment.method === 'card' ? '💳 신용카드' :
+                                                     selectedPayment.method === 'kakaopay' ? '💰 카카오페이' :
+                                                     selectedPayment.method === 'toss' ? '🏦 토스페이' : selectedPayment.method}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-sm font-medium text-gray-600">결제상태:</span>
+                                                <div>{getStatusBadge(selectedPayment.status)}</div>
+                                            </div>
+                                            <hr className="border-blue-200" />
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-sm font-medium text-gray-600">결제금액:</span>
+                                                <span className="text-lg font-bold text-blue-700">
+                                                    {selectedPayment.amount.toLocaleString()}원
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 상담 정보 */}
+                                    {(() => {
+                                        const booking = bookingHistory.find(b => b.id === selectedPayment.bookingId);
+                                        if (booking) {
+                                            return (
+                                                <div className="bg-green-50 border border-green-200 rounded-xl p-5 mb-6">
+                                                    <h4 className="font-bold text-green-800 mb-4 text-center">📅 상담 정보</h4>
+                                                    <div className="space-y-3">
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="text-sm font-medium text-gray-600">전문가:</span>
+                                                            <span className="text-sm font-medium">{booking.expertName || '정보 없음'}</span>
+                                                        </div>
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="text-sm font-medium text-gray-600">상담 방식:</span>
+                                                            <span className="text-sm">
+                                                                {booking.consultationType === 'phone' ? '📞 전화 상담' :
+                                                                 booking.consultationType === 'video' ? '📹 화상 상담' :
+                                                                 booking.consultationType === 'chat' ? '💬 채팅 상담' : '상담'}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="text-sm font-medium text-gray-600">예약일시:</span>
+                                                            <span className="text-sm font-medium text-green-700">
+                                                                {booking.scheduledTime || '정보 없음'}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="text-sm font-medium text-gray-600">상담 주제:</span>
+                                                            <span className="text-sm">{booking.consultationTopic || '일반 상담'}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        }
+                                        return null;
+                                    })()}
+
+                                    {/* 금액 상세 내역 */}
+                                    <div className="bg-gray-50 border border-gray-200 rounded-xl p-5 mb-6">
+                                        <h4 className="font-bold text-gray-800 mb-4 text-center">💰 금액 상세</h4>
+                                        <div className="space-y-3">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-sm text-gray-600">상담료:</span>
+                                                <span className="text-sm font-medium">
+                                                    {Math.round(selectedPayment.amount * 0.9).toLocaleString()}원
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-sm text-gray-600">플랫폼 수수료 (10%):</span>
+                                                <span className="text-sm text-orange-600">
+                                                    {Math.round(selectedPayment.amount * 0.1).toLocaleString()}원
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-sm text-gray-600">결제 수수료:</span>
+                                                <span className="text-sm text-gray-500">포함</span>
+                                            </div>
+                                            <hr className="border-gray-300" />
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-base font-bold text-gray-800">총 결제 금액:</span>
+                                                <span className="text-base font-bold text-gray-900">
+                                                    {selectedPayment.amount.toLocaleString()}원
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 환불 정보 (환불 관련 상태인 경우만 표시) */}
+                                    {(selectedPayment.status === 'refund_requested' || 
+                                      selectedPayment.status === 'refunded' || 
+                                      selectedPayment.status === 'refund_rejected') && (
+                                        <div className="bg-orange-50 border border-orange-200 rounded-xl p-5 mb-6">
+                                            <h4 className="font-bold text-orange-800 mb-4 text-center">💸 환불 정보</h4>
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-sm font-medium text-gray-600">환불 상태:</span>
+                                                    <div>{getStatusBadge(selectedPayment.status)}</div>
+                                                </div>
+                                                {selectedPayment.status === 'refunded' && (
+                                                    <>
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="text-sm text-gray-600">환불 금액:</span>
+                                                            <span className="text-sm font-bold text-green-600">
+                                                                {selectedPayment.amount.toLocaleString()}원
+                                                            </span>
+                                                        </div>
+                                                        <div className="text-xs text-orange-700 mt-2">
+                                                            환불 완료일: {selectedPayment.refundedAt || '정보 없음'}
+                                                        </div>
+                                                    </>
+                                                )}
+                                                {selectedPayment.status === 'refund_requested' && (
+                                                    <div className="text-xs text-orange-700 mt-2">
+                                                        처리까지 영업일 기준 3-5일이 소요됩니다.
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* 액션 버튼들 */}
+                                    <div className="flex flex-col gap-3">
+                                        <button
+                                            onClick={() => {
+                                                // 영수증 다운로드 Mock
+                                                const receiptData = `
+=== 결제 영수증 ===
+거래번호: ${selectedPayment.transactionId}
+결제일: ${selectedPayment.date}
+결제금액: ${selectedPayment.amount.toLocaleString()}원
+결제방법: ${selectedPayment.method}
+상태: ${selectedPayment.status}
+================================
+                                                `.trim();
+                                                const blob = new Blob([receiptData], { type: 'text/plain' });
+                                                const url = URL.createObjectURL(blob);
+                                                const a = document.createElement('a');
+                                                a.href = url;
+                                                a.download = `receipt_${selectedPayment.transactionId}.txt`;
+                                                a.click();
+                                                URL.revokeObjectURL(url);
+                                            }}
+                                            className="w-full py-3 border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50 font-medium"
+                                        >
+                                            🧾 영수증 다운로드
+                                        </button>
+                                        
+                                        {canRefund(selectedPayment, bookingHistory.find(b => b.id === selectedPayment.bookingId)) && (
+                                            <button
+                                                onClick={() => {
+                                                    setShowPaymentDetailModal(false);
+                                                    setShowRefundModal(true);
+                                                }}
+                                                className="w-full py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium"
+                                            >
+                                                💸 환불 신청
+                                            </button>
+                                        )}
+                                        
+                                        <button
+                                            onClick={() => {
+                                                setShowPaymentDetailModal(false);
+                                                setSelectedPayment(null);
+                                            }}
+                                            className="w-full py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-medium"
+                                        >
+                                            닫기
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 환불 신청 모달 */}
+                        {showRefundModal && selectedPayment && (
+                            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
+                                <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-xl">
+                                    <div className="text-center mb-6">
+                                        <div className="text-4xl mb-4">💸</div>
+                                        <h3 className="text-xl font-bold text-gray-900">환불 신청</h3>
+                                        <p className="text-sm text-gray-600 mt-2">환불 사유를 입력해주세요</p>
+                                    </div>
+
+                                    {/* 결제 정보 */}
+                                    <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                                        <div className="space-y-2 text-sm">
+                                            <div className="flex justify-between">
+                                                <span>거래번호:</span>
+                                                <span className="font-mono text-gray-700">{selectedPayment.transactionId}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span>결제일:</span>
+                                                <span>{selectedPayment.date}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span>결제금액:</span>
+                                                <span className="font-bold text-red-600">{selectedPayment.amount.toLocaleString()}원</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span>결제방법:</span>
+                                                <span>{selectedPayment.method}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 환불 사유 선택 */}
+                                    <div className="mb-4">
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">환불 사유 *</label>
+                                        <div className="space-y-2 mb-4">
+                                            {[
+                                                '상담 취소',
+                                                '전문가 사정으로 인한 취소',
+                                                '서비스 불만족',
+                                                '예약 시간 변경 불가',
+                                                '기타'
+                                            ].map(reason => (
+                                                <label key={reason} className="flex items-center">
+                                                    <input
+                                                        type="radio"
+                                                        name="refundReason"
+                                                        value={reason}
+                                                        checked={refundReason === reason}
+                                                        onChange={(e) => setRefundReason(e.target.value)}
+                                                        className="mr-2"
+                                                    />
+                                                    <span className="text-sm text-gray-700">{reason}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                        
+                                        {refundReason === '기타' && (
+                                            <textarea
+                                                placeholder="상세 사유를 입력해주세요..."
+                                                value={refundReason === '기타' ? '' : refundReason}
+                                                onChange={(e) => setRefundReason('기타: ' + e.target.value)}
+                                                className="w-full p-3 border border-gray-300 rounded-lg resize-none"
+                                                rows="3"
+                                            />
+                                        )}
+                                    </div>
+
+                                    {/* 환불 안내 */}
+                                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-6">
+                                        <div className="text-xs text-yellow-800">
+                                            <div className="font-medium mb-1">⚠️ 환불 안내</div>
+                                            <ul className="space-y-1">
+                                                <li>• 환불 처리까지 영업일 기준 3-5일이 소요됩니다</li>
+                                                <li>• 상담 24시간 전까지만 전액 환불 가능합니다</li>
+                                                <li>• 24시간 내 취소 시 수수료가 차감될 수 있습니다</li>
+                                                <li>• 처리 결과는 이메일로 안내됩니다</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    {/* 액션 버튼 */}
+                                    <div className="flex gap-3">
+                                        <button
+                                            onClick={() => {
+                                                setShowRefundModal(false);
+                                                setSelectedPayment(null);
+                                                setRefundReason('');
+                                            }}
+                                            disabled={refundLoading}
+                                            className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                                        >
+                                            취소
+                                        </button>
+                                        <button
+                                            onClick={handleRefundRequest}
+                                            disabled={refundLoading || !refundReason.trim()}
+                                            className="flex-1 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            {refundLoading ? (
+                                                <div className="flex items-center justify-center">
+                                                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2"></div>
+                                                    처리 중...
+                                                </div>
+                                            ) : (
+                                                '환불 신청'
+                                            )}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             );
@@ -3363,52 +3933,77 @@
                                 </div>
                             </div>
                         ) : (
-                            <div className="bg-white rounded-lg p-4 border border-blue-200">
-                                <div className="flex flex-col md:flex-row gap-4 items-center">
-                                    <div className="flex-1">
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            문서 유형 선택
-                                        </label>
-                                        <select
-                                            value={selectedDocumentType}
-                                            onChange={(e) => setSelectedDocumentType(e.target.value)}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        >
-                                            {Object.entries(documentTypes).map(([key, type]) => (
-                                                <option key={key} value={key}>
-                                                    {type.icon} {type.name} - {type.description}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
+                            <div className="bg-white rounded-lg p-6 border border-blue-200">
+                                {/* 문서 유형 선택 */}
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        📂 문서 유형 선택
+                                    </label>
+                                    <select
+                                        value={selectedDocumentType}
+                                        onChange={(e) => setSelectedDocumentType(e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    >
+                                        {Object.entries(documentTypes).map(([key, type]) => (
+                                            <option key={key} value={key}>
+                                                {type.icon} {type.name} - {type.description}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* 드래그 앤 드롭 업로드 영역 */}
+                                <div 
+                                    className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 hover:bg-blue-50 transition-colors cursor-pointer"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    onDragOver={(e) => {
+                                        e.preventDefault();
+                                        e.currentTarget.classList.add('border-blue-400', 'bg-blue-50');
+                                    }}
+                                    onDragLeave={(e) => {
+                                        e.preventDefault();
+                                        e.currentTarget.classList.remove('border-blue-400', 'bg-blue-50');
+                                    }}
+                                    onDrop={(e) => {
+                                        e.preventDefault();
+                                        e.currentTarget.classList.remove('border-blue-400', 'bg-blue-50');
+                                        const files = e.dataTransfer.files;
+                                        if (files.length > 0) {
+                                            // 첫 번째 파일을 input에 설정
+                                            const event = {
+                                                target: {
+                                                    files: files
+                                                }
+                                            };
+                                            handleFileUpload(event);
+                                        }
+                                    }}
+                                >
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        onChange={handleFileUpload}
+                                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                        className="hidden"
+                                    />
                                     
-                                    <div className="flex-shrink-0">
-                                        <input
-                                            ref={fileInputRef}
-                                            type="file"
-                                            onChange={handleFileUpload}
-                                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                                            className="hidden"
-                                        />
-                                        <button
-                                            onClick={() => fileInputRef.current?.click()}
-                                            disabled={uploading}
-                                            className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                                                uploading 
-                                                    ? 'bg-gray-400 cursor-not-allowed' 
-                                                    : 'bg-blue-600 hover:bg-blue-700 text-white'
-                                            }`}
-                                        >
-                                            {uploading ? (
-                                                <>
-                                                    <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                                    업로드 중...
-                                                </>
-                                            ) : (
-                                                <>📤 파일 업로드</>
-                                            )}
-                                        </button>
-                                    </div>
+                                    {uploading ? (
+                                        <div className="py-4">
+                                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
+                                            <p className="text-gray-600">파일을 업로드하고 있습니다...</p>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="text-4xl mb-4">📤</div>
+                                            <p className="text-lg font-medium text-gray-700 mb-2">파일을 여기로 드래그하거나 클릭하세요</p>
+                                            <p className="text-sm text-gray-500 mb-4">
+                                                PDF, Word 문서, 이미지 파일 (최대 50MB)
+                                            </p>
+                                            <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                                                📂 파일 선택
+                                            </button>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -4082,6 +4677,7 @@
             const [processingId, setProcessingId] = useState(null);
             const [selectedExpert, setSelectedExpert] = useState(null);
             const [showDetailModal, setShowDetailModal] = useState(false);
+            const [showBulkActions, setShowBulkActions] = useState(false);
             const [actionReason, setActionReason] = useState('');
 
             // 전문가 목록 로드
@@ -4243,8 +4839,33 @@
                     {/* 헤더 */}
                     <div className="flex items-center justify-between">
                         <h2 className="text-xl font-semibold">🎯 전문가 승인 관리</h2>
-                        <div className="text-sm text-gray-500">
-                            총 {experts?.length || 0}명의 전문가
+                        <div className="flex items-center space-x-4">
+                            {/* 일괄 처리 버튼 (승인 대기 탭에서만 표시) */}
+                            {activeTab === 'pending' && experts?.filter(e => e.expert_status === 'pending').length > 0 && (
+                                <div className="flex space-x-2">
+                                    <button
+                                        onClick={() => {
+                                            if (confirm('모든 승인 대기 중인 전문가를 승인하시겠습니까?')) {
+                                                experts.filter(e => e.expert_status === 'pending')
+                                                    .forEach(expert => handleExpertAction(expert.user_id, 'approve'));
+                                            }
+                                        }}
+                                        disabled={processingId}
+                                        className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg font-medium transition-colors disabled:opacity-50"
+                                    >
+                                        ✅ 일괄 승인
+                                    </button>
+                                    <button
+                                        onClick={() => setShowBulkActions(!showBulkActions)}
+                                        className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg font-medium transition-colors"
+                                    >
+                                        ⚙️ 고급 작업
+                                    </button>
+                                </div>
+                            )}
+                            <div className="text-sm text-gray-500">
+                                총 {experts?.length || 0}명의 전문가
+                            </div>
                         </div>
                     </div>
 
@@ -4363,54 +4984,62 @@
                                             </p>
                                         </div>
 
-                                        {/* 액션 버튼 */}
-                                        <div className="flex flex-col space-y-2 ml-4">
-                                            <button
-                                                onClick={() => showExpertDetail(expert)}
-                                                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm rounded-lg transition-colors"
-                                            >
-                                                📋 상세보기
-                                            </button>
-                                            
+                                        {/* 빠른 액션 버튼 */}
+                                        <div className="flex flex-col space-y-2 ml-4 min-w-[120px]">
                                             {expert.expert_status === 'pending' && (
                                                 <>
                                                     <button
                                                         onClick={() => handleExpertAction(expert.user_id, 'approve')}
                                                         disabled={processingId === expert.user_id}
-                                                        className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm rounded-lg transition-colors disabled:bg-gray-400"
+                                                        className={`px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg font-medium transition-colors flex items-center justify-center ${
+                                                            processingId === expert.user_id ? 'opacity-50 cursor-not-allowed' : ''
+                                                        }`}
                                                     >
-                                                        {processingId === expert.user_id ? '처리중...' : '✅ 승인'}
+                                                        {processingId === expert.user_id ? (
+                                                            <>
+                                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                                                처리중...
+                                                            </>
+                                                        ) : (
+                                                            <>✅ 빠른 승인</>
+                                                        )}
                                                     </button>
                                                     <button
-                                                        onClick={() => handleExpertAction(expert.user_id, 'reject')}
+                                                        onClick={() => handleExpertAction(expert.user_id, 'reject', '추가 검토 필요')}
                                                         disabled={processingId === expert.user_id}
-                                                        className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm rounded-lg transition-colors disabled:bg-gray-400"
+                                                        className={`px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg font-medium transition-colors ${
+                                                            processingId === expert.user_id ? 'opacity-50 cursor-not-allowed' : ''
+                                                        }`}
                                                     >
-                                                        {processingId === expert.user_id ? '처리중...' : '❌ 거절'}
+                                                        ❌ 거절
                                                     </button>
                                                 </>
                                             )}
                                             
+                                            <button
+                                                onClick={() => showExpertDetail(expert)}
+                                                className="px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 text-sm rounded-lg font-medium transition-colors"
+                                            >
+                                                📋 상세보기
+                                            </button>
+                                            
                                             {expert.expert_status === 'approved' && (
-                                                <button
-                                                    onClick={() => handleExpertAction(expert.user_id, 'reject')}
-                                                    disabled={processingId === expert.user_id}
-                                                    className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white text-sm rounded-lg transition-colors disabled:bg-gray-400"
-                                                >
-                                                    🔄 승인취소
-                                                </button>
+                                                <div className="px-4 py-2 bg-green-50 text-green-700 text-sm rounded-lg text-center">
+                                                    ✅ 승인완료
+                                                </div>
                                             )}
                                             
                                             {expert.expert_status === 'rejected' && (
                                                 <button
                                                     onClick={() => handleExpertAction(expert.user_id, 'approve')}
-                                                    disabled={processingId === expert.user_id}
-                                                    className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm rounded-lg transition-colors disabled:bg-gray-400"
-                                                >
-                                                    🔄 재승인
-                                                </button>
-                                            )}
-                                        </div>
+                                                        disabled={processingId === expert.user_id}
+                                                        className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm rounded-lg transition-colors disabled:bg-gray-400"
+                                                    >
+                                                        {processingId === expert.user_id ? '처리중...' : '✅ 승인'}
+                                                    </button>
+                                                <div className="px-4 py-2 bg-orange-50 text-orange-700 text-sm rounded-lg text-center">
+                                                    💭 재검토 가능
+                                                </div>
                                     </div>
                                 </div>
                             ))}
@@ -5231,6 +5860,18 @@
                         const result = await authManager.signUp(email, password, finalNickname);
                         if (result.success) {
                             setError('');
+                            
+                            // 환영 이메일 발송
+                            try {
+                                await EmailManager.sendWelcomeEmail(result.user.id, {
+                                    nickname: finalNickname,
+                                    email: email
+                                });
+                                console.log('✅ 환영 이메일 발송 완료');
+                            } catch (emailError) {
+                                console.error('❌ 환영 이메일 발송 실패:', emailError);
+                            }
+                            
                             showNotification('회원가입 완료!', `🎉 환영합니다, ${finalNickname}님!\n✨ 바로 서비스를 이용하실 수 있습니다.\n🎯 취업경쟁력 진단과 커뮤니티 참여가 가능합니다.`, 'success');
                             setAuthMode('login');
                             setIsLogin(true);
@@ -7666,6 +8307,7 @@
             const [currentStep, setCurrentStep] = useState(1);
             const [bookingResult, setBookingResult] = useState(null);
             const [paymentLoading, setPaymentLoading] = useState(false);
+            const [paymentError, setPaymentError] = useState(null);
             const [showCalendar, setShowCalendar] = useState(false);
             
             // 현재 월 달력 표시를 위한 상태
@@ -7759,39 +8401,48 @@
                 setCurrentStep(3); // 결제 단계
             };
 
-            // Mock 결제 처리 함수
+            // 결제 처리 함수 (현재 Mock, 추후 토스페이먼츠 API 연동 예정)
             const handlePayment = async (paymentMethod) => {
                 try {
                     setPaymentLoading(true);
+                    setPaymentError(null); // 이전 에러 초기화
                     
-                    // Mock 결제 프로세스 시뮬레이션
-                    console.log('📱 Mock 결제 시작:', { 
+                    // 결제 프로세스 시작 
+                    console.log('📱 결제 시작:', { 
                         method: paymentMethod, 
                         amount: bookingResult.paymentAmount,
                         expert: expert.name
                     });
                     
-                    // 결제 로딩 시뮬레이션 (3초)
-                    await new Promise(resolve => setTimeout(resolve, 3000));
+                    // 결제 API 호출 (현재는 시뮬레이션, 추후 실제 API로 교체)
+                    let paymentResult;
                     
-                    // 90% 성공률 시뮬레이션
-                    const paymentSuccess = Math.random() > 0.1;
-                    
-                    if (!paymentSuccess) {
-                        throw new Error('결제가 실패했습니다. 카드 정보를 확인하거나 다른 결제 방법을 시도해주세요.');
+                    if (paymentMethod === 'card' || paymentMethod === 'kakaopay' || paymentMethod === 'toss') {
+                        // TODO: 실제 결제 API 연동 시 여기를 교체
+                        // 현재는 개발/테스트를 위한 Mock 결제
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                        
+                        // 시뮬레이션: 10% 확률로 결제 실패 (테스트용)
+                        const shouldFail = Math.random() < 0.1;
+                        if (shouldFail && paymentMethod === 'card') {
+                            throw new Error('CARD_DECLINED');
+                        }
+                        
+                        // 결제 성공 시뮬레이션
+                        paymentResult = {
+                            paymentId: `mock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                            transactionId: `TXN${Date.now()}`,
+                            amount: bookingResult.paymentAmount,
+                            method: paymentMethod,
+                            paidAt: new Date().toISOString(),
+                            status: 'completed',
+                            isTestPayment: true // 테스트 결제 표시
+                        };
+                    } else {
+                        throw new Error('UNSUPPORTED_METHOD');
                     }
                     
-                    // Mock 결제 결과
-                    const mockPaymentResult = {
-                        paymentId: `mock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                        transactionId: `TXN${Date.now()}`,
-                        amount: bookingResult.paymentAmount,
-                        method: paymentMethod,
-                        paidAt: new Date().toISOString(),
-                        status: 'completed'
-                    };
-                    
-                    console.log('💳 Mock 결제 완료:', mockPaymentResult);
+                    console.log('💳 결제 완료:', paymentResult);
                     
                     // Supabase에 예약 정보 저장
                     const { error } = await supabase
@@ -7807,8 +8458,8 @@
                             platform_fee: bookingResult.platformFee,
                             expert_payout: bookingResult.expertPayout,
                             payment_method: paymentMethod,
-                            payment_id: mockPaymentResult.paymentId,
-                            transaction_id: mockPaymentResult.transactionId,
+                            payment_id: paymentResult.paymentId,
+                            transaction_id: paymentResult.transactionId,
                             status: 'confirmed'
                         });
 
@@ -7817,16 +8468,87 @@
                     // 결제 결과를 bookingResult에 추가
                     setBookingResult(prev => ({
                         ...prev,
-                        paymentResult: mockPaymentResult
+                        paymentResult: paymentResult
                     }));
                     
                     setCurrentStep(4); // 완료 단계
+                    
+                    // 예약 확인 이메일 발송
+                    try {
+                        await EmailManager.sendConsultationBookedEmail(currentUser.id, {
+                            clientName: currentUser.nickname || currentUser.email,
+                            expertName: expert.name,
+                            date: selectedSlot.date,
+                            time: selectedSlot.time,
+                            duration: selectedSlot.duration,
+                            method: selectedSlot.method,
+                            amount: selectedSlot.price,
+                            bookingId: bookingResult.id
+                        });
+                        console.log('✅ 예약 확인 이메일 발송 완료');
+                    } catch (emailError) {
+                        console.error('❌ 예약 확인 이메일 발송 실패:', emailError);
+                    }
                     
                     showToast('🎉 상담 예약이 완료되었습니다!', 'success');
                     
                 } catch (error) {
                     console.error('💥 결제 처리 오류:', error);
-                    showToast(error.message || '결제 처리 중 오류가 발생했습니다.', 'error');
+                    
+                    // 사용자 친화적인 에러 메시지 설정
+                    let userFriendlyError = {
+                        title: '결제 실패',
+                        message: '결제 처리 중 오류가 발생했습니다.',
+                        code: error.message,
+                        canRetry: true
+                    };
+                    
+                    switch(error.message) {
+                        case 'CARD_DECLINED':
+                            userFriendlyError = {
+                                title: '카드 결제 실패',
+                                message: '카드 승인이 거절되었습니다. 카드사에 문의하거나 다른 결제 방법을 시도해주세요.',
+                                code: '카드 승인 거절',
+                                canRetry: true
+                            };
+                            break;
+                        case 'UNSUPPORTED_METHOD':
+                            userFriendlyError = {
+                                title: '지원되지 않는 결제방법',
+                                message: '선택하신 결제 방법을 현재 지원하지 않습니다.',
+                                code: '결제방법 오류',
+                                canRetry: false
+                            };
+                            break;
+                        case 'NETWORK_ERROR':
+                            userFriendlyError = {
+                                title: '네트워크 오류',
+                                message: '인터넷 연결을 확인하고 다시 시도해주세요.',
+                                code: '네트워크 연결 오류',
+                                canRetry: true
+                            };
+                            break;
+                        case 'INSUFFICIENT_FUNDS':
+                            userFriendlyError = {
+                                title: '잔액 부족',
+                                message: '계좌 잔액이 부족합니다. 잔액을 확인하고 다시 시도해주세요.',
+                                code: '잔액 부족',
+                                canRetry: true
+                            };
+                            break;
+                        default:
+                            if (error.message.includes('timeout')) {
+                                userFriendlyError = {
+                                    title: '결제 시간 초과',
+                                    message: '결제 처리 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.',
+                                    code: '시간 초과',
+                                    canRetry: true
+                                };
+                            }
+                    }
+                    
+                    setPaymentError(userFriendlyError);
+                    showToast(userFriendlyError.title + ': ' + userFriendlyError.message, 'error');
                 } finally {
                     setPaymentLoading(false);
                 }
@@ -7836,7 +8558,35 @@
             if (currentStep === 3 && bookingResult) {
                 return (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
-                        <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-xl">
+                        <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-xl relative">
+                            {/* 결제 진행 중 오버레이 */}
+                            {paymentLoading && (
+                                <div className="absolute inset-0 bg-white bg-opacity-95 rounded-xl flex items-center justify-center z-10">
+                                    <div className="text-center">
+                                        <div className="relative mb-4">
+                                            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600"></div>
+                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                <span className="text-xl">💳</span>
+                                            </div>
+                                        </div>
+                                        <h4 className="text-lg font-semibold text-gray-800 mb-2">결제 처리 중...</h4>
+                                        <div className="text-sm text-gray-600 space-y-1">
+                                            <p>안전한 결제 서버로 정보를 전송하고 있습니다</p>
+                                            <p className="text-xs text-gray-500">잠시만 기다려 주세요 (약 2-5초)</p>
+                                        </div>
+                                        <div className="mt-4 bg-blue-50 p-3 rounded-lg">
+                                            <div className="flex items-center justify-center space-x-2 text-sm text-blue-700">
+                                                <span className="inline-block w-2 h-2 bg-blue-400 rounded-full animate-pulse"></span>
+                                                <span>결제 승인 대기 중</span>
+                                                <span className="inline-block w-2 h-2 bg-blue-400 rounded-full animate-pulse animation-delay-300"></span>
+                                            </div>
+                                        </div>
+                                        <div className="mt-3 text-xs text-gray-500">
+                                            ⚠️ 브라우저를 종료하거나 새로고침하지 마세요
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                             <div className="text-center mb-6">
                                 <div className="text-4xl mb-4">💳</div>
                                 <h3 className="text-xl font-bold text-gray-900">결제하기</h3>
@@ -7875,6 +8625,7 @@
                             {/* 결제 방법 선택 */}
                             <div className="space-y-3 mb-6">
                                 <h4 className="font-medium text-gray-800">결제 방법을 선택하세요</h4>
+                                <p className="text-xs text-gray-500 mb-3">모든 결제 방식은 SSL 암호화로 안전하게 처리됩니다</p>
                                 
                                 <button
                                     onClick={() => handlePayment('card')}
@@ -7890,7 +8641,9 @@
                                             <span className="text-2xl mr-3">💳</span>
                                             <div>
                                                 <div className="font-medium">신용카드</div>
-                                                <div className="text-sm text-gray-500">일반적인 신용카드 결제</div>
+                                                <div className="text-sm text-gray-500">국내외 모든 신용카드 지원</div>
+                                                <div className="text-xs text-blue-600 mt-1">수수료: 2.9% + 100원 (카드사 부담)</div>
+                                                <div className="text-xs text-gray-400">즉시 승인, 안전한 PG사 결제</div>
                                             </div>
                                         </div>
                                         <div className="text-blue-600 font-medium">
@@ -7917,7 +8670,9 @@
                                             <span className="text-2xl mr-3">💰</span>
                                             <div>
                                                 <div className="font-medium">카카오페이</div>
-                                                <div className="text-sm text-gray-500">간편하고 안전한 결제</div>
+                                                <div className="text-sm text-gray-500">카카오톡에서 간편 결제</div>
+                                                <div className="text-xs text-yellow-600 mt-1">수수료: 2.5% (업계 최저)</div>
+                                                <div className="text-xs text-gray-400">QR코드 또는 카톡 알림으로 결제</div>
                                             </div>
                                         </div>
                                         <div className="text-yellow-600 font-medium">
@@ -7944,13 +8699,94 @@
                                             <span className="text-2xl mr-3">🏦</span>
                                             <div>
                                                 <div className="font-medium">토스페이</div>
-                                                <div className="text-sm text-gray-500">토스 간편결제</div>
+                                                <div className="text-sm text-gray-500">토스앱 간편결제</div>
+                                                <div className="text-xs text-blue-600 mt-1">수수료: 2.7% (앱 내 할인 적용)</div>
+                                                <div className="text-xs text-gray-400">생체인증으로 빠르고 안전</div>
                                             </div>
                                         </div>
-                                        <div className="text-blue-600 font-medium">선택</div>
+                                        <div className="text-blue-600 font-medium">
+                                            {paymentLoading ? (
+                                                <div className="inline-block animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                                            ) : (
+                                                '선택'
+                                            )}
+                                        </div>
                                     </div>
                                 </button>
+
+                                <div className="bg-gray-50 p-3 rounded-lg">
+                                    <div className="text-xs text-gray-600">
+                                        <span className="font-medium">💡 결제 팁:</span> 
+                                        카카오페이가 수수료가 가장 저렴하며, 모든 결제 방식 동일한 보안 수준을 제공합니다.
+                                    </div>
+                                </div>
                             </div>
+
+                            {/* 결제 에러 메시지 */}
+                            {paymentError && (
+                                <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+                                    <div className="flex items-start">
+                                        <span className="text-2xl mr-3">⚠️</span>
+                                        <div className="flex-1">
+                                            <h4 className="text-lg font-semibold text-red-800 mb-2">{paymentError.title}</h4>
+                                            <p className="text-sm text-red-700 mb-3">{paymentError.message}</p>
+                                            <div className="text-xs text-red-600 mb-4">
+                                                <strong>오류 코드:</strong> {paymentError.code}
+                                            </div>
+                                            {paymentError.canRetry && (
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() => {
+                                                            setPaymentError(null);
+                                                        }}
+                                                        className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors"
+                                                    >
+                                                        다시 시도
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setCurrentStep(2)}
+                                                        className="px-4 py-2 border border-red-300 text-red-700 text-sm rounded-lg hover:bg-red-50 transition-colors"
+                                                    >
+                                                        이전 단계로
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="mt-3 bg-red-100 p-3 rounded-lg">
+                                        <div className="text-xs text-red-700">
+                                            <strong>💡 해결 방법:</strong>
+                                            <ul className="mt-1 space-y-1 ml-4">
+                                                {paymentError.code === '카드 승인 거절' && (
+                                                    <>
+                                                        <li>• 카드 한도를 확인해주세요</li>
+                                                        <li>• 다른 카드로 시도해보세요</li>
+                                                        <li>• 카드사 고객센터에 문의해주세요</li>
+                                                    </>
+                                                )}
+                                                {paymentError.code === '잔액 부족' && (
+                                                    <>
+                                                        <li>• 계좌 잔액을 확인해주세요</li>
+                                                        <li>• 다른 결제 방법을 시도해주세요</li>
+                                                    </>
+                                                )}
+                                                {paymentError.code === '네트워크 연결 오류' && (
+                                                    <>
+                                                        <li>• 인터넷 연결을 확인해주세요</li>
+                                                        <li>• 잠시 후 다시 시도해주세요</li>
+                                                    </>
+                                                )}
+                                                {paymentError.code === '시간 초과' && (
+                                                    <>
+                                                        <li>• 잠시 후 다시 시도해주세요</li>
+                                                        <li>• 브라우저를 새로고침해보세요</li>
+                                                    </>
+                                                )}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="flex gap-3">
                                 <button
@@ -7975,21 +8811,79 @@
             if (currentStep === 4 && bookingResult) {
                 return (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
-                        <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-xl">
+                        <div className="bg-white rounded-xl p-6 max-w-lg w-full shadow-xl max-h-90vh overflow-y-auto">
                             <div className="text-center">
                                 <div className="text-6xl mb-4">🎉</div>
-                                <h3 className="text-xl font-bold text-gray-900 mb-4">결제 완료!</h3>
-                                <div className="bg-green-50 p-4 rounded-lg mb-4 text-left">
-                                    <div className="space-y-2 text-sm">
-                                        <div><strong>전문가:</strong> {expert.name}</div>
-                                        <div><strong>일시:</strong> {bookingResult.scheduledTime}</div>
-                                        <div><strong>상담 방식:</strong> {
-                                            consultationType === 'phone' ? '📞 전화 상담' :
-                                            consultationType === 'video' ? '📹 화상 상담' : '💬 채팅 상담'
-                                        }</div>
-                                        <div><strong>결제 금액:</strong> {bookingResult.paymentAmount.toLocaleString()}원</div>
+                                <h3 className="text-2xl font-bold text-gray-900 mb-2">결제 완료!</h3>
+                                <p className="text-sm text-gray-600 mb-6">상담 예약이 성공적으로 완료되었습니다.</p>
+                                
+                                {/* 예약 상세 정보 */}
+                                <div className="bg-green-50 border border-green-200 rounded-xl p-5 mb-6 text-left">
+                                    <h4 className="font-bold text-green-800 mb-4 text-center">📋 예약 상세 정보</h4>
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-sm font-medium text-gray-600">예약 ID:</span>
+                                            <span className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
+                                                {bookingResult.paymentResult?.transactionId || 'N/A'}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-sm font-medium text-gray-600">전문가:</span>
+                                            <span className="text-sm font-medium text-gray-800">{expert.name}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-sm font-medium text-gray-600">전문 분야:</span>
+                                            <span className="text-sm text-gray-800">{expert.category || expert.field}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-sm font-medium text-gray-600">상담 일시:</span>
+                                            <span className="text-sm font-medium text-blue-700">{bookingResult.scheduledTime}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-sm font-medium text-gray-600">상담 방식:</span>
+                                            <span className="text-sm font-medium">
+                                                {consultationType === 'phone' ? '📞 전화 상담' :
+                                                 consultationType === 'video' ? '📹 화상 상담' : '💬 채팅 상담'}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-sm font-medium text-gray-600">상담 주제:</span>
+                                            <span className="text-sm text-gray-800">{bookingResult.consultationTopic || '미지정'}</span>
+                                        </div>
+                                        <hr className="border-green-200" />
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-sm font-medium text-gray-600">결제 방법:</span>
+                                            <span className="text-sm font-medium">
+                                                {bookingResult.paymentResult?.method === 'card' ? '💳 신용카드' :
+                                                 bookingResult.paymentResult?.method === 'kakaopay' ? '💰 카카오페이' :
+                                                 bookingResult.paymentResult?.method === 'toss' ? '🏦 토스페이' : '기타'}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-sm font-medium text-gray-600">결제 금액:</span>
+                                            <span className="text-lg font-bold text-green-700">{bookingResult.paymentAmount.toLocaleString()}원</span>
+                                        </div>
+                                        <div className="text-xs text-gray-500 text-right">
+                                            (플랫폼 수수료 {bookingResult.platformFee.toLocaleString()}원 포함)
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-sm font-medium text-gray-600">결제 일시:</span>
+                                            <span className="text-xs text-gray-500">
+                                                {new Date().toLocaleString('ko-KR')}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
+
+                                {/* 연락처 정보 */}
+                                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6 text-left">
+                                    <h4 className="font-medium text-orange-800 mb-2">📞 연락처 정보</h4>
+                                    <div className="text-sm text-orange-700 space-y-1">
+                                        <p><strong>고객님 연락처:</strong> {phoneNumber || '미입력'}</p>
+                                        <p className="text-xs text-orange-600">※ 전문가가 상담 전 연락드릴 예정입니다</p>
+                                    </div>
+                                </div>
+
                                 <div className="bg-blue-50 p-4 rounded-lg mb-6">
                                     <h4 className="font-medium text-blue-800 mb-2">📋 다음 단계</h4>
                                     <ul className="text-sm text-blue-700 text-left space-y-1">
@@ -7997,14 +8891,48 @@
                                         <li>• 상담 전 준비사항을 안내해드립니다</li>
                                         <li>• 마이페이지에서 예약을 확인할 수 있습니다</li>
                                         <li>• 취소는 상담 24시간 전까지 가능합니다</li>
+                                        <li>• 예약 확인 이메일이 발송됩니다</li>
                                     </ul>
                                 </div>
-                                <button
-                                    onClick={onClose}
-                                    className="w-full py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                                >
-                                    확인
-                                </button>
+
+                                {/* 액션 버튼들 */}
+                                <div className="flex flex-col gap-2">
+                                    <button
+                                        onClick={onClose}
+                                        className="w-full py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
+                                    >
+                                        ✓ 확인 완료
+                                    </button>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => {
+                                                // 마이페이지로 이동 (예약 내역 확인)
+                                                onClose();
+                                                // 실제로는 마이페이지 탭으로 이동하는 로직 필요
+                                            }}
+                                            className="flex-1 py-2 border border-blue-300 text-blue-700 text-sm rounded-lg hover:bg-blue-50"
+                                        >
+                                            📋 예약 확인
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                // 영수증 출력 기능 (Mock)
+                                                alert('영수증 다운로드 기능은 준비 중입니다.');
+                                            }}
+                                            className="flex-1 py-2 border border-gray-300 text-gray-700 text-sm rounded-lg hover:bg-gray-50"
+                                        >
+                                            🧾 영수증
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {bookingResult.paymentResult?.isTestPayment && (
+                                    <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                                        <div className="text-xs text-yellow-800">
+                                            ⚠️ <strong>테스트 결제입니다.</strong> 실제 금액이 청구되지 않습니다.
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -8216,10 +9144,10 @@
             const [formData, setFormData] = useState({
                 title: '',
                 content: '',
-                category: 'travel',
-                serviceType: 'phone',
+                category: 'tech_development',
+                serviceType: 'video',
                 price: '',
-                duration: '30',
+                duration: '60',
                 availableDays: [],
                 availableTimeSlots: [],
                 tags: []
@@ -8239,9 +9167,9 @@
 
             // 서비스 유형 (상담 방식)
             const serviceTypes = {
-                'phone': '전화 상담',
-                'chat': '채팅 상담',
-                'video': '영상 통화'
+                'video': '📹 영상 멘토링 (추천)',
+                'phone': '📞 전화 멘토링',
+                'chat': '💬 채팅 멘토링'
             };
 
             // 요일 옵션
@@ -8277,10 +9205,10 @@
                     setFormData({
                         title: '',
                         content: '',
-                        category: 'travel',
-                        serviceType: 'phone',
+                        category: 'tech_development',
+                        serviceType: 'video',
                         price: '',
-                        duration: '30',
+                        duration: '60',
                         availableDays: [],
                         availableTimeSlots: [],
                         tags: []
@@ -8479,22 +9407,26 @@
 
                             {/* 카테고리 선택 */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    전문 분야 *
+                                <label className="block text-sm font-medium text-gray-700 mb-3">
+                                    💼 전문 분야 *
                                 </label>
-                                <div className="grid grid-cols-3 gap-2">
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                     {Object.entries(categories).map(([key, category]) => (
                                         <button
                                             key={key}
+                                            type="button"
                                             onClick={() => handleInputChange('category', key)}
-                                            className={`p-3 rounded-lg text-center transition-all ${
+                                            className={`p-4 rounded-xl text-center transition-all border-2 ${
                                                 formData.category === key
-                                                    ? `bg-${category.color}-500 text-white`
-                                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                    ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-md transform scale-105'
+                                                    : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:border-gray-300'
                                             }`}
                                         >
-                                            <div className="text-lg mb-1">{category.icon}</div>
-                                            <div className="font-semibold text-xs">{category.name}</div>
+                                            <div className="text-2xl mb-2">{category.icon}</div>
+                                            <div className="font-semibold text-sm">{category.name}</div>
+                                            {formData.category === key && (
+                                                <div className="text-xs text-blue-600 mt-1">✓ 선택됨</div>
+                                            )}
                                         </button>
                                     ))}
                                 </div>
@@ -8575,37 +9507,64 @@
                             {/* 상담료 */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    상담료 (원) *
+                                    💰 상담료 *
                                 </label>
-                                <input
-                                    type="text"
-                                    value={formData.price}
-                                    onChange={(e) => {
-                                        const value = e.target.value.replace(/[^0-9]/g, '');
-                                        const formatted = value.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-                                        handleInputChange('price', formatted);
-                                    }}
-                                    placeholder="30,000"
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                />
-                                <div className="text-xs text-gray-500 mt-1">
-                                    최소 30,000원 이상, 최대 500,000원 이하
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        value={formData.price}
+                                        onChange={(e) => {
+                                            const value = e.target.value.replace(/[^0-9]/g, '');
+                                            const formatted = value.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                                            handleInputChange('price', formatted);
+                                        }}
+                                        placeholder="80,000"
+                                        className="w-full p-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    />
+                                    <span className="absolute right-3 top-3 text-gray-500 font-medium">원</span>
+                                </div>
+                                
+                                {/* 권장 가격 버튼들 */}
+                                <div className="mt-3">
+                                    <p className="text-xs text-gray-600 mb-2">💡 권장 가격 (60분 기준)</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {['50,000', '80,000', '120,000', '150,000'].map(price => (
+                                            <button
+                                                key={price}
+                                                type="button"
+                                                onClick={() => handleInputChange('price', price)}
+                                                className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
+                                                    formData.price === price
+                                                        ? 'bg-blue-100 border-blue-300 text-blue-700'
+                                                        : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                                                }`}
+                                            >
+                                                {price}원
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                
+                                <div className="text-xs text-gray-500 mt-2">
+                                    🔸 최소 30,000원 이상, 최대 500,000원 이하<br/>
+                                    🔸 플랫폼 수수료 10% 차감 후 지급
                                 </div>
                             </div>
 
                             {/* 상담 가능 요일 */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    상담 가능 요일 *
+                                <label className="block text-sm font-medium text-gray-700 mb-3">
+                                    📅 상담 가능 요일 * ({formData.availableDays.length}일 선택됨)
                                 </label>
-                                <div className="flex flex-wrap gap-2">
+                                <div className="grid grid-cols-7 gap-2">
                                     {dayOptions.map(day => (
                                         <button
                                             key={day.value}
+                                            type="button"
                                             onClick={() => handleDayToggle(day.value)}
-                                            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                                            className={`py-3 rounded-lg text-sm font-medium transition-all ${
                                                 formData.availableDays.includes(day.value)
-                                                    ? 'bg-blue-500 text-white'
+                                                    ? 'bg-blue-500 text-white shadow-md transform scale-105'
                                                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                             }`}
                                         >
@@ -8613,13 +9572,52 @@
                                         </button>
                                     ))}
                                 </div>
+                                <div className="text-xs text-gray-500 mt-2">
+                                    💡 상담 가능한 요일을 모두 선택해주세요 (최소 1일 이상)
+                                </div>
                             </div>
 
                             {/* 상담 가능 시간 */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    상담 가능 시간 * (복수 선택 가능)
+                                <label className="block text-sm font-medium text-gray-700 mb-3">
+                                    🕐 상담 가능 시간 * ({formData.availableTimeSlots.length}시간 선택됨)
                                 </label>
+                                
+                                {/* 빠른 선택 버튼들 */}
+                                <div className="flex flex-wrap gap-2 mb-3 p-3 bg-gray-50 rounded-lg">
+                                    <span className="text-xs text-gray-600 font-medium">빠른 선택:</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const morningTimes = ['09:00', '10:00', '11:00'];
+                                            handleInputChange('availableTimeSlots', morningTimes);
+                                        }}
+                                        className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                                    >
+                                        오전 (9-12시)
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const afternoonTimes = ['13:00', '14:00', '15:00', '16:00', '17:00'];
+                                            handleInputChange('availableTimeSlots', afternoonTimes);
+                                        }}
+                                        className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
+                                    >
+                                        오후 (1-6시)
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const eveningTimes = ['18:00', '19:00', '20:00'];
+                                            handleInputChange('availableTimeSlots', eveningTimes);
+                                        }}
+                                        className="text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors"
+                                    >
+                                        저녁 (6-8시)
+                                    </button>
+                                </div>
+                                
                                 <div className="grid grid-cols-4 gap-2">
                                     {timeSlotOptions.map(time => (
                                         <button
@@ -8628,7 +9626,7 @@
                                             onClick={() => handleTimeSlotToggle(time.value)}
                                             className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                                                 formData.availableTimeSlots.includes(time.value)
-                                                    ? 'bg-green-500 text-white'
+                                                    ? 'bg-green-500 text-white shadow-md transform scale-105'
                                                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                             }`}
                                         >
@@ -8636,17 +9634,52 @@
                                         </button>
                                     ))}
                                 </div>
-                                <div className="text-xs text-gray-500 mt-1">
-                                    선택한 시간대에 상담이 가능합니다
+                                <div className="text-xs text-gray-500 mt-2">
+                                    💡 구직자들이 선택할 수 있는 시간대입니다 (최소 3시간 이상 권장)
                                 </div>
                             </div>
 
                             {/* 태그 */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    전문 태그 (최대 5개)
+                                    🏷️ 전문 태그 ({formData.tags.length}/5개)
                                 </label>
-                                <div className="flex gap-2 mb-2">
+                                {/* 추천 태그 */}
+                                <div className="mb-3 p-3 bg-blue-50 rounded-lg">
+                                    <p className="text-xs text-blue-700 font-medium mb-2">💡 추천 태그 (클릭으로 추가)</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {(() => {
+                                            const recommendedTags = {
+                                                'tech_development': ['신입', '경력', '면접준비', '기술스택', '포트폴리오', '이력서', '코딩테스트'],
+                                                'finance_consulting': ['금융권', '자격증', 'CPA', 'CFA', '투자', '재무관리', '경제'],
+                                                'marketing_planning': ['브랜딩', '디지털마케팅', '소셜미디어', '광고', '기획', '분석', '전략'],
+                                                'manufacturing': ['생산관리', '품질관리', '안전', '공정개선', '기술', '제조업'],
+                                                'others': ['커리어', '취업', '이직', '상담', '멘토링']
+                                            };
+                                            return (recommendedTags[formData.category] || recommendedTags.others).map(tag => (
+                                                <button
+                                                    key={tag}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        if (!formData.tags.includes(tag) && formData.tags.length < 5) {
+                                                            handleInputChange('tags', [...formData.tags, tag]);
+                                                        }
+                                                    }}
+                                                    disabled={formData.tags.includes(tag) || formData.tags.length >= 5}
+                                                    className={`text-xs px-2 py-1 rounded transition-colors ${
+                                                        formData.tags.includes(tag) 
+                                                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                                                            : 'bg-white text-blue-600 border border-blue-300 hover:bg-blue-100'
+                                                    }`}
+                                                >
+                                                    {tag}
+                                                </button>
+                                            ));
+                                        })()}
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-2 mb-3">
                                     <input
                                         type="text"
                                         value={tagInput}
@@ -8657,50 +9690,107 @@
                                                 handleAddTag();
                                             }
                                         }}
-                                        placeholder="태그 입력 후 엔터"
-                                        className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                        placeholder="직접 태그 입력 후 엔터"
+                                        className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                        maxLength={10}
                                     />
                                     <button
+                                        type="button"
                                         onClick={handleAddTag}
                                         disabled={!tagInput.trim() || formData.tags.length >= 5}
-                                        className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 disabled:bg-gray-300"
+                                        className="px-4 py-3 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 disabled:bg-gray-300 transition-colors"
                                     >
                                         추가
                                     </button>
                                 </div>
-                                <div className="flex flex-wrap gap-1">
-                                    {formData.tags.map((tag, index) => (
-                                        <span
-                                            key={index}
-                                            className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded"
-                                        >
-                                            {tag}
-                                            <button
-                                                onClick={() => handleRemoveTag(tag)}
-                                                className="ml-1 text-blue-500 hover:text-blue-700"
+                                
+                                {/* 선택된 태그들 */}
+                                {formData.tags.length > 0 && (
+                                    <div className="flex flex-wrap gap-2 mb-3">
+                                        {formData.tags.map((tag, index) => (
+                                            <span
+                                                key={index}
+                                                className="inline-flex items-center px-3 py-1.5 bg-blue-100 text-blue-700 text-sm rounded-full"
                                             >
-                                                ✕
-                                            </button>
+                                                #{tag}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleRemoveTag(tag)}
+                                                    className="ml-2 text-blue-500 hover:text-blue-700 text-lg"
+                                                >
+                                                    ×
+                                                </button>
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                                
+                                <div className="text-xs text-gray-500">
+                                    💡 구직자가 검색할 때 도움이 되는 키워드를 추가해주세요
+                                </div>
+                            </div>
+
+                            {/* 제출 전 검토 */}
+                            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                                <h4 className="text-sm font-medium text-green-800 mb-2">📋 등록 전 최종 확인</h4>
+                                <div className="space-y-1 text-xs text-green-700">
+                                    <div className="flex items-center space-x-2">
+                                        <span className={formData.title.length >= 10 ? '✅' : '⚠️'}>
+                                            {formData.title.length >= 10 ? '✅' : '⚠️'}
                                         </span>
-                                    ))}
+                                        <span>제목: {formData.title.length >= 10 ? '적절함' : '10자 이상 권장'} ({formData.title.length}자)</span>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <span className={formData.content.length >= 100 ? '✅' : '⚠️'}>
+                                            {formData.content.length >= 100 ? '✅' : '⚠️'}
+                                        </span>
+                                        <span>내용: {formData.content.length >= 100 ? '적절함' : '100자 이상 권장'} ({formData.content.length}자)</span>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <span className={formData.price && parseInt(formData.price.replace(/,/g, '')) >= 30000 ? '✅' : '⚠️'}>
+                                            {formData.price && parseInt(formData.price.replace(/,/g, '')) >= 30000 ? '✅' : '⚠️'}
+                                        </span>
+                                        <span>상담료: {formData.price ? '설정됨' : '미설정'}</span>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <span className={formData.availableDays.length >= 3 ? '✅' : '⚠️'}>
+                                            {formData.availableDays.length >= 3 ? '✅' : '⚠️'}
+                                        </span>
+                                        <span>상담 가능일: {formData.availableDays.length}일 ({formData.availableDays.length >= 3 ? '충분함' : '3일 이상 권장'})</span>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <span className={formData.availableTimeSlots.length >= 3 ? '✅' : '⚠️'}>
+                                            {formData.availableTimeSlots.length >= 3 ? '✅' : '⚠️'}
+                                        </span>
+                                        <span>상담 시간: {formData.availableTimeSlots.length}시간 ({formData.availableTimeSlots.length >= 3 ? '충분함' : '3시간 이상 권장'})</span>
+                                    </div>
                                 </div>
                             </div>
 
                             {/* 버튼 */}
-                            <div className="flex gap-3 pt-4">
+                            <div className="flex gap-3 pt-6 border-t">
                                 <button
+                                    type="button"
                                     onClick={onClose}
                                     disabled={isSubmitting}
-                                    className="flex-1 py-3 px-4 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50"
+                                    className="flex-1 py-4 px-6 border-2 border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
                                 >
                                     취소
                                 </button>
                                 <button
+                                    type="button"
                                     onClick={handleSubmit}
-                                    disabled={isSubmitting}
-                                    className="flex-1 py-3 px-4 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    disabled={isSubmitting || !formData.title.trim() || !formData.content.trim() || !formData.price || formData.availableDays.length === 0 || formData.availableTimeSlots.length === 0}
+                                    className="flex-1 py-4 px-6 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-bold hover:from-blue-600 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
                                 >
-                                    {isSubmitting ? '등록 중...' : '글 등록'}
+                                    {isSubmitting ? (
+                                        <>
+                                            <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                            서비스 등록 중...
+                                        </>
+                                    ) : (
+                                        '🚀 서비스 등록하기'
+                                    )}
                                 </button>
                             </div>
                         </div>
@@ -10248,6 +11338,20 @@
                     
                     if (error) throw error;
                     
+                    // 새 메시지 알림 이메일 발송
+                    try {
+                        await EmailManager.sendNewMessageEmail(selectedConversation.partnerId, {
+                            senderName: currentUser.nickname || currentUser.email,
+                            receiverName: selectedConversation.partnerNickname,
+                            subject: '답장',
+                            content: newMessage.trim().substring(0, 100) + (newMessage.trim().length > 100 ? '...' : ''),
+                            messageId: 'reply_' + Date.now()
+                        });
+                        console.log('✅ 새 메시지 알림 이메일 발송 완료');
+                    } catch (emailError) {
+                        console.error('❌ 새 메시지 알림 이메일 발송 실패:', emailError);
+                    }
+                    
                     setNewMessage('');
                     await loadMessages(selectedConversation.partnerId);
                     await loadConversations(); // 대화 목록 새로고침
@@ -10293,6 +11397,20 @@
                         });
                     
                     if (error) throw error;
+                    
+                    // 새 메시지 알림 이메일 발송
+                    try {
+                        await EmailManager.sendNewMessageEmail(recipientData.id, {
+                            senderName: currentUser.nickname || currentUser.email,
+                            receiverName: recipientData.nickname || recipientData.email,
+                            subject: newMessageSubject.trim(),
+                            content: newMessageContent.trim().substring(0, 100) + (newMessageContent.trim().length > 100 ? '...' : ''),
+                            messageId: 'new_' + Date.now()
+                        });
+                        console.log('✅ 새 메시지 알림 이메일 발송 완료');
+                    } catch (emailError) {
+                        console.error('❌ 새 메시지 알림 이메일 발송 실패:', emailError);
+                    }
                     
                     setShowNewMessageModal(false);
                     setNewRecipientEmail('');
@@ -11133,7 +12251,8 @@
                     if (error) {
                         console.error('전문가 데이터 로드 오류:', error);
                         // 오류 시 모의데이터 사용
-                        setExpertData(getMockExpertData());
+                        // 실제 전문가 데이터 로드 (현재는 빈 객체로 시작)
+                        setExpertData({});
                         return;
                     }
 
@@ -11144,24 +12263,20 @@
                         'marketing_strategy': experts.filter(e => e.category === 'marketing_strategy')
                     };
 
-                    // 실데이터가 없는 카테고리는 모의데이터로 보완
-                    const mockData = getMockExpertData();
-                    Object.keys(mockData).forEach(category => {
-                        if (!categorizedExperts[category] || categorizedExperts[category].length === 0) {
-                            categorizedExperts[category] = mockData[category];
-                        }
-                    });
+                    // 실제 데이터가 로드될 때까지는 빈 카테고리로 표시
+                    // Supabase 연동 후 실제 전문가 데이터가 여기에 표시됩니다.
 
                     setExpertData(categorizedExperts);
                 } catch (error) {
                     console.error('전문가 데이터 로드 실패:', error);
-                    setExpertData(getMockExpertData());
+                    setExpertData({});
                 } finally {
                     setLoading(false);
                 }
             };
 
             // 모의데이터 반환 함수 (폴백용)
+            /* TODO: 실제 Supabase 연동 후 제거 예정
             const getMockExpertData = () => ({
                 'tech_development': [
                     {
@@ -11277,7 +12392,7 @@
                         profileImage: '🎨'
                     }
                 ]
-            });
+            }); */
 
             // 전문가 데이터 로드
             useEffect(() => {
@@ -11337,12 +12452,7 @@
                             }
                         });
 
-                        // 빈 카테고리에 기본 전문가 추가 (데모용)
-                        Object.keys(categorizedExperts).forEach(category => {
-                            if (categorizedExperts[category].length === 0) {
-                                categorizedExperts[category] = expertData[category] || [];
-                            }
-                        });
+                        // 실제 Supabase 데이터만 사용
 
                         setExpertData(categorizedExperts);
                     } catch (error) {

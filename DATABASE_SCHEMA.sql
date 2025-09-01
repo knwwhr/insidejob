@@ -524,7 +524,7 @@ CREATE TABLE IF NOT EXISTS chat_messages (
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     
     message_text TEXT NOT NULL,
-    message_type TEXT DEFAULT 'text' CHECK (message_type IN ('text', 'image', 'file', 'system')),
+    message_type TEXT DEFAULT 'text' CHECK (message_type IN ('text', 'image', 'file', 'system', 'webrtc-signal')),
     
     -- 메시지 메타데이터
     reply_to UUID REFERENCES chat_messages(id),
@@ -613,6 +613,76 @@ CREATE TABLE IF NOT EXISTS user_documents (
 );
 
 -- ==============================================
+-- 11. 알림 시스템 (이메일 & 플랫폼 알림)
+-- ==============================================
+
+CREATE TABLE IF NOT EXISTS notifications (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    
+    -- 알림 타입 및 내용
+    type TEXT NOT NULL CHECK (type IN (
+        'welcome',                  -- 회원가입 환영
+        'expert_approved',          -- 현직자 승인
+        'expert_rejected',          -- 현직자 거절
+        'consultation_booked',      -- 상담 예약
+        'consultation_reminder',    -- 상담 시작 알림
+        'consultation_completed',   -- 상담 완료
+        'new_message',              -- 새 쪽지
+        'payment_completed',        -- 결제 완료
+        'system_announcement',      -- 시스템 공지
+        'others'                   -- 기타
+    )),
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    
+    -- 관련 데이터 (JSON)
+    related_data JSONB,
+    related_id UUID,
+    
+    -- 알림 상태
+    is_read BOOLEAN DEFAULT FALSE,
+    read_at TIMESTAMP WITH TIME ZONE,
+    
+    -- 이메일 발송 상태
+    email_sent BOOLEAN DEFAULT FALSE,
+    email_sent_at TIMESTAMP WITH TIME ZONE,
+    email_error TEXT,
+    
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+);
+
+-- 이메일 발송 로그 테이블
+CREATE TABLE IF NOT EXISTS email_logs (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    
+    -- 수신자 정보
+    recipient_email TEXT NOT NULL,
+    recipient_user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    
+    -- 이메일 내용
+    email_type TEXT NOT NULL,
+    subject TEXT NOT NULL,
+    template_name TEXT,
+    template_variables JSONB,
+    
+    -- 발송 상태
+    status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'sent', 'failed', 'bounced')),
+    sent_at TIMESTAMP WITH TIME ZONE,
+    
+    -- 외부 서비스 연동 정보
+    provider TEXT DEFAULT 'supabase_edge_function',
+    external_id TEXT,
+    error_message TEXT,
+    
+    -- 추적 정보
+    opened_at TIMESTAMP WITH TIME ZONE,
+    clicked_at TIMESTAMP WITH TIME ZONE,
+    
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+);
+
+-- ==============================================
 -- 인덱스 생성 (성능 최적화)
 -- ==============================================
 
@@ -652,6 +722,15 @@ CREATE INDEX IF NOT EXISTS idx_chat_files_user_id ON chat_files(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_documents_user_id ON user_documents(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_documents_type ON user_documents(document_type);
 
+-- 알림 시스템 인덱스
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_type ON notifications(type);
+CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_unread ON notifications(user_id, is_read) WHERE is_read = false;
+CREATE INDEX IF NOT EXISTS idx_email_logs_recipient ON email_logs(recipient_email);
+CREATE INDEX IF NOT EXISTS idx_email_logs_status ON email_logs(status);
+CREATE INDEX IF NOT EXISTS idx_email_logs_created_at ON email_logs(created_at DESC);
+
 -- ==============================================
 -- RLS (Row Level Security) 정책 설정
 -- ==============================================
@@ -674,6 +753,8 @@ ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE chat_participants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE chat_files ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_documents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE email_logs ENABLE ROW LEVEL SECURITY;
 
 -- 사용자 프로필 정책
 CREATE POLICY "Users can view own profile"
@@ -855,6 +936,33 @@ CREATE POLICY "Users can upload own documents"
 CREATE POLICY "Users can update own documents"
     ON user_documents FOR UPDATE
     USING (auth.uid() = user_id);
+
+-- 알림 시스템 정책
+CREATE POLICY "Users can view own notifications"
+    ON notifications FOR SELECT
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "System can create notifications"
+    ON notifications FOR INSERT
+    WITH CHECK (true); -- 시스템에서만 알림 생성
+
+CREATE POLICY "Users can mark own notifications as read"
+    ON notifications FOR UPDATE
+    USING (auth.uid() = user_id);
+
+-- 이메일 로그 정책 (관리자만 접근)
+CREATE POLICY "Admins can view email logs"
+    ON email_logs FOR SELECT
+    USING (
+        EXISTS (
+            SELECT 1 FROM user_profiles
+            WHERE user_id = auth.uid() AND role = 'admin'
+        )
+    );
+
+CREATE POLICY "System can create email logs"
+    ON email_logs FOR INSERT
+    WITH CHECK (true); -- 시스템/Edge Function에서만 로그 생성
 
 -- ==============================================
 -- 함수 및 트리거 설정
