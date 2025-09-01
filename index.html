@@ -14520,31 +14520,38 @@
                             </div>
                         )}
                         
-                        currentView === 'calculator' && React.createElement(CareerCompetitivenessCalculator, { 
-                            savedCalculations: savedCalculations, 
-                            onCalculationComplete: handleCalculationComplete, 
-                            setCurrentView: setCurrentView, 
-                            currentUser: currentUser, 
-                            showNotification: showNotification, 
-                            setAuthMode: setAuthMode, 
-                            setShowSaveResultSignupModal: setShowSaveResultSignupModal 
-                        })
+                        {currentView === 'calculator' && (
+                            <CareerCompetitivenessCalculator 
+                                savedCalculations={savedCalculations} 
+                                onCalculationComplete={handleCalculationComplete} 
+                                setCurrentView={setCurrentView} 
+                                currentUser={currentUser} 
+                                showNotification={showNotification} 
+                                setAuthMode={setAuthMode} 
+                                setShowSaveResultSignupModal={setShowSaveResultSignupModal} 
+                            />
+                        )}
                         
                         
-                        currentView === 'community' && React.createElement(CommunityApp, { 
-                            setCurrentView: setCurrentView, 
-                            currentUser: currentUser, 
-                            checkCalculationForInteraction: checkCalculationForInteraction, 
-                            handlePostClick: handlePostClick, 
-                            isAdminUser: isAdminUser 
-                        })
-                        currentView === 'post-detail' && selectedPost && React.createElement(PostDetailPage, { 
-                            post: selectedPost, 
-                            setCurrentView: setCurrentView, 
-                            currentUser: currentUser, 
-                            checkCalculationForInteraction: checkCalculationForInteraction, 
-                            isAdminUser: isAdminUser 
-                        })
+                        {currentView === 'community' && (
+                            <CommunityApp 
+                                setCurrentView={setCurrentView} 
+                                currentUser={currentUser} 
+                                checkCalculationForInteraction={checkCalculationForInteraction} 
+                                handlePostClick={handlePostClick} 
+                                isAdminUser={isAdminUser} 
+                            />
+                        )}
+                        
+                        {currentView === 'post-detail' && selectedPost && (
+                            <PostDetailPage 
+                                post={selectedPost} 
+                                setCurrentView={setCurrentView} 
+                                currentUser={currentUser} 
+                                checkCalculationForInteraction={checkCalculationForInteraction} 
+                                isAdminUser={isAdminUser} 
+                            />
+                        )}
                         
                         {/* 현직자 멘토링 페이지 - 게스트 접근제한 추가 */}
                         {currentView === 'experts' && (
