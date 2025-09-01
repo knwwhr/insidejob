@@ -11924,17 +11924,19 @@
                         </div>
                     </div>
                     
-                    {/* 예약 모달 */}
-                    {showBookingModal && selectedExpert && (
-                        <ConsultationBookingComponent
-                            expert={selectedExpert}
-                            currentUser={currentUser}
-                            onClose={() => {
-                                setShowBookingModal(false);
-                                setSelectedExpert(null);
-                            }}
-                        />
-                    )}
+                    {/* 모달들 */}
+                    <>
+                        {/* 예약 모달 */}
+                        {showBookingModal && selectedExpert && (
+                            <ConsultationBookingComponent
+                                expert={selectedExpert}
+                                currentUser={currentUser}
+                                onClose={() => {
+                                    setShowBookingModal(false);
+                                    setSelectedExpert(null);
+                                }}
+                            />
+                        )}
 
                         {/* 전문가 글쓰기 모달 */}
                         {showWriteModal && (
@@ -11946,6 +11948,7 @@
                                 isAdminUser={isAdminUser}
                             />
                         )}
+                    </>
                     </div>
                 </div>
             );
