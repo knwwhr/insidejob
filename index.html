@@ -10990,25 +10990,25 @@
                     </div>
 
                     {/* 공지사항 상세보기 모달 */}
-                    showDetailModal && selectedAnnouncement && 
-                        React.createElement(AnnouncementDetailModal, {
-                            announcement: selectedAnnouncement,
-                            onClose: () => {
+                    {showDetailModal && selectedAnnouncement && 
+                        <AnnouncementDetailModal
+                            announcement={selectedAnnouncement}
+                            onClose={() => {
                                 setShowDetailModal(false);
                                 setSelectedAnnouncement(null);
-                            }
-                        })
+                            }}
+                        />}
 
                     {/* 공지사항 작성 모달 */}
-                    showWriteModal && 
-                        React.createElement(AnnouncementWriteModal, {
-                            currentUser: currentUser,
-                            onClose: () => setShowWriteModal(false),
-                            onSuccess: () => {
+                    {showWriteModal && 
+                        <AnnouncementWriteModal
+                            currentUser={currentUser}
+                            onClose={() => setShowWriteModal(false)}
+                            onSuccess={() => {
                                 setShowWriteModal(false);
                                 loadAnnouncements();
-                            }
-                        })
+                            }}
+                        />}
                 </div>
             );
         };
