@@ -295,8 +295,7 @@
                 const dataString = JSON.stringify({
                     monthlyLivingCost: result.monthlyLivingCost,
                     totalAssets: result.totalAssets,
-                    assetSufficiencyYears: result.assetSufficiencyYears,
-                    housingType: result.housingType
+                    assetSufficiencyYears: result.assetSufficiencyYears
                 });
                 
                 const encoder = new TextEncoder();
@@ -308,13 +307,13 @@
 
             // 그룹 자동 배정
             assignGroup(calculationResult) {
-                const monthlyBudget = calculationResult.monthlyLivingCost;
-                const assetYears = calculationResult.assetSufficiencyYears;
+                // 취업경쟁력 점수 기반으로 단순 분류
+                const score = calculationResult.totalScore || 0;
                 
-                // 복합 지표로 은밀하게 분류
-                if (monthlyBudget < 200 || assetYears < 15) return 'prudent';
-                if (monthlyBudget < 400 || assetYears < 25) return 'balanced';
-                return 'premium';
+                // 점수 기반 분류 (A/B/C 등급 시스템)
+                if (score >= 80) return 'premium';
+                if (score >= 60) return 'balanced';
+                return 'prudent';
             }
 
             // 익명 닉네임 생성
@@ -341,9 +340,8 @@
                         calculation_hash: calculationHash,
                         assigned_group: assignedGroup,
                         nickname: nickname,
-                        monthly_budget: calculationResult.monthlyLivingCost,
-                        asset_years: calculationResult.assetSufficiencyYears,
-                        housing_type: calculationResult.housingType,
+                        target_salary: calculationResult.targetSalary || calculationResult.monthlyLivingCost || 0,
+                        career_score: calculationResult.totalScore || calculationResult.assetSufficiencyYears || 0,
                         created_at: new Date().toISOString(),
                         expires_at: new Date(Date.now() + (30 * 24 * 60 * 60 * 1000)).toISOString(),
                         last_active: new Date().toISOString(),
@@ -548,8 +546,8 @@
                     session_token: token,
                     assigned_group: assignedGroup,
                     nickname: nickname,
-                    monthly_budget: calculationResult.monthlyLivingCost,
-                    asset_years: calculationResult.assetSufficiencyYears,
+                    target_salary: calculationResult.targetSalary || calculationResult.monthlyLivingCost || 0,
+                    career_score: calculationResult.totalScore || calculationResult.assetSufficiencyYears || 0,
                     created_at: new Date().toISOString(),
                     expires_at: new Date(Date.now() + (30 * 24 * 60 * 60 * 1000)).toISOString(),
                     is_local_fallback: true
@@ -1144,9 +1142,6 @@
                 'finance': {
                     name: '💰 세무/법무'
                 },
-                'housing': {
-                    name: '🏠 주거/생활'
-                },
             };
             
             // 데이터 업데이트 함수
@@ -1596,9 +1591,6 @@
                     'finance': {
                         name: '💰 세무/법무'
                     },
-                    'housing': {
-                        name: '🏠 주거/생활'
-                    }
                 };
                 
                 
@@ -2446,8 +2438,8 @@
                                         formData: localData.formData,
                                         calculationResult: localData.calculationResult,
                                         totalAssets: localData.calculationResult.totalAssets || localData.totalAssets || 0,
-                                        monthlyLivingCost: localData.calculationResult.monthlyLivingCost || localData.monthlyLivingCost || 0,
-                                        assetSufficiencyYears: localData.calculationResult.assetSufficiencyYears || localData.assetSufficiencyYears || 0
+                                        targetSalary: localData.calculationResult.targetSalary || localData.calculationResult.monthlyLivingCost || localData.monthlyLivingCost || 0,
+                                        totalScore: localData.calculationResult.totalScore || localData.calculationResult.assetSufficiencyYears || localData.assetSufficiencyYears || 0
                                     });
                                     console.log('✅ localStorage 계산 결과 추가:', localData.formData?.age, '세');
                                 } else {
@@ -2514,8 +2506,8 @@
                                             formData: formData,
                                             calculationResult: calculationResult,
                                             totalAssets: calculationResult.totalAssets || 0,
-                                            monthlyLivingCost: calculationResult.monthlyLivingCost || 0,
-                                            assetSufficiencyYears: calculationResult.assetSufficiencyYears || 0
+                                            targetSalary: calculationResult.targetSalary || calculationResult.monthlyLivingCost || 0,
+                                            totalScore: calculationResult.totalScore || calculationResult.assetSufficiencyYears || 0
                                         };
                                     });
                                     calculations = [...calculations, ...supabaseCalculations];
@@ -2563,22 +2555,20 @@
                                     age: 55,
                                     health: '양호',
                                     lifeMode: '균형',
-                                    housingType: '자가',
-                                    housingValue: 30000,
-                                    financialAssets: 15000,
-                                    severancePay: 8000,
-                                    debt: 5000,
-                                    nationalPension: 150,
-                                    privatePension: 80
+                                    skillScore: 85,
+                                    experienceScore: 70,
+                                    networkScore: 60,
+                                    preparationScore: 75,
+                                    marketScore: 80
                                 },
                                 calculationResult: {
                                     totalAssets: 480000000,
-                                    monthlyLivingCost: 250,
-                                    assetSufficiencyYears: 25.5
+                                    targetSalary: 350,
+                                    totalScore: 75
                                 },
                                 totalAssets: 480000000,
-                                monthlyLivingCost: 250,
-                                assetSufficiencyYears: 25.5
+                                targetSalary: 350,
+                                totalScore: 75
                             };
                             uniqueCalculations.push(testCalculation);
                             console.log('✅ 테스트 계산 결과 추가됨');
@@ -2989,19 +2979,19 @@
                                                             {/* 주요 결과 요약 */}
                                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                                                 <div className="bg-green-50 p-4 rounded-lg">
-                                                                    <div className="text-sm text-green-600 font-medium">월 활동비</div>
+                                                                    <div className="text-sm text-green-600 font-medium">희망 연봉</div>
                                                                     <div className="text-xl font-bold text-green-900">
-                                                                        {calculation.monthlyLivingCost 
-                                                                            ? `${calculation.monthlyLivingCost.toLocaleString()}만원` 
+                                                                        {calculation.targetSalary 
+                                                                            ? `${calculation.targetSalary.toLocaleString()}만원` 
                                                                             : '계산 필요'
                                                                         }
                                                                     </div>
                                                                 </div>
                                                                 <div className="bg-purple-50 p-4 rounded-lg">
-                                                                    <div className="text-sm text-purple-600 font-medium">취업 예상 기간</div>
+                                                                    <div className="text-sm text-purple-600 font-medium">취업경쟁력 점수</div>
                                                                     <div className="text-xl font-bold text-purple-900">
-                                                                        {calculation.assetSufficiencyYears 
-                                                                            ? `${Math.round(calculation.assetSufficiencyYears)}년` 
+                                                                        {calculation.totalScore 
+                                                                            ? `${Math.round(calculation.totalScore)}점` 
                                                                             : '계산 필요'
                                                                         }
                                                                     </div>
@@ -3014,32 +3004,24 @@
                                                                     <h5 className="font-medium text-gray-900 mb-3">입력한 커리어 정보</h5>
                                                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                                                                         <div>
-                                                                            <span className="text-gray-600">주택:</span>
-                                                                            <span className="ml-1 font-medium">{(calculation.formData.housingValue || 0).toLocaleString()}만원</span>
-                                                                        </div>
-                                                                        <div>
                                                                             <span className="text-gray-600">스킬점수:</span>
-                                                                            <span className="ml-1 font-medium">{(calculation.formData.financialAssets || 0).toLocaleString()}만원</span>
+                                                                            <span className="ml-1 font-medium">{(calculation.formData.skillScore || 0)}점</span>
                                                                         </div>
                                                                         <div>
                                                                             <span className="text-gray-600">실무경험:</span>
-                                                                            <span className="ml-1 font-medium">{(calculation.formData.severancePay || 0).toLocaleString()}만원</span>
+                                                                            <span className="ml-1 font-medium">{(calculation.formData.experienceScore || 0)}점</span>
                                                                         </div>
                                                                         <div>
                                                                             <span className="text-gray-600">부채:</span>
-                                                                            <span className="ml-1 font-medium">{(calculation.formData.debt || 0).toLocaleString()}만원</span>
+                                                                            <span className="ml-1 font-medium">{(calculation.formData.networkScore || 0)}점</span>
                                                                         </div>
                                                                         <div>
                                                                             <span className="text-gray-600">프리랜싱:</span>
-                                                                            <span className="ml-1 font-medium">{(calculation.formData.nationalPension || 0).toLocaleString()}만원/월</span>
+                                                                            <span className="ml-1 font-medium">{(calculation.formData.preparationScore || 0)}점</span>
                                                                         </div>
                                                                         <div>
                                                                             <span className="text-gray-600">사이드프로젝트:</span>
-                                                                            <span className="ml-1 font-medium">{(calculation.formData.privatePension || 0).toLocaleString()}만원/월</span>
-                                                                        </div>
-                                                                        <div>
-                                                                            <span className="text-gray-600">주거형태:</span>
-                                                                            <span className="ml-1 font-medium">{calculation.formData.housingType || '정보없음'}</span>
+                                                                            <span className="ml-1 font-medium">{(calculation.formData.marketScore || 0)}점</span>
                                                                         </div>
                                                                         <div>
                                                                             <span className="text-gray-600">라이프스타일:</span>
@@ -5387,7 +5369,7 @@
                                 phone: expertProfile.phone,
                                 title: expertProfile.title,
                                 expert_type: expertProfile.category === 'travel' ? 'travel_planner' : 
-                                           expertProfile.category === 'legal' ? 'lawyer' : 'senior_housing_consultant',
+                                           expertProfile.category === 'legal' ? 'lawyer' : 'consultant',
                                 category: expertProfile.category,
                                 specialties: expertProfile.specialties,
                                 bio: expertProfile.bio,
@@ -5892,30 +5874,6 @@
                 };
             };
 
-            // 라이프스타일 그룹 정의 (중성적이고 포용적인 표현)
-            const lifestyleGroups = {
-                'prudent': { 
-                    name: '신중형', 
-                    description: '체계적인 취업준비를 추구하는 분들',
-                    color: 'bg-blue-500', 
-                    emoji: '🌱',
-                    tagline: '작은 준비에서 찾는 큰 성취'
-                },
-                'balanced': { 
-                    name: '균형형', 
-                    description: '일과 삶의 균형을 추구하는 분들',
-                    color: 'bg-green-500', 
-                    emoji: '⚖️',
-                    tagline: '성장과 여유의 조화'
-                },
-                'premium': { 
-                    name: '도전형', 
-                    description: '적극적인 커리어 개발을 추구하는 분들',
-                    color: 'bg-purple-500', 
-                    emoji: '🌟',
-                    tagline: '꿈꾸던 커리어의 실현'
-                }
-            };
 
             // 구직자 커뮤니티 토픽 (취업 준비 5개 카테고리)
             const topics = {
@@ -5933,10 +5891,8 @@
                     title: '이력서 자기소개서 피드백 부탁드려요',
                     content: '신입 개발자 지원하는데 이력서 검토 좀 해주실 수 있나요? 프로젝트 경험이 부족한 것 같아서요.',
                     topic: 'resume_review',
-                    asset_group: 'middle',
                     user_hash: 'user123',
                     age_badge: '20-24세',
-                    asset_badge: '대학생',
                     is_hot: true,
                     replies_count: 12,
                     likes_count: 8,
@@ -5950,7 +5906,6 @@
                     asset_group: 'middle', 
                     user_hash: 'user456',
                     age_badge: '25-29세',
-                    asset_badge: '경력직',
                     is_hot: false,
                     replies_count: 7,
                     likes_count: 5,
@@ -5961,10 +5916,8 @@
                     title: '핀테크 업계 동향 궁금해요',
                     content: '핀테크 쪽으로 이직하려는데 요즘 채용 동향이나 필요 스킬이 궁금합니다.',
                     topic: 'industry_info',
-                    asset_group: 'high',
                     user_hash: 'user789',
                     age_badge: '30-34세',
-                    asset_badge: '이직준비',
                     is_hot: true,
                     replies_count: 15,
                     likes_count: 12,
@@ -5975,10 +5928,8 @@
                     title: 'UX디자이너 직무 궁금해요',
                     content: 'UX디자이너로 전향하려는데 실제 업무는 어떤지, 필요한 스킬은 뭔지 궁금합니다.',
                     topic: 'job_analysis',
-                    asset_group: 'low',
                     user_hash: 'user101', 
                     age_badge: '25-29세',
-                    asset_badge: '전환자',
                     is_hot: false,
                     replies_count: 9,
                     likes_count: 6,
@@ -5989,10 +5940,8 @@
                     title: '신입 개발자 취업 준비 어떻게 시작할까요?',
                     content: '20대 중반인데 개발자 취업을 준비하고 있어요. 어떤 것부터 시작해야 할지...',
                     topic: 'health',
-                    asset_group: 'middle',
                     user_hash: 'user202',
                     age_badge: '20-24세', 
-                    asset_badge: '안정형',
                     is_hot: false,
                     replies_count: 4,
                     likes_count: 3,
@@ -6031,22 +5980,6 @@
                     likes_count: 32,
                     created_at: '2025-01-20T15:30:00Z'
                 },
-                {
-                    id: '8',
-                    title: '취업 후 커리어 로드맵, 성공적인 성장 가이드',
-                    content: '부동산/건설 현직자 윤부동산입니다. 취업 후 체계적인 커리어 성장에 대한 실전 가이드를 공유합니다...',
-                    topic: 'expert',
-                    expert_category: 'living',
-                    user_hash: 'expert_yoon_housing',
-                    expert_badge: '인증 전문가',
-                    expert_name: '윤부동산',
-                    expert_title: '부동산/건설 현직자',
-                    consultation_price: '80,000원/60분',
-                    is_hot: false,
-                    replies_count: 12,
-                    likes_count: 28,
-                    created_at: '2025-01-19T11:20:00Z'
-                }
             ];
 
             // 컴포넌트 초기화시 세션 확인
@@ -6139,7 +6072,6 @@
             // 게시글 필터링 (현재 선택된 자산그룹과 토픽)
             const getFilteredPosts = () => {
                 return posts.filter(post => 
-                    post.asset_group === selectedAssetGroup && 
                     post.topic === activeTopic
                 );
             };
@@ -6212,7 +6144,6 @@
 
             // 정상 접근: 커뮤니티 화면
             // 기본 커뮤니티 그룹 (나중에 계산 결과 기반 그룹 배정 가능)
-            const currentGroup = lifestyleGroups['balanced'];
 
             return (
                 <div className="max-w-4xl mx-auto space-y-4">
@@ -6411,7 +6342,6 @@
                                                         ) : (
                                                             <>
                                                                 <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
-                                                                    {post.asset_badge}
                                                                 </span>
                                                                 <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
                                                                     {post.age_badge}
@@ -11846,22 +11776,6 @@
             );
         };
         
-        // 재산세 계산 함수 (2025년 한국 기준)
-        const calculatePropertyTax = (homeValue) => {
-            if (!homeValue || homeValue === 0) return 0;
-            
-            // 주택 공시가격 (만원 → 원)
-            const publicValue = homeValue * 10000;
-            
-            // 과세표준 = 공시가격 × 공정시장가액비율(60%)
-            const taxBase = publicValue * 0.6;
-            
-            // 재산세 = 과세표준 × 세율(0.4%) - 누진공제(63만원)
-            const annualPropertyTax = Math.max(0, (taxBase * 0.004) - 630000);
-            
-            // 월 재산세
-            return Math.round(annualPropertyTax / 12);
-        };
 
         // 취업경쟁력 진단기 (커리어 멘토링 서비스)
         // 인사이드잡 취업경쟁력 계산기 (6단계 진단 시스템)
@@ -11886,7 +11800,6 @@
             const [showAssetDetail, setShowAssetDetail] = useState(false);
             const [showInheritanceGuide, setShowInheritanceGuide] = useState(false);
             const [lifeExpectancy, setLifeExpectancy] = useState(100);
-            const [enableDownsizing, setEnableDownsizing] = useState(false);
             const [isResultSaved, setIsResultSaved] = useState(false);
             const [expenseData, setExpenseData] = useState({
                 food: '', communication: '', utilities: '', medical: '', hobby: '', vehicle: '', etc: ''
@@ -11920,11 +11833,10 @@
             }, [formData]);
 
             const getAverageDataByAge = (age) => {
-                if (age >= 60) return { financialAssets: 8000, severancePay: 3000, homeValue: 25000, nationalPension: 120, privatePension: 50, debt: 500 };
-                if (age >= 55) return { financialAssets: 6500, severancePay: 4000, homeValue: 28000, nationalPension: 100, privatePension: 40, debt: 800 };
-                if (age >= 50) return { financialAssets: 5000, severancePay: 5000, homeValue: 30000, nationalPension: 80, privatePension: 30, debt: 1200 };
-                if (age >= 45) return { financialAssets: 3500, severancePay: 3500, homeValue: 32000, nationalPension: 60, privatePension: 20, debt: 1500 };
-                return { financialAssets: 2000, severancePay: 2000, homeValue: 25000, nationalPension: 40, privatePension: 10, debt: 1000 };
+                if (age >= 30) return { skillLevel: 85, experienceLevel: 90, networkLevel: 80, preparationLevel: 70, competitionLevel: 60 };
+                if (age >= 25) return { skillLevel: 75, experienceLevel: 70, networkLevel: 65, preparationLevel: 80, competitionLevel: 70 };
+                if (age >= 20) return { skillLevel: 65, experienceLevel: 50, networkLevel: 45, preparationLevel: 85, competitionLevel: 80 };
+                return { skillLevel: 60, experienceLevel: 30, networkLevel: 35, preparationLevel: 90, competitionLevel: 85 };
             };
 
             const formatResultAmount = (amount) => {
@@ -12231,7 +12143,6 @@
                     ...calculatorResult,
                     formData: formData,
                     lifeExpectancy: lifeExpectancy,
-                    enableDownsizing: enableDownsizing,
                     savedAt: new Date().toISOString(),
                     calculatedAt: new Date().toISOString()  // 마이페이지 호환성을 위해 추가
                 };
@@ -12251,7 +12162,6 @@
                         setFormData(savedData.formData);
                         setCalculatorResult(savedData);
                         setLifeExpectancy(savedData.lifeExpectancy);
-                        setEnableDownsizing(savedData.enableDownsizing);
                         setCalculatorStep(4);
                         setIsResultSaved(true);
                         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -12304,13 +12214,6 @@
                 }
             }, [lifeExpectancy]);
 
-            // 매각 옵션 변경 시 재계산
-            useEffect(() => {
-                if (calculatorResult && calculatorStep === 7) {
-                    // 진단 결과 업데이트
-                    calculateCareerResults();
-                }
-            }, [enableDownsizing]);
 
             // 1단계 렌더링
             if (calculatorStep === 1) {
@@ -12480,24 +12383,9 @@
                                 </div>
 
                                 <div className="space-y-6">
-                                    <div>
-                                        <label className="block text-xl font-semibold text-gray-800 mb-3">🏠 주거 형태</label>
-                                        <select
-                                            className="w-full p-4 border-2 border-gray-200 rounded-lg text-lg"
-                                            value={formData.housingType}
-                                            onChange={(e) => handleInputChange('housingType', e.target.value)}
-                                        >
-                                            <option value="">선택하세요</option>
-                                            <option value="owned_living">자가 소유 + 거주</option>
-                                            <option value="owned_renting">자가 소유 + 전세/월세 거주</option>
-                                            <option value="jeonse">전세</option>
-                                            <option value="monthly">월세</option>
-                                            <option value="none">무주택</option>
-                                        </select>
-                                    </div>
 
                                     <AmountInput
-                                        label="🏦 현금 및 현금성 자산 (예금·적금·주식·펀드 등, 단위: 만원)"
+                                        label="💼 취업준비 자금 (예금·적금 등, 단위: 만원)"
                                         value={formData.financialAssets}
                                         onChange={(v) => handleInputChange('financialAssets', v)}
                                         placeholder=""
@@ -12510,208 +12398,6 @@
                                         placeholder=""
                                     />
 
-                                    {/* 주거형태별 조건부 필드 */}
-                                    {(formData.housingType === 'owned_living' || formData.housingType === 'owned_renting') && (
-                                        <>
-                                            <AmountInput
-                                                label="🏠 자가 소유 주택 시세 (단위: 만원)"
-                                                value={formData.homeValue}
-                                                onChange={(v) => handleInputChange('homeValue', v)}
-                                                placeholder=""
-                                            />
-                                            <AmountInput
-                                                label="🏠 주택담보대출 잔액 (단위: 만원)"
-                                                value={formData.homeMortgage}
-                                                onChange={(v) => handleInputChange('homeMortgage', v)}
-                                                placeholder=""
-                                            />
-                                            {formData.homeMortgage && parseInt(formData.homeMortgage) > 0 && (
-                                                <div className="space-y-4">
-                                                    <AmountInput
-                                                        label="💳 월 대출상환액 (매달 나가는 돈, 단위: 만원)"
-                                                        value={formData.homeMortgagePayment}
-                                                        onChange={(v) => handleInputChange('homeMortgagePayment', v)}
-                                                        placeholder="예: 50만원"
-                                                    />
-                                                    
-                                                    <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg">
-                                                        <div className="flex items-center mb-3">
-                                                            <input
-                                                                type="checkbox"
-                                                                id="knowLoanEndYear"
-                                                                checked={formData.knowLoanEndYear || false}
-                                                                onChange={(e) => handleInputChange('knowLoanEndYear', e.target.checked)}
-                                                                onClick={(e) => {
-                                                                    const newValue = !formData.knowLoanEndYear;
-                                                                    handleInputChange('knowLoanEndYear', newValue);
-                                                                }}
-                                                                className="mr-2 scale-125"
-                                                            />
-                                                            <label htmlFor="knowLoanEndYear" className="text-blue-800 font-semibold">
-                                                                📅 대출 완료 예정년도를 알고 있어요
-                                                            </label>
-                                                        </div>
-                                                        
-                                                        {!formData.knowLoanEndYear && (
-                                                            <p className="text-blue-700 text-sm">
-                                                                ℹ️ 체크하지 않으면 <strong>보수적으로 계산</strong>합니다.<br/>
-                                                                (취업 후에도 계속 상환한다고 가정)
-                                                            </p>
-                                                        )}
-                                                    </div>
-
-                                                    {formData.knowLoanEndYear && (
-                                                        <div>
-                                                            <label className="block text-xl font-semibold text-gray-800 mb-3">📅 대출 완료 예정년도</label>
-                                                            <input
-                                                                type="text"
-                                                                inputMode="numeric"
-                                                                pattern="[0-9]*"
-                                                                value={formData.loanEndYear || ''}
-                                                                onChange={(e) => {
-                                                                    const year = e.target.value.replace(/[^0-9]/g, '');
-                                                                    if (year.length <= 4) {
-                                                                        handleInputChange('loanEndYear', year);
-                                                                    }
-                                                                }}
-                                                                className="w-full p-4 border-2 border-gray-200 rounded-lg text-lg"
-                                                                placeholder="예: 2030"
-                                                            />
-                                                            {formData.loanEndYear && (
-                                                                <div className="text-green-600 font-semibold text-lg mt-1">
-                                                                    ✅ {formData.loanEndYear}년 이후 월 {formData.homeMortgagePayment ? parseInt(formData.homeMortgagePayment).toLocaleString() : 0}만원 절약!
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </>
-                                    )}
-
-                                    {formData.housingType === 'owned_renting' && (
-                                        <>
-                                            <AmountInput
-                                                label="🏠 내 소유 집 임차인 보증금 (내가 받은 보증금, 단위: 만원)"
-                                                value={formData.ownedHouseDeposit}
-                                                onChange={(v) => handleInputChange('ownedHouseDeposit', v)}
-                                                placeholder=""
-                                            />
-
-                                            <AmountInput
-                                                label="🏠 현재 거주지 보증금 (내가 낸 보증금, 단위: 만원)"
-                                                value={formData.currentDeposit}
-                                                onChange={(v) => handleInputChange('currentDeposit', v)}
-                                                placeholder=""
-                                            />
-                                            
-                                            <AmountInput
-                                                label="💳 보증금 대출 잔액 (단위: 만원)"
-                                                value={formData.depositLoan}
-                                                onChange={(v) => handleInputChange('depositLoan', v)}
-                                                placeholder=""
-                                            />
-                                            {formData.depositLoan && parseInt(formData.depositLoan) > 0 && (
-                                                <div className="space-y-4">
-                                                    <AmountInput
-                                                        label="💳 보증금 대출 월 상환액 (매달 나가는 돈, 단위: 만원)"
-                                                        value={formData.depositLoanPayment}
-                                                        onChange={(v) => handleInputChange('depositLoanPayment', v)}
-                                                        placeholder="예: 30만원"
-                                                    />
-                                                    
-                                                    <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg">
-                                                        <div className="flex items-center mb-3">
-                                                            <input
-                                                                type="checkbox"
-                                                                id="knowDepositLoanEndYear"
-                                                                checked={formData.knowDepositLoanEndYear || false}
-                                                                onChange={(e) => handleInputChange('knowDepositLoanEndYear', e.target.checked)}
-                                                                className="mr-2 scale-125"
-                                                            />
-                                                            <label htmlFor="knowDepositLoanEndYear" className="text-blue-800 font-semibold">
-                                                                📅 대출 완료 예정년도를 알고 있어요
-                                                            </label>
-                                                        </div>
-                                                    </div>
-
-                                                    {formData.knowDepositLoanEndYear && (
-                                                        <div>
-                                                            <label className="block text-xl font-semibold text-gray-800 mb-3">📅 대출 완료 예정년도</label>
-                                                            <input
-                                                                type="text"
-                                                                inputMode="numeric"
-                                                                pattern="[0-9]*"
-                                                                value={formData.depositLoanEndYear || ''}
-                                                                onChange={(e) => {
-                                                                    const year = e.target.value.replace(/[^0-9]/g, '');
-                                                                    if (year.length <= 4) {
-                                                                        handleInputChange('depositLoanEndYear', year);
-                                                                    }
-                                                                }}
-                                                                className="w-full p-4 border-2 border-gray-200 rounded-lg text-lg"
-                                                                placeholder="예: 2028"
-                                                            />
-                                                            {formData.depositLoanEndYear && (
-                                                                <div className="text-green-600 font-semibold text-lg mt-1">
-                                                                    ✅ {formData.depositLoanEndYear}년 이후 월 {formData.depositLoanPayment ? parseInt(formData.depositLoanPayment).toLocaleString() : 0}만원 절약!
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
-
-                                            <div className="mb-6">
-                                                <label className="block text-xl font-semibold text-gray-800 mb-3">🏠 현재 거주 형태</label>
-                                                <select
-                                                    className="w-full p-4 border-2 border-gray-200 rounded-lg text-lg"
-                                                    value={formData.currentRentType}
-                                                    onChange={(e) => handleInputChange('currentRentType', e.target.value)}
-                                                >
-                                                    <option value="">선택하세요</option>
-                                                    <option value="jeonse">전세</option>
-                                                    <option value="monthly">월세</option>
-                                                </select>
-                                            </div>
-
-                                            {formData.currentRentType === 'monthly' && (
-                                                <AmountInput
-                                                    label="🏠 현재 거주지 월세 (내가 내는 월세, 단위: 만원)"
-                                                    value={formData.currentRent}
-                                                    onChange={(v) => handleInputChange('currentRent', v)}
-                                                    placeholder=""
-                                                    />
-                                            )}
-                                        </>
-                                    )}
-
-                                    {formData.housingType === 'jeonse' && (
-                                        <AmountInput
-                                            label="🏠 전세보증금 (단위: 만원)"
-                                            value={formData.jeonseDeposit}
-                                            onChange={(v) => handleInputChange('jeonseDeposit', v)}
-                                            placeholder=""
-                                            averageAmount={0}
-                                        />
-                                    )}
-
-                                    {formData.housingType === 'monthly' && (
-                                        <>
-                                            <AmountInput
-                                                label="🏠 월세보증금 (단위: 만원)"
-                                                value={formData.monthlyDeposit}
-                                                onChange={(v) => handleInputChange('monthlyDeposit', v)}
-                                                placeholder=""
-                                            />
-                                            <AmountInput
-                                                label="🏠 월세 (단위: 만원)"
-                                                value={formData.monthlyRent}
-                                                onChange={(v) => handleInputChange('monthlyRent', v)}
-                                                placeholder=""
-                                            />
-                                        </>
-                                    )}
 
                                     <AmountInput
                                         label="🏢 수익형 부동산 (오피스텔·상가 등, 단위: 만원)"
@@ -12810,7 +12496,6 @@
                                         <button
                                             onClick={() => goToNextStep(3)}
                                             className="btn-primary flex-1"
-                                            disabled={!formData.housingType}
                                         >
                                             다음 단계 →
                                         </button>
@@ -12872,23 +12557,9 @@
                                     placeholder=""
                                 />
                                 
-                                <AmountInput
-                                    label="🏠 부동산 임대 (월 수입)"
-                                    value={formData.housingPension}
-                                    onChange={(v) => handleInputChange('housingPension', v)}
-                                    placeholder=""
-                                    averageAmount={0}
-                                />
 
                                 <h2 className="text-2xl font-bold mb-6 mt-8 text-gray-800">💼 기타 월 수입 (단위: 만원)</h2>
                                 
-                                <AmountInput
-                                    label="🏠 임대소득 (월 수령액)"
-                                    value={formData.rentalIncome}
-                                    onChange={(v) => handleInputChange('rentalIncome', v)}
-                                    placeholder=""
-                                    averageAmount={0}
-                                />
                                 
                                 <AmountInput
                                     label="💼 근로소득 (파트타임, 자문료 등)"
@@ -12899,7 +12570,7 @@
                                 />
                                 
                                 <AmountInput
-                                    label="💰 투자소득 (배당금, 이자 등)"
+                                    label="💰 부수입 (프리랜싱, 사이드 프로젝트 등)"
                                     value={formData.financialIncome}
                                     onChange={(v) => handleInputChange('financialIncome', v)}
                                     placeholder=""
@@ -13258,7 +12929,7 @@
                                     
                                     {!showAssetDetail && (
                                         <div className="text-center mt-2">
-                                            <p className="text-xs text-blue-600">💡 계산과정을 보시면 자산 분류와 주택 매각 옵션을 확인할 수 있습니다</p>
+                                            <p className="text-xs text-blue-600">💡 계산과정을 보시면 자산 분류를 확인할 수 있습니다</p>
                                         </div>
                                     )}
 
@@ -13283,34 +12954,19 @@
                                                             <div className="space-y-1 text-green-700">
                                                                 {parseInt(formData.financialAssets) > 0 && <div>• 현금성 자산: {formatResultAmount(parseInt(formData.financialAssets) * 10000)}</div>}
                                                                 {parseInt(formData.severancePay) > 0 && <div>• 실무경험: {parseInt(formData.severancePay)}점</div>}
-                                                                {formData.homeValue && parseInt(formData.homeValue) > 0 && enableDownsizing && (
-                                                                    <div>• 주택 (매각): {formatResultAmount(calculatorResult.assetBreakdown?.realizedHousingAsset || 0)}</div>
-                                                                )}
-                                                                {parseInt(formData.housingPension) > 0 && (
-                                                                    <div>• 주택 (부동산 임대): {formatResultAmount(parseInt(formData.homeValue) * 10000)}</div>
-                                                                )}
-                                                                {formData.jeonseDeposit && parseInt(formData.jeonseDeposit) > 0 && <div>• 전세보증금: {formatResultAmount(parseInt(formData.jeonseDeposit) * 10000)}</div>}
-                                                                {formData.monthlyDeposit && parseInt(formData.monthlyDeposit) > 0 && <div>• 월세보증금: {formatResultAmount(parseInt(formData.monthlyDeposit) * 10000)}</div>}
                                                             </div>
                                                         </div>
                                                         
                                                         {/* 돈이 나오지 않는 자산 */}
                                                         <div className="bg-gray-50 p-2 rounded border border-gray-200">
-                                                            <div className="font-semibold text-gray-800 mb-2">🏠 취업준비에 활용할 수 없는 자산</div>
+                                                            <div className="font-semibold text-gray-800 mb-2">💼 취업준비에 활용할 수 없는 자산</div>
                                                             <div className="space-y-1 text-gray-600">
-                                                                {formData.homeValue && parseInt(formData.homeValue) > 0 && !enableDownsizing && !parseInt(formData.housingPension) && (
-                                                                    <div>• {formData.housingType === 'owned_living' ? '거주용' : '임대용'} 주택: {formatResultAmount(parseInt(formData.homeValue) * 10000)}</div>
-                                                                )}
                                                                 {formData.investmentRealEstate && parseInt(formData.investmentRealEstate) > 0 && (
                                                                     <div>• 수익형 부동산: {formatResultAmount(parseInt(formData.investmentRealEstate) * 10000)}</div>
                                                                 )}
-                                                                {formData.currentDeposit && parseInt(formData.currentDeposit) > 0 && <div>• 거주지 보증금: {formatResultAmount(parseInt(formData.currentDeposit) * 10000)}</div>}
                                                                 {formData.inheritance && parseInt(formData.inheritance) > 0 && <div>• 가족 지원/후원 예정: {formatResultAmount(parseInt(formData.inheritance) * 10000)}</div>}
-                                                                {(!formData.homeValue || parseInt(formData.homeValue) === 0 || 
-                                                                  (formData.housingType === 'owned_living' && (enableDownsizing || parseInt(formData.housingPension))) ||
-                                                                  (formData.housingType === 'owned_renting' && enableDownsizing)) && 
-                                                                 (!formData.inheritance || parseInt(formData.inheritance) === 0) &&
-                                                                 (!formData.currentDeposit || parseInt(formData.currentDeposit) === 0) && (
+                                                                {(!formData.inheritance || parseInt(formData.inheritance) === 0) &&
+                                                                 (!formData.investmentRealEstate || parseInt(formData.investmentRealEstate) === 0) && (
                                                                     <div className="text-gray-400 italic">해당 없음</div>
                                                                 )}
                                                             </div>
@@ -13318,40 +12974,17 @@
                                                     </div>
                                                     
                                                     {/* 부채 차감 */}
-                                                    {((formData.debt && parseInt(formData.debt) > 0) || (formData.homeMortgage && parseInt(formData.homeMortgage) > 0) || (formData.investmentLoan && parseInt(formData.investmentLoan) > 0) || (formData.depositLoan && parseInt(formData.depositLoan) > 0) || (formData.ownedHouseDeposit && parseInt(formData.ownedHouseDeposit) > 0)) && (
+                                                    {((formData.debt && parseInt(formData.debt) > 0) || (formData.investmentLoan && parseInt(formData.investmentLoan) > 0)) && (
                                                         <div className="mt-3 p-2 bg-red-50 rounded border border-red-200">
                                                             <div className="font-semibold text-red-800 mb-1 text-xs">💳 부채 차감</div>
                                                             <div className="space-y-1 text-xs text-red-700">
                                                                 {formData.debt && parseInt(formData.debt) > 0 && <div>• 기타 대출: -{formatResultAmount(parseInt(formData.debt) * 10000)}</div>}
-                                                                {formData.homeMortgage && parseInt(formData.homeMortgage) > 0 && <div>• 주택대출: -{formatResultAmount(parseInt(formData.homeMortgage) * 10000)}</div>}
                                                                 {formData.investmentLoan && parseInt(formData.investmentLoan) > 0 && <div>• 투자대출: -{formatResultAmount(parseInt(formData.investmentLoan) * 10000)}</div>}
-                                                                {formData.depositLoan && parseInt(formData.depositLoan) > 0 && <div>• 보증금 대출: -{formatResultAmount(parseInt(formData.depositLoan) * 10000)}</div>}
-                                                                {formData.ownedHouseDeposit && parseInt(formData.ownedHouseDeposit) > 0 && <div>• 임차인 보증금: -{formatResultAmount(parseInt(formData.ownedHouseDeposit) * 10000)}</div>}
                                                             </div>
                                                         </div>
                                                     )}
                                                 </div>
 
-                                                {/* 주택 매각 옵션 */}
-                                                {(formData.housingType === 'owned_living' || formData.housingType === 'owned_renting') && !parseInt(formData.housingPension) && (
-                                                    <div className="bg-orange-50 p-3 rounded-lg border-l-4 border-orange-300 mt-3">
-                                                        <div className="flex items-center justify-between mb-2">
-                                                            <span className="text-sm font-medium text-orange-800">🏠 주택 매각 옵션</span>
-                                                            <label className="flex items-center gap-2 cursor-pointer">
-                                                                <input 
-                                                                    type="checkbox" 
-                                                                    checked={enableDownsizing}
-                                                                    onChange={(e) => setEnableDownsizing(e.target.checked)}
-                                                                    className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500"
-                                                                />
-                                                                <span className="text-sm font-medium text-orange-800">매각했을 때 취업준비비 계산하기</span>
-                                                            </label>
-                                                        </div>
-                                                        <div className="text-xs text-orange-600">
-                                                            부동산 지식을 활용하면 더 많은 취업 기회를 확보할 수 있어요.
-                                                        </div>
-                                                    </div>
-                                                )}
 
                                                 <div className="bg-white p-3 rounded-lg">
                                                     <div className="flex justify-between items-center mb-1">
@@ -13403,12 +13036,6 @@
                                         <div className="flex justify-between text-green-700">
                                             <span>+ 기타 월 수입:</span>
                                             <span className="font-bold">+{formatResultAmount(calculatorResult.monthlyOtherIncome)}/월</span>
-                                        </div>
-                                    )}
-                                    {calculatorResult.monthlyHousingCost > 0 && (
-                                        <div className="flex justify-between text-red-700">
-                                            <span>- 월세 지출:</span>
-                                            <span className="font-bold">-{formatResultAmount(calculatorResult.monthlyHousingCost)}/월</span>
                                         </div>
                                     )}
                                     {calculatorResult.monthlyLoanInterest > 0 && (
@@ -13835,8 +13462,6 @@
                                 age_group: getAgeGroup(calculationData.formData?.age),
                                 health_status: calculationData.formData?.health,
                                 life_mode: calculationData.formData?.lifeMode,
-                                housing_type: calculationData.formData?.housingType,
-                                housing_value: calculationData.formData?.housingValue ? parseInt(calculationData.formData.housingValue) * 10000 : 0,
                                 skill_portfolio_score: calculationData.formData?.portfolioCount ? parseInt(calculationData.formData.portfolioCount) * 5 : 0,
                                 severance_pay: calculationData.formData?.severancePay ? parseInt(calculationData.formData.severancePay) * 10000 : 0,
                                 debt: calculationData.formData?.debt ? parseInt(calculationData.formData.debt) * 10000 : 0,
@@ -13958,8 +13583,6 @@
                                 age_group: getAgeGroup(calculationResult.formData?.age || 25),
                                 health_status: calculationResult.formData?.health,
                                 life_mode: calculationResult.formData?.lifeMode,
-                                housing_type: calculationResult.formData?.housingType,
-                                housing_value: (calculationResult.formData?.housingValue || 0) * 10000,
                                 skill_portfolio_score: (calculationResult.formData?.portfolioCount || 0) * 5,
                                 severance_pay: (calculationResult.formData?.severancePay || 0) * 10000,
                                 debt: (calculationResult.formData?.debt || 0) * 10000,
