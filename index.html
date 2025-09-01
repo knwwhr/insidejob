@@ -2443,29 +2443,29 @@
                         React.createElement(AdminTab, { 
                             key: 'admin-tab',
                             currentUser: currentUser 
-                        })
-                ].filter(Boolean)),
+                        }),
 
-                // 게스트가 제한된 탭에 접근한 경우 안내 메시지
-                isCurrentUserGuest && (activeTab === 'activity' || activeTab === 'chat') && 
-                    React.createElement('div', {
-                        key: 'guest-restriction',
-                        className: "text-center py-12"
-                    }, React.createElement('div', {
-                        className: "bg-amber-50 border border-amber-200 rounded-lg p-8 max-w-md mx-auto"
-                    }, [
-                        React.createElement('div', { key: 'icon', className: "text-4xl mb-4" }, '🚫'),
-                        React.createElement('h3', { key: 'title', className: "text-lg font-semibold text-amber-800 mb-2" }, '게스트 사용 제한'),
-                        React.createElement('p', { key: 'message', className: "text-amber-600 mb-4" }, '이 기능은 정식 회원만 사용할 수 있습니다.'),
-                        React.createElement('button', { 
-                            key: 'signup-btn',
-                            onClick: () => {
-                                // TODO: setAuthMode와 setShowAuthForm props 추가 필요
-                                setCurrentView('login');
-                            },
-                            className: "bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                        }, '회원가입하기')
-                    ]))
+                    // 게스트가 제한된 탭에 접근한 경우 안내 메시지
+                    isCurrentUserGuest && (activeTab === 'activity' || activeTab === 'chat') && 
+                        React.createElement('div', {
+                            key: 'guest-restriction',
+                            className: "text-center py-12"
+                        }, React.createElement('div', {
+                            className: "bg-amber-50 border border-amber-200 rounded-lg p-8 max-w-md mx-auto"
+                        }, [
+                            React.createElement('div', { key: 'icon', className: "text-4xl mb-4" }, '🚫'),
+                            React.createElement('h3', { key: 'title', className: "text-lg font-semibold text-amber-800 mb-2" }, '게스트 사용 제한'),
+                            React.createElement('p', { key: 'message', className: "text-amber-600 mb-4" }, '이 기능은 정식 회원만 사용할 수 있습니다.'),
+                            React.createElement('button', { 
+                                key: 'signup-btn',
+                                onClick: () => {
+                                    // TODO: setAuthMode와 setShowAuthForm props 추가 필요
+                                    setCurrentView('login');
+                                },
+                                className: "bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                            }, '회원가입하기')
+                        ]))
+                ].filter(Boolean))
             ].filter(Boolean));
         };
 
