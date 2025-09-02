@@ -87,6 +87,9 @@ CREATE TABLE IF NOT EXISTS user_profiles (
     -- 3단계 역할 구조: 관리자, 일반회원, 전문가 회원
     role TEXT DEFAULT 'member' CHECK (role IN ('admin', 'member', 'expert')),
     
+    -- 소셜 로그인 제공업체 정보
+    provider TEXT DEFAULT 'email' CHECK (provider IN ('email', 'google', 'kakao', 'naver')),
+    
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
