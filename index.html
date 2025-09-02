@@ -14099,6 +14099,7 @@
             const [showNotificationModal, setShowNotificationModal] = useState(false);
             const [notificationContent, setNotificationContent] = useState({ title: '', message: '', type: 'info' });
             const [showMobileMenu, setShowMobileMenu] = useState(false);
+            const [lastActivity, setLastActivity] = useState(Date.now());
 
             // 통합 알림 표시 함수
             const showNotification = (messageOrTitle, messageOrType = 'info', typeOverride = null) => {
