@@ -90,6 +90,13 @@ CREATE TABLE IF NOT EXISTS user_profiles (
     -- 소셜 로그인 제공업체 정보
     provider TEXT DEFAULT 'email' CHECK (provider IN ('email', 'google', 'kakao', 'naver')),
     
+    -- 사용자 계정 상태 관리
+    account_status TEXT DEFAULT 'active' CHECK (account_status IN ('active', 'suspended', 'deactivated', 'deleted')),
+    suspended_reason TEXT, -- 정지 사유
+    suspended_until TIMESTAMP WITH TIME ZONE, -- 정지 해제 일시 (NULL이면 무기한)
+    suspended_by UUID REFERENCES user_profiles(id), -- 정지 처리한 관리자
+    suspended_at TIMESTAMP WITH TIME ZONE, -- 정지 처리 일시
+    
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
