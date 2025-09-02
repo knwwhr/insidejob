@@ -14114,7 +14114,8 @@
             };
 
             // Auth 상태 변화 처리
-            const handleAuthStateChange = async () => {
+            useEffect(() => {
+                const handleAuthStateChange = async () => {
                     try {
                         // Supabase Auth 상태 변화 감지
                         const { data: { subscription } } = supabaseClient.auth.onAuthStateChange(async (event, session) => {
