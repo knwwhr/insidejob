@@ -12566,7 +12566,7 @@
                 );
             }
 
-            // 2단계 렌더링 (자산 정보)
+            // 2단계 렌더링 (스킬 역량)
             if (calculatorStep === 2) {
                 return (
                     <div className="min-h-screen py-8 px-4">
@@ -12593,113 +12593,136 @@
                             </div>
 
                             <div className="card">
-                                <div className="bg-green-50 border-l-4 border-green-400 p-6 mb-8 rounded-r-lg">
-                                    <p className="text-lg text-green-800">
-                                        😊 <strong>정확한 수치를 모르시는 경우에는</strong><br/>
-                                        알고 계신 대략적인 금액을 입력하시면 됩니다.
+                                <div className="bg-blue-50 border-l-4 border-blue-400 p-6 mb-8 rounded-r-lg">
+                                    <p className="text-lg text-blue-800">
+                                        💡 <strong>보유한 기술과 능력을 모두 체크해주세요</strong><br/>
+                                        다양한 스킬이 경쟁력 평가에 반영됩니다.
                                     </p>
                                 </div>
 
-                                <div className="space-y-6">
-
-                                    <AmountInput
-                                        label="💼 취업준비 자금 (예금·적금 등, 단위: 만원)"
-                                        value={formData.financialAssets}
-                                        onChange={(v) => handleInputChange('financialAssets', v)}
-                                        placeholder=""
-                                    />
-
-                                    <AmountInput
-                                        label="💼 인턴십/아르바이트 경험 (경험을 통해 습득한 실무 스킬 점수, 1-100점)"
-                                        value={formData.severancePay}
-                                        onChange={(v) => handleInputChange('severancePay', v)}
-                                        placeholder=""
-                                    />
-
-
-                                    <AmountInput
-                                        label="🏢 수익형 부동산 (오피스텔·상가 등, 단위: 만원)"
-                                        value={formData.investmentRealEstate}
-                                        onChange={(v) => handleInputChange('investmentRealEstate', v)}
-                                        placeholder=""
-                                        averageAmount={0}
-                                    />
-
-                                    <AmountInput
-                                        label="🏢 수익형 부동산 대출 잔액 (단위: 만원)"
-                                        value={formData.investmentLoan}
-                                        onChange={(v) => handleInputChange('investmentLoan', v)}
-                                        placeholder=""
-                                        averageAmount={0}
-                                    />
-                                    {formData.investmentLoan && parseInt(formData.investmentLoan) > 0 && (
-                                        <AmountInput
-                                            label="💳 수익형 부동산 대출 월 이자 (단위: 만원)"
-                                            value={formData.investmentLoanInterest}
-                                            onChange={(v) => handleInputChange('investmentLoanInterest', v)}
-                                            placeholder=""
-                                            averageAmount={0}
-                                        />
-                                    )}
-
-                                    <AmountInput
-                                        label="💳 기타 대출 잔액 (단위: 만원)"
-                                        value={formData.debt}
-                                        onChange={(v) => handleInputChange('debt', v)}
-                                        placeholder=""
-                                    />
-                                    {formData.debt && parseInt(formData.debt) > 0 && (
-                                        <AmountInput
-                                            label="💳 기타 대출 월 이자 (단위: 만원)"
-                                            value={formData.debtInterest}
-                                            onChange={(v) => handleInputChange('debtInterest', v)}
-                                            placeholder=""
-                                            averageAmount={0}
-                                        />
-                                    )}
-
-                                    <div className="mb-6">
-                                        <div className="flex items-center gap-2 mb-3">
-                                            <label className="block text-xl font-semibold text-gray-800">👨‍👩‍👧‍👦 가족 지원 또는 후원 예정액 (단위: 만원)</label>
-                                            <button
-                                                onClick={() => setShowInheritanceGuide(!showInheritanceGuide)}
-                                                className="text-blue-500 bg-blue-50 rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-blue-100"
-                                            >
-                                                ?
-                                            </button>
+                                <div className="space-y-8">
+                                    {/* Technical Skills Section */}
+                                    <div>
+                                        <label className="block text-xl font-semibold text-gray-800 mb-4">💻 기술 스킬</label>
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                            {[
+                                                'JavaScript', 'Python', 'Java', 'C/C++', 'C#', 'PHP',
+                                                'React', 'Vue.js', 'Angular', 'Node.js', 'Spring', 'Django',
+                                                'HTML/CSS', 'SQL', 'MongoDB', 'AWS', 'Git', 'Docker'
+                                            ].map(skill => (
+                                                <label key={skill} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={formData.technicalSkills?.includes(skill) || false}
+                                                        onChange={(e) => {
+                                                            const currentSkills = formData.technicalSkills || [];
+                                                            if (e.target.checked) {
+                                                                handleInputChange('technicalSkills', [...currentSkills, skill]);
+                                                            } else {
+                                                                handleInputChange('technicalSkills', currentSkills.filter(s => s !== skill));
+                                                            }
+                                                        }}
+                                                        className="rounded text-blue-600"
+                                                    />
+                                                    <span className="text-sm font-medium">{skill}</span>
+                                                </label>
+                                            ))}
                                         </div>
-                                        <input
-                                            type="text"
-                                            inputMode="numeric"
-                                            pattern="[0-9]*"
-                                            value={formData.inheritance}
-                                            onChange={(e) => {
-                                                const numValue = e.target.value.replace(/[^0-9]/g, '');
-                                                handleInputChange('inheritance', numValue === '' ? '' : numValue);
-                                            }}
-                                            className="w-full p-4 border-2 border-gray-200 rounded-lg text-lg"
-                                            placeholder=""
-                                            autoComplete="off"
-                                        />
-                                        <div className="text-green-600 font-semibold text-lg mt-1">{formatAmount(formData.inheritance)}</div>
-                                        
-                                        {showInheritanceGuide && (
-                                            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mt-3 rounded-r-lg">
-                                                <div className="text-yellow-800">
-                                                    <p className="font-semibold mb-2">📊 참고 가이드라인</p>
-                                                    <ul className="text-sm space-y-1">
-                                                        <li>• <strong>생애 평균:</strong> 약 2,000만원 (한국조세재정연구원 2022)</li>
-                                                        <li>• <strong>부모 1인당:</strong> 평균 1,000만원 내외</li>
-                                                        <li>• <strong>시기:</strong> 대부분 20-30대에 지원받음</li>
-                                                        <li>• <strong>형태:</strong> 현금, 부동산, 주식 등 다양</li>
-                                                    </ul>
-                                                    <p className="text-xs mt-2 text-yellow-700">
-                                                        * 가족 상황에 따라 큰 차이가 있으니 예상 가능한 금액만 입력하세요
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        )}
                                     </div>
+
+                                    {/* Certifications Section */}
+                                    <div>
+                                        <label className="block text-xl font-semibold text-gray-800 mb-4">🏆 자격증/인증</label>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            {[
+                                                '정보처리기사', '토익/토플', 'AWS 인증', '구글 클라우드 인증',
+                                                '컴활 1급', '워드프로세서', 'PMP', '6시그마',
+                                                '회계사', '변리사', '기타 IT 인증', '기타 전문 자격증'
+                                            ].map(cert => (
+                                                <label key={cert} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={formData.certifications?.includes(cert) || false}
+                                                        onChange={(e) => {
+                                                            const currentCerts = formData.certifications || [];
+                                                            if (e.target.checked) {
+                                                                handleInputChange('certifications', [...currentCerts, cert]);
+                                                            } else {
+                                                                handleInputChange('certifications', currentCerts.filter(c => c !== cert));
+                                                            }
+                                                        }}
+                                                        className="rounded text-blue-600"
+                                                    />
+                                                    <span className="text-sm font-medium">{cert}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Language Skills Section */}
+                                    <div>
+                                        <label className="block text-xl font-semibold text-gray-800 mb-4">🌍 어학 능력</label>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            {[
+                                                '영어 (비즈니스 레벨)', '영어 (회화 가능)', '영어 (기초)',
+                                                '중국어 (비즈니스 레벨)', '중국어 (회화 가능)', '중국어 (기초)',
+                                                '일본어 (비즈니스 레벨)', '일본어 (회화 가능)', '일본어 (기초)',
+                                                '기타 언어'
+                                            ].map(lang => (
+                                                <label key={lang} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={formData.languageSkills?.includes(lang) || false}
+                                                        onChange={(e) => {
+                                                            const currentLangs = formData.languageSkills || [];
+                                                            if (e.target.checked) {
+                                                                handleInputChange('languageSkills', [...currentLangs, lang]);
+                                                            } else {
+                                                                handleInputChange('languageSkills', currentLangs.filter(l => l !== lang));
+                                                            }
+                                                        }}
+                                                        className="rounded text-blue-600"
+                                                    />
+                                                    <span className="text-sm font-medium">{lang}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Portfolio Projects Section */}
+                                    <div>
+                                        <label className="block text-xl font-semibold text-gray-800 mb-4">📁 포트폴리오 프로젝트 수</label>
+                                        <select
+                                            value={formData.portfolioProjects || ''}
+                                            onChange={(e) => handleInputChange('portfolioProjects', e.target.value)}
+                                            className="w-full p-4 border-2 border-gray-200 rounded-lg text-lg bg-white"
+                                        >
+                                            <option value="">선택해주세요</option>
+                                            <option value="0">0개 (없음)</option>
+                                            <option value="1-2">1-2개</option>
+                                            <option value="3-5">3-5개</option>
+                                            <option value="6-10">6-10개</option>
+                                            <option value="10+">10개 이상</option>
+                                        </select>
+                                    </div>
+
+                                    {/* Portfolio Quality Section - only show if projects > 0 */}
+                                    {formData.portfolioProjects && formData.portfolioProjects !== '0' && (
+                                        <div>
+                                            <label className="block text-xl font-semibold text-gray-800 mb-4">⭐ 포트폴리오 품질 (자체 평가)</label>
+                                            <select
+                                                value={formData.portfolioQuality || ''}
+                                                onChange={(e) => handleInputChange('portfolioQuality', e.target.value)}
+                                                className="w-full p-4 border-2 border-gray-200 rounded-lg text-lg bg-white"
+                                            >
+                                                <option value="">선택해주세요</option>
+                                                <option value="basic">기초 수준 (학습용 프로젝트)</option>
+                                                <option value="intermediate">중급 수준 (실용적 기능 구현)</option>
+                                                <option value="advanced">고급 수준 (상용 서비스 수준)</option>
+                                                <option value="professional">전문가 수준 (기업급 품질)</option>
+                                            </select>
+                                        </div>
+                                    )}
 
                                     <div className="flex gap-4 mt-8">
                                         <button
@@ -12725,7 +12748,7 @@
                 );
             }
 
-            // 3단계 렌더링 (추가 수입·지출)
+            // 3단계 렌더링 (경력 경험 평가)
             if (calculatorStep === 3) {
                 return (
                     <div className="min-h-screen py-8 px-4">
@@ -12743,8 +12766,8 @@
                                 <div className="flex-1"></div>
                             </div>
                             <div className="text-center mb-8">
-                                <h1 className="text-3xl font-bold text-gray-800 mb-3">📋 추가 수입·지출</h1>
-                                <p className="text-xl text-gray-600">매달 들어오는 부수입이나 나가는 고정비용 (선택사항)</p>
+                                <h1 className="text-3xl font-bold text-gray-800 mb-3">💼 경력 및 경험</h1>
+                                <p className="text-xl text-gray-600">당신의 다양한 경험과 활동을 평가해보세요</p>
                                 <div className="w-full bg-gray-200 rounded-full h-4 mt-6 max-w-md mx-auto">
                                     <div className="bg-blue-600 h-4 rounded-full" style={{width: '50%'}}></div>
                                 </div>
@@ -12752,56 +12775,107 @@
                             </div>
 
                             <div className="card">
-                                <div className="bg-green-50 border-l-4 border-green-400 p-6 mb-8 rounded-r-lg">
-                                    <p className="text-lg text-green-800">
-                                        😊 <strong>정확한 수치를 모르시는 경우에는</strong><br/>
-                                        알고 계신 대략적인 금액을 입력하시면 됩니다.
+                                <div className="bg-blue-50 border-l-4 border-blue-400 p-6 mb-8 rounded-r-lg">
+                                    <p className="text-lg text-blue-800">
+                                        💡 <strong>각 영역에서 가장 가까운 수준을 선택해주세요</strong><br/>
+                                        다양한 경험이 모여 당신만의 경쟁력을 만들어갑니다.
                                     </p>
                                 </div>
 
-                                <h2 className="text-2xl font-bold mb-6 text-gray-800">📈 매달 받는 부수입 (단위: 만원)</h2>
-                                
-                                <AmountInput
-                                    label="🏛️ 프리랜싱 (월 수입)"
-                                    value={formData.nationalPension}
-                                    onChange={(v) => handleInputChange('nationalPension', v)}
-                                    placeholder=""
-                                />
-                                
-                                <AmountInput
-                                    label="💰 사이드 프로젝트 (월 수입)"
-                                    value={formData.privatePension}
-                                    onChange={(v) => handleInputChange('privatePension', v)}
-                                    placeholder=""
-                                />
-                                
+                                {/* 인턴십/실무 경험 */}
+                                <div className="mb-6">
+                                    <label className="block text-lg font-semibold text-gray-700 mb-3">
+                                        🏢 인턴십/실무 경험
+                                    </label>
+                                    <select 
+                                        value={formData.internshipExperience || ''}
+                                        onChange={(e) => handleInputChange('internshipExperience', e.target.value)}
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700 bg-white"
+                                    >
+                                        <option value="">선택해주세요</option>
+                                        <option value="none">실무 경험 없음</option>
+                                        <option value="short">단기 인턴 경험 (1-3개월)</option>
+                                        <option value="long">장기 인턴 경험 (3-12개월)</option>
+                                        <option value="multiple">다수의 인턴 경험</option>
+                                        <option value="fulltime">정규직 경험 있음</option>
+                                    </select>
+                                </div>
 
-                                <h2 className="text-2xl font-bold mb-6 mt-8 text-gray-800">💼 기타 월 수입 (단위: 만원)</h2>
-                                
-                                
-                                <AmountInput
-                                    label="💼 근로소득 (파트타임, 자문료 등)"
-                                    value={formData.workIncome}
-                                    onChange={(v) => handleInputChange('workIncome', v)}
-                                    placeholder=""
-                                    averageAmount={0}
-                                />
-                                
-                                <AmountInput
-                                    label="💰 부수입 (프리랜싱, 사이드 프로젝트 등)"
-                                    value={formData.financialIncome}
-                                    onChange={(v) => handleInputChange('financialIncome', v)}
-                                    placeholder=""
-                                    averageAmount={0}
-                                />
-                                
-                                <AmountInput
-                                    label="📚 기타소득 (강의, 로열티 등)"
-                                    value={formData.otherIncome}
-                                    onChange={(v) => handleInputChange('otherIncome', v)}
-                                    placeholder=""
-                                    averageAmount={0}
-                                />
+                                {/* 프로젝트 경험 */}
+                                <div className="mb-6">
+                                    <label className="block text-lg font-semibold text-gray-700 mb-3">
+                                        🚀 프로젝트 경험
+                                    </label>
+                                    <select 
+                                        value={formData.projectExperience || ''}
+                                        onChange={(e) => handleInputChange('projectExperience', e.target.value)}
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700 bg-white"
+                                    >
+                                        <option value="">선택해주세요</option>
+                                        <option value="none">프로젝트 경험 없음</option>
+                                        <option value="academic">수업/과제 프로젝트만</option>
+                                        <option value="personal">개인 프로젝트 경험</option>
+                                        <option value="team">팀 프로젝트 다수 참여</option>
+                                        <option value="commercial">상업적/실무 프로젝트 경험</option>
+                                    </select>
+                                </div>
+
+                                {/* 활동 경험 */}
+                                <div className="mb-6">
+                                    <label className="block text-lg font-semibold text-gray-700 mb-3">
+                                        🎯 대외활동/봉사 경험
+                                    </label>
+                                    <select 
+                                        value={formData.activityExperience || ''}
+                                        onChange={(e) => handleInputChange('activityExperience', e.target.value)}
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700 bg-white"
+                                    >
+                                        <option value="">선택해주세요</option>
+                                        <option value="none">대외활동 경험 없음</option>
+                                        <option value="volunteer">봉사활동 참여</option>
+                                        <option value="club">동아리/학회 활동</option>
+                                        <option value="contest">공모전/대회 참여</option>
+                                        <option value="multiple">다양한 대외활동 경험</option>
+                                    </select>
+                                </div>
+
+                                {/* 수상 경력 */}
+                                <div className="mb-6">
+                                    <label className="block text-lg font-semibold text-gray-700 mb-3">
+                                        🏆 수상/성취 경력
+                                    </label>
+                                    <select 
+                                        value={formData.awardHistory || ''}
+                                        onChange={(e) => handleInputChange('awardHistory', e.target.value)}
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700 bg-white"
+                                    >
+                                        <option value="">선택해주세요</option>
+                                        <option value="none">수상 경력 없음</option>
+                                        <option value="academic">학업 관련 상 (장학금 등)</option>
+                                        <option value="competition">공모전/대회 입상</option>
+                                        <option value="certification">자격증/인증서 보유</option>
+                                        <option value="multiple">다수의 수상/인증 경력</option>
+                                    </select>
+                                </div>
+
+                                {/* 리더십 경험 */}
+                                <div className="mb-6">
+                                    <label className="block text-lg font-semibold text-gray-700 mb-3">
+                                        👑 리더십/팀 관리 경험
+                                    </label>
+                                    <select 
+                                        value={formData.leadershipExperience || ''}
+                                        onChange={(e) => handleInputChange('leadershipExperience', e.target.value)}
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700 bg-white"
+                                    >
+                                        <option value="">선택해주세요</option>
+                                        <option value="none">리더십 경험 없음</option>
+                                        <option value="member">팀 구성원으로만 참여</option>
+                                        <option value="sub">서브 리더/파트 리더 경험</option>
+                                        <option value="leader">프로젝트 리더 경험</option>
+                                        <option value="manager">팀/조직 관리 경험</option>
+                                    </select>
+                                </div>
 
                                 <div className="flex gap-4 mt-8">
                                     <button
@@ -12814,10 +12888,10 @@
                                         이전 단계
                                     </button>
                                     <button
-                                        onClick={calculateCareerResults}
+                                        onClick={() => goToNextStep(4)}
                                         className="btn-primary flex-1"
                                     >
-                                        🚀 취업경쟁력 진단하기
+                                        다음 단계 →
                                     </button>
                                 </div>
                             </div>
@@ -12826,8 +12900,10 @@
                 );
             }
 
-            // 결과 화면 (원본에서 추출한 완전한 버전)
+            // 결과 화면 (취업경쟁력 진단 결과)
             if (calculatorStep === 4 && calculatorResult) {
+                const gradeInfo = getGradeFromScore(calculatorResult.totalScore);
+                
                 return (
                     <div className="min-h-screen py-8 px-4">
                         <div className="max-w-2xl mx-auto">
@@ -12839,89 +12915,166 @@
                                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                                     </svg>
-                                    다시 계산하기
+                                    다시 진단하기
                                 </button>
                                 <div className="flex-1"></div>
                             </div>
+                            
                             <div className="text-center mb-8">
-                                <h1 className="text-3xl font-bold text-gray-800 mb-3">🎉 취업경쟁력 진단 완료!</h1>
+                                <h1 className="text-3xl font-bold text-gray-800 mb-3">🎯 취업경쟁력 진단 완료!</h1>
+                                <p className="text-gray-600">당신의 종합적인 취업 준비 상태를 분석했습니다</p>
                             </div>
 
+                            {/* 종합 등급 표시 */}
                             <div className="card mb-6">
                                 <div className="text-center">
-                                    <div className="text-5xl font-bold text-blue-600 mb-4">
-                                        하루 {formatResultAmount(calculatorResult.totalDailyAvailable)}
+                                    <div className={`inline-flex items-center justify-center w-32 h-32 rounded-full text-6xl font-bold mb-4 ${gradeInfo.bg} ${gradeInfo.color} border-4 border-current`}>
+                                        {gradeInfo.grade}
                                     </div>
-                                    <div className="text-3xl text-gray-600 mb-4">
-                                        월 {formatResultAmount(calculatorResult.totalMonthlyAvailable)}
+                                    <div className="text-2xl font-bold text-gray-800 mb-2">
+                                        종합 점수: {calculatorResult.totalScore}점 / 100점
                                     </div>
-                                    
-                                    {/* 안전 수준 표시 */}
-                                    <div className={`inline-block px-6 py-3 rounded-full text-white font-bold text-lg mb-4 ${
-                                        calculatorResult.safetyLevel === '안전' ? 'bg-green-500' :
-                                        calculatorResult.safetyLevel === '보통' ? 'bg-yellow-500' : 'bg-red-500'
-                                    }`}>
-                                        {calculatorResult.safetyLevel} 수준
+                                    <div className="text-lg text-gray-600 mb-4">
+                                        등급: <span className={`font-bold ${gradeInfo.color}`}>{calculatorResult.grade}</span>
                                     </div>
                                     
-                                    {/* 기대수명 조정 */}
-                                    <div className="bg-blue-50 p-4 rounded-lg mb-4 max-w-md mx-auto">
-                                        <div className="flex items-center justify-center gap-3 mb-2">
-                                            <span className="text-sm font-medium text-blue-800">취업목표기간:</span>
-                                            <div className="flex items-center gap-2">
-                                                <button 
-                                                    onClick={() => setLifeExpectancy(Math.max(70, lifeExpectancy - 5))}
-                                                    className="w-8 h-8 bg-blue-200 hover:bg-blue-300 rounded-full flex items-center justify-center text-blue-700 font-bold"
-                                                >
-                                                    -
-                                                </button>
-                                                <span className="font-bold text-lg text-blue-600 min-w-[50px] text-center">{lifeExpectancy}세</span>
-                                                <button 
-                                                    onClick={() => setLifeExpectancy(Math.min(110, lifeExpectancy + 5))}
-                                                    className="w-8 h-8 bg-blue-200 hover:bg-blue-300 rounded-full flex items-center justify-center text-blue-700 font-bold"
-                                                >
-                                                    +
-                                                </button>
+                                    {/* 성공률 및 예상 기간 */}
+                                    <div className="grid grid-cols-2 gap-4 mt-6">
+                                        <div className="bg-green-50 p-4 rounded-lg">
+                                            <div className="text-2xl font-bold text-green-600 mb-1">
+                                                {calculatorResult.predictedSuccessRate}%
                                             </div>
+                                            <div className="text-sm text-green-700 font-medium">예상 취업 성공률</div>
                                         </div>
-                                        <div className="text-xs text-blue-600 text-center">
-                                            {formData.age}세부터 {lifeExpectancy}세까지 ({lifeExpectancy - parseInt(formData.age)}년간) 자산 보존
+                                        <div className="bg-blue-50 p-4 rounded-lg">
+                                            <div className="text-2xl font-bold text-blue-600 mb-1">
+                                                {calculatorResult.estimatedJobPeriod}개월
+                                            </div>
+                                            <div className="text-sm text-blue-700 font-medium">예상 취업 기간</div>
                                         </div>
                                     </div>
-
-                                    
-                                    {/* 계산 결과 저장 */}
-                                    {!isResultSaved ? (
-                                        <div className="text-center mb-6">
-                                            <button
-                                                onClick={saveCalculationResult}
-                                                className="px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
-                                            >
-                                                💾 내 계산결과 저장하기
-                                            </button>
-                                            <div className="text-sm text-blue-600 mt-2 font-medium">
-                                                계산 결과를 저장하면 나와 비슷한 사람들과 이야기할 수 있어요!
-                                            </div>
-                                            <div className="text-sm text-gray-500 mt-1">
-                                                언제든지 다시 계산하고 업데이트 할 수 있습니다
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="text-center mb-6">
-                                            <div className="inline-block px-6 py-3 bg-green-100 text-green-800 rounded-lg font-semibold">
-                                                ✅ 계산결과가 저장되었습니다!
-                                            </div>
-                                            <div className="text-sm text-gray-500 mt-2">
-                                                언제든지 다시 계산하고 업데이트 할 수 있습니다
-                                            </div>
-                                            <div className="text-sm text-blue-600 mt-1 font-medium">
-                                                👇 아래에서 비슷한 분들과 소통해보세요
-                                            </div>
-                                        </div>
-                                    )}
-                                    
                                 </div>
                             </div>
+
+                            {/* 6개 분야별 점수 분석 */}
+                            <div className="card mb-6">
+                                <h3 className="text-xl font-bold mb-4">📊 분야별 경쟁력 분석</h3>
+                                <div className="space-y-4">
+                                    {Object.values(calculatorResult.scoreBreakdown).map((item, index) => {
+                                        const percentage = (item.score / item.maxScore) * 100;
+                                        const scoreGrade = getGradeFromScore(percentage);
+                                        
+                                        return (
+                                            <div key={index} className="border rounded-lg p-4">
+                                                <div className="flex justify-between items-center mb-3">
+                                                    <span className="font-semibold text-gray-800">{item.category}</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={`px-3 py-1 rounded-full text-sm font-bold ${scoreGrade.bg} ${scoreGrade.color}`}>
+                                                            {scoreGrade.grade}
+                                                        </span>
+                                                        <span className="font-bold text-gray-700">
+                                                            {item.score}/{item.maxScore}점
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                
+                                                {/* 진행률 바 */}
+                                                <div className="bg-gray-200 rounded-full h-3">
+                                                    <div 
+                                                        className={`h-3 rounded-full transition-all duration-300 ${
+                                                            percentage >= 80 ? 'bg-green-500' :
+                                                            percentage >= 60 ? 'bg-blue-500' :
+                                                            percentage >= 40 ? 'bg-yellow-500' : 'bg-red-500'
+                                                        }`}
+                                                        style={{width: `${percentage}%`}}
+                                                    ></div>
+                                                </div>
+                                                <div className="text-right text-sm text-gray-600 mt-1">
+                                                    {percentage.toFixed(1)}%
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* 개선 추천사항 */}
+                            {calculatorResult.recommendations && calculatorResult.recommendations.length > 0 && (
+                                <div className="card mb-6">
+                                    <h3 className="text-xl font-bold mb-4">💡 개선 추천사항</h3>
+                                    <div className="space-y-3">
+                                        {calculatorResult.recommendations.map((recommendation, index) => (
+                                            <div key={index} className="flex items-start gap-3 p-3 bg-yellow-50 rounded-lg border-l-4 border-yellow-400">
+                                                <span className="text-yellow-600 font-bold text-lg">•</span>
+                                                <span className="text-gray-700">{recommendation}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* 또래 비교 */}
+                            {calculatorResult.peerComparison && (
+                                <div className="card mb-6">
+                                    <h3 className="text-xl font-bold mb-4">👥 또래 비교</h3>
+                                    <div className="grid grid-cols-3 gap-4 text-center">
+                                        <div className="bg-blue-50 p-4 rounded-lg">
+                                            <div className="text-2xl font-bold text-blue-600 mb-1">
+                                                {calculatorResult.peerComparison.myScore}점
+                                            </div>
+                                            <div className="text-sm text-blue-700">내 점수</div>
+                                        </div>
+                                        <div className="bg-gray-50 p-4 rounded-lg">
+                                            <div className="text-2xl font-bold text-gray-600 mb-1">
+                                                {calculatorResult.peerComparison.peerAverage}점
+                                            </div>
+                                            <div className="text-sm text-gray-700">동연령 평균</div>
+                                        </div>
+                                        <div className="bg-purple-50 p-4 rounded-lg">
+                                            <div className="text-2xl font-bold text-purple-600 mb-1">
+                                                {calculatorResult.peerComparison.industryAverage}점
+                                            </div>
+                                            <div className="text-sm text-purple-700">업계 평균</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="mt-4 text-center">
+                                        <div className="text-lg font-semibold text-gray-700">
+                                            상위 {100 - calculatorResult.peerComparison.percentile}% 수준
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* 계산 결과 저장 */}
+                            {!isResultSaved ? (
+                                <div className="text-center mb-6">
+                                    <button
+                                        onClick={saveCalculationResult}
+                                        className="px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+                                    >
+                                        💾 내 진단결과 저장하기
+                                    </button>
+                                    <div className="text-sm text-blue-600 mt-2 font-medium">
+                                        진단 결과를 저장하면 나와 비슷한 사람들과 이야기할 수 있어요!
+                                    </div>
+                                    <div className="text-sm text-gray-500 mt-1">
+                                        언제든지 다시 진단하고 업데이트 할 수 있습니다
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="text-center mb-6">
+                                    <div className="inline-block px-6 py-3 bg-green-100 text-green-800 rounded-lg font-semibold">
+                                        ✅ 진단결과가 저장되었습니다!
+                                    </div>
+                                    <div className="text-sm text-gray-500 mt-2">
+                                        언제든지 다시 진단하고 업데이트 할 수 있습니다
+                                    </div>
+                                    <div className="text-sm text-blue-600 mt-1 font-medium">
+                                        👇 아래에서 비슷한 분들과 소통해보세요
+                                    </div>
+                                </div>
+                            )}
                             
                             {/* 커뮤니티 섹션 - 저장 후에만 표시 */}
                             {isResultSaved && (
@@ -12932,19 +13085,9 @@
                                     <div className="grid grid-cols-3 gap-2 mb-6">
                                         <button
                                             className={`py-3 px-3 rounded-lg font-semibold transition-all duration-300 text-sm ${
-                                                activeTab === 'expense' 
-                                                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg' 
-                                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                            }`}
-                                            onClick={() => setActiveTab('expense')}
-                                        >
-                                            📊 지출내역 공유
-                                        </button>
-                                        <button
-                                            className={`py-3 px-3 rounded-lg font-semibold transition-all duration-300 text-sm ${
                                                 activeTab === 'community' 
                                                     ? 'bg-gradient-to-r from-green-500 to-blue-500 text-white shadow-lg' 
-                                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 animate-pulse'
+                                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                             }`}
                                             onClick={() => setActiveTab('community')}
                                         >
@@ -12960,79 +13103,48 @@
                                         >
                                             🔍 현직자 찾기
                                         </button>
+                                        <button
+                                            className={`py-3 px-3 rounded-lg font-semibold transition-all duration-300 text-sm ${
+                                                activeTab === 'mypage' 
+                                                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg' 
+                                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                            }`}
+                                            onClick={() => setActiveTab('mypage')}
+                                        >
+                                            📋 내 진단내역
+                                        </button>
                                     </div>
-
-                                    {/* 지출내역 공유 탭 */}
-                                    {activeTab === 'expense' && (
-                                        <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-lg">
-                                            <div className="bg-white p-4 rounded-lg mb-4">
-                                                <p className="text-gray-800 font-semibold">
-                                                    💰 <strong>지출내역 입력</strong> 후<br/>
-                                                    비슷한 사람들이 어떻게 돈을 쓰고 있는지 확인할 수 있습니다.
-                                                </p>
-                                            </div>
-                                            
-                                            <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
-                                                <div className="bg-white p-2 rounded-lg text-center">
-                                                    <div className="font-bold text-purple-600">"식비는 얼마가 적당할까요?"</div>
-                                                </div>
-                                                <div className="bg-white p-2 rounded-lg text-center">
-                                                    <div className="font-bold text-purple-600">"다른사람은 의료비를 얼마나 쓸까요?"</div>
-                                                </div>
-                                                <div className="bg-white p-2 rounded-lg text-center">
-                                                    <div className="font-bold text-purple-600">"취미·여가비 현실적인 기준은?"</div>
-                                                </div>
-                                                <div className="bg-white p-2 rounded-lg text-center">
-                                                    <div className="font-bold text-purple-600">"차량유지비는 얼마나 나올까요?"</div>
-                                                </div>
-                                            </div>
-                                            
-                                            <div className="bg-purple-100 p-3 rounded-lg mb-4 text-center">
-                                                <p className="text-purple-800 font-semibold">
-                                                    📈 <strong>더 나은 서비스 제공을 위해서만 익명으로 활용됩니다</strong>
-                                                </p>
-                                                <p className="text-purple-700 text-sm">내 또래의 실제 지출 패턴을 확인하세요</p>
-                                            </div>
-                                            
-                                            <button
-                                                onClick={openExpenseModal}
-                                                className="w-full text-lg py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-semibold transform hover:scale-105 transition-all duration-300"
-                                            >
-                                                📝 지출내역 입력하기
-                                            </button>
-                                        </div>
-                                    )}
 
                                     {/* 커뮤니티 참여 탭 */}
                                     {activeTab === 'community' && (
                                         <div className="bg-gradient-to-r from-green-50 to-blue-50 p-6 rounded-lg">
                                             <div className="bg-white p-4 rounded-lg mb-4">
                                                 <p className="text-gray-800 font-semibold">
-                                                    🤝 <strong>익명 라이프스타일 커뮤니티</strong>에서<br/>
-                                                    비슷한 자산과 나이대({formData.age}세)의 사람들과 솔직한 경험을 나누어보세요.
+                                                    🤝 <strong>익명 취업 커뮤니티</strong>에서<br/>
+                                                    비슷한 진단 결과와 나이대({formData.age}세)의 사람들과 솔직한 경험을 나누어보세요.
                                                 </p>
                                             </div>
                                             
                                             <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
                                                 <div className="bg-white p-2 rounded-lg text-center">
-                                                    <div className="font-bold text-blue-600">"실제로 이 돈으로 살 수 있나요?"</div>
+                                                    <div className="font-bold text-blue-600">"이 점수로 정말 취업될까요?"</div>
                                                 </div>
                                                 <div className="bg-white p-2 rounded-lg text-center">
-                                                    <div className="font-bold text-blue-600">"예상치 못한 비용들은 뭐가 있나요?"</div>
+                                                    <div className="font-bold text-blue-600">"면접에서 어떤 질문이 나올까요?"</div>
                                                 </div>
                                                 <div className="bg-white p-2 rounded-lg text-center">
-                                                    <div className="font-bold text-blue-600">"어떤 서비스들을 실제로 이용하시나요?"</div>
+                                                    <div className="font-bold text-blue-600">"포트폴리오 어떻게 만드셨나요?"</div>
                                                 </div>
                                                 <div className="bg-white p-2 rounded-lg text-center">
-                                                    <div className="font-bold text-blue-600">"취업 생활의 현실적인 팁들"</div>
+                                                    <div className="font-bold text-blue-600">"네트워킹은 어떻게 하세요?"</div>
                                                 </div>
                                             </div>
                                             
                                             <div className="bg-green-100 p-3 rounded-lg mb-4 text-center">
                                                 <p className="text-green-800 font-semibold">
-                                                    ✨ <strong>금융상품 판매는 일체 없습니다</strong> ✨
+                                                    ✨ <strong>구인구직 정보는 일체 없습니다</strong> ✨
                                                 </p>
-                                                <p className="text-green-700 text-sm">순수 라이프스타일 커뮤니티입니다</p>
+                                                <p className="text-green-700 text-sm">순수 취업 준비 경험 공유 커뮤니티입니다</p>
                                             </div>
                                             
                                             <button
@@ -13126,351 +13238,51 @@
                                             </div>
                                         </div>
                                     )}
-                                </div>
-                            )}
 
-                            <div className="card mb-6">
-                                <h3 className="text-xl font-bold mb-4">📊 세부 계산결과</h3>
-                                <div className="space-y-3">
-                                    <div className="flex justify-between items-center">
-                                        <span>자산을 활용한 취업준비비:</span>
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-bold">{formatResultAmount(calculatorResult.monthlyAmount)}/월</span>
+                                    {/* 내 진단내역 탭 */}
+                                    {activeTab === 'mypage' && (
+                                        <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-lg">
+                                            <div className="bg-white p-4 rounded-lg mb-4">
+                                                <p className="text-gray-800 font-semibold">
+                                                    📋 <strong>마이페이지</strong>에서<br/>
+                                                    저장된 진단 결과와 활동 내역을 확인할 수 있습니다.
+                                                </p>
+                                            </div>
+                                            
+                                            <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
+                                                <div className="bg-white p-2 rounded-lg text-center">
+                                                    <div className="font-bold text-purple-600">"진단 결과 히스토리"</div>
+                                                </div>
+                                                <div className="bg-white p-2 rounded-lg text-center">
+                                                    <div className="font-bold text-purple-600">"커뮤니티 활동 내역"</div>
+                                                </div>
+                                                <div className="bg-white p-2 rounded-lg text-center">
+                                                    <div className="font-bold text-purple-600">"멘토링 예약 현황"</div>
+                                                </div>
+                                                <div className="bg-white p-2 rounded-lg text-center">
+                                                    <div className="font-bold text-purple-600">"개인정보 관리"</div>
+                                                </div>
+                                            </div>
+                                            
                                             <button
-                                                onClick={() => setShowAssetDetail(!showAssetDetail)}
-                                                className="text-white text-sm px-3 py-2 bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors font-semibold shadow-md animate-pulse"
+                                                onClick={() => setCurrentView('mypage')}
+                                                className="w-full text-lg py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-semibold transform hover:scale-105 transition-all duration-300"
                                             >
-                                                {showAssetDetail ? '📊 계산과정 숨기기' : '📊 계산과정 보기'}
+                                                📋 마이페이지 이동하기
                                             </button>
                                         </div>
-                                    </div>
-                                    
-                                    {!showAssetDetail && (
-                                        <div className="text-center mt-2">
-                                            <p className="text-xs text-blue-600">💡 계산과정을 보시면 자산 분류를 확인할 수 있습니다</p>
-                                        </div>
                                     )}
-
-                                    {/* 자산 계산 상세 설명 */}
-                                    {showAssetDetail && (
-                                        <div className="bg-blue-50 p-4 rounded-lg mt-3 space-y-3 text-sm">
-                                            <div className="font-semibold text-blue-800 mb-2">📊 계산 과정</div>
-                                            
-                                            <div className="space-y-3">
-                                                <div className="bg-white p-3 rounded-lg">
-                                                    <div className="flex justify-between items-center mb-3">
-                                                        <span className="font-medium">• 순 자산:</span>
-                                                        <span className="font-bold">{formatResultAmount(calculatorResult.assetBreakdown?.totalAssets || 0)}</span>
-                                                    </div>
-                                                    <p className="text-xs text-gray-600 mb-3">입력하신 모든 자산을 취업준비에 활용할 수 있는 자산과 활용할 수 없는 자산으로 구분했습니다</p>
-                                                    
-                                                    {/* 자산 구분 테이블 */}
-                                                    <div className="grid grid-cols-2 gap-3 text-xs">
-                                                        {/* 돈이 나오는 자산 */}
-                                                        <div className="bg-green-50 p-2 rounded border border-green-200">
-                                                            <div className="font-semibold text-green-800 mb-2">💰 취업준비에 활용할 수 있는 자산</div>
-                                                            <div className="space-y-1 text-green-700">
-                                                                {parseInt(formData.financialAssets) > 0 && <div>• 현금성 자산: {formatResultAmount(parseInt(formData.financialAssets) * 10000)}</div>}
-                                                                {parseInt(formData.severancePay) > 0 && <div>• 실무경험: {parseInt(formData.severancePay)}점</div>}
-                                                            </div>
-                                                        </div>
-                                                        
-                                                        {/* 돈이 나오지 않는 자산 */}
-                                                        <div className="bg-gray-50 p-2 rounded border border-gray-200">
-                                                            <div className="font-semibold text-gray-800 mb-2">💼 취업준비에 활용할 수 없는 자산</div>
-                                                            <div className="space-y-1 text-gray-600">
-                                                                {formData.investmentRealEstate && parseInt(formData.investmentRealEstate) > 0 && (
-                                                                    <div>• 수익형 부동산: {formatResultAmount(parseInt(formData.investmentRealEstate) * 10000)}</div>
-                                                                )}
-                                                                {formData.inheritance && parseInt(formData.inheritance) > 0 && <div>• 가족 지원/후원 예정: {formatResultAmount(parseInt(formData.inheritance) * 10000)}</div>}
-                                                                {(!formData.inheritance || parseInt(formData.inheritance) === 0) &&
-                                                                 (!formData.investmentRealEstate || parseInt(formData.investmentRealEstate) === 0) && (
-                                                                    <div className="text-gray-400 italic">해당 없음</div>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    {/* 부채 차감 */}
-                                                    {((formData.debt && parseInt(formData.debt) > 0) || (formData.investmentLoan && parseInt(formData.investmentLoan) > 0)) && (
-                                                        <div className="mt-3 p-2 bg-red-50 rounded border border-red-200">
-                                                            <div className="font-semibold text-red-800 mb-1 text-xs">💳 부채 차감</div>
-                                                            <div className="space-y-1 text-xs text-red-700">
-                                                                {formData.debt && parseInt(formData.debt) > 0 && <div>• 기타 대출: -{formatResultAmount(parseInt(formData.debt) * 10000)}</div>}
-                                                                {formData.investmentLoan && parseInt(formData.investmentLoan) > 0 && <div>• 투자대출: -{formatResultAmount(parseInt(formData.investmentLoan) * 10000)}</div>}
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-
-
-                                                <div className="bg-white p-3 rounded-lg">
-                                                    <div className="flex justify-between items-center mb-1">
-                                                        <span className="font-medium">• 비상자금 제외:</span>
-                                                        <span className="font-bold text-red-600">-{formatResultAmount(calculatorResult.assetBreakdown?.emergencyFund || 0)}</span>
-                                                    </div>
-                                                    <p className="text-xs text-gray-600">예상치 못한 의료비 등을 위해 현금성 자산의 10%를 비상자금으로 보존합니다</p>
-                                                </div>
-
-                                                <div className="bg-white p-3 rounded-lg">
-                                                    <div className="flex justify-between items-center mb-1">
-                                                        <span className="font-medium">• 취업준비에 활용할 수 있는 자산:</span>
-                                                        <span className="font-bold text-green-600">{formatResultAmount(calculatorResult.assetBreakdown?.availableAssets || 0)}</span>
-                                                    </div>
-                                                    <p className="text-xs text-gray-600">비상자금까지 차감하고 취업준비 기간 동안 활용할 수 있는 자산입니다</p>
-                                                </div>
-
-                                                <div className="bg-white p-3 rounded-lg">
-                                                    <div className="flex justify-between items-center mb-1">
-                                                        <span className="font-medium">• 소비 예상 기간:</span>
-                                                        <span className="font-bold text-blue-600">{calculatorResult.yearsToLive || 0}년</span>
-                                                    </div>
-                                                    <p className="text-xs text-gray-600">현재부터 취업 성공까지 자산을 활용하는 기간입니다</p>
-                                                </div>
-
-                                                <div className="bg-blue-100 p-3 rounded-lg border-t-2 border-blue-300">
-                                                    <div className="text-center font-bold text-green-600 text-lg">
-                                                        소비 가능한 자산은 연간 {formatResultAmount(calculatorResult.monthlyAmount * 12)}, 월간 {formatResultAmount(calculatorResult.monthlyAmount)} 입니다.
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="text-xs text-blue-700 mt-3 p-3 bg-blue-100 rounded border-l-4 border-blue-400">
-                                                💡 <strong>계산 공식:</strong> 취업준비에 활용할 수 있는 자산 ÷ 준비예상기간 ÷ 12개월 = 월 사용 가능 금액<br/>
-                                                <div className="mt-2 p-2 bg-yellow-50 rounded border border-yellow-200">
-                                                    <strong>⚠️ 중요:</strong> 이 계산은 <strong>{lifeExpectancy - (formData.age || 25)}년간</strong> 자산을 활용한다고 가정하고 계산되었습니다.(투자수익률을 배제)
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {calculatorResult.monthlyPension > 0 && (
-                                        <div className="flex justify-between text-green-700">
-                                            <span>+ 부수입:</span>
-                                            <span className="font-bold">+{formatResultAmount(calculatorResult.monthlyPension)}/월</span>
-                                        </div>
-                                    )}
-                                    {calculatorResult.monthlyOtherIncome > 0 && (
-                                        <div className="flex justify-between text-green-700">
-                                            <span>+ 기타 월 수입:</span>
-                                            <span className="font-bold">+{formatResultAmount(calculatorResult.monthlyOtherIncome)}/월</span>
-                                        </div>
-                                    )}
-                                    {calculatorResult.monthlyLoanInterest > 0 && (
-                                        <div className="flex justify-between text-red-700">
-                                            <span>- 월 대출 이자:</span>
-                                            <span className="font-bold">-{formatResultAmount(calculatorResult.monthlyLoanInterest)}/월</span>
-                                        </div>
-                                    )}
-                                    {calculatorResult.monthlyPropertyTax > 0 && (
-                                        <div className="flex justify-between text-red-700">
-                                            <span>- 월 재산세:</span>
-                                            <span className="font-bold">-{formatResultAmount(calculatorResult.monthlyPropertyTax)}/월</span>
-                                        </div>
-                                    )}
-                                    <div className="flex justify-between font-bold pt-2 border-t border-blue-200 text-lg">
-                                        <span>총 경쟁력 점수:</span>
-                                        <span className="text-blue-600">{formatResultAmount(calculatorResult.totalMonthlyAvailable)}/월</span>
-                                    </div>
                                 </div>
-                            </div>
-
+                            )}
 
                             <div className="text-center space-y-3">
                                 <button
                                     onClick={() => goToNextStep(1)}
                                     className="text-gray-500 underline hover:text-gray-700"
                                 >
-                                    다시 계산하기
+                                    다시 진단하기
                                 </button>
                             </div>
-
-                            {/* 지출내역 입력 모달 */}
-                            {showExpenseModal && (
-                                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 pt-8">
-                                    <div className="bg-white rounded-lg p-6 max-w-lg w-full mx-4 max-h-[80vh] overflow-y-auto relative">
-                                        <div className="flex justify-between items-center mb-6">
-                                            <h3 className="text-2xl font-bold text-center flex-1">📊 월 지출내역 입력</h3>
-                                            <button
-                                                onClick={closeExpenseModal}
-                                                className="text-gray-500 hover:text-gray-700 text-2xl font-bold ml-4"
-                                            >
-                                                ×
-                                            </button>
-                                        </div>
-                                        <div className="space-y-6">
-                                            <ExpenseInput
-                                                label="🍽️ 식비"
-                                                field="food"
-                                                value={expenseData.food}
-                                                placeholder=""
-                                            />
-                                            <ExpenseInput
-                                                label="📱 통신비"
-                                                field="communication"
-                                                value={expenseData.communication}
-                                                placeholder=""
-                                            />
-                                            <ExpenseInput
-                                                label="💡 공과금"
-                                                field="utilities"
-                                                value={expenseData.utilities}
-                                                placeholder=""
-                                            />
-                                            <ExpenseInput
-                                                label="🏥 의료비"
-                                                field="medical"
-                                                value={expenseData.medical}
-                                                placeholder=""
-                                            />
-                                            <ExpenseInput
-                                                label="🎯 취미·여가비"
-                                                field="hobby"
-                                                value={expenseData.hobby}
-                                                placeholder=""
-                                            />
-                                            <ExpenseInput
-                                                label="🚗 차량유지비 (기름값 등)"
-                                                field="vehicle"
-                                                value={expenseData.vehicle}
-                                                placeholder=""
-                                            />
-                                            <ExpenseInput
-                                                label="📦 기타"
-                                                field="etc"
-                                                value={expenseData.etc}
-                                                placeholder=""
-                                            />
-                                        </div>
-                                        <div className="flex gap-3 mt-6">
-                                            <button
-                                                onClick={closeExpenseModal}
-                                                className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
-                                            >
-                                                취소
-                                            </button>
-                                            <button
-                                                onClick={submitExpenseData}
-                                                className="flex-1 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                                            >
-                                                저장
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                            
-                            {/* 지출내역 비교 결과 모달 */}
-                            {showComparisonModal && expenseComparison && (
-                                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                                    <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-90vh overflow-y-auto relative">
-                                        <div className="flex justify-between items-center mb-6">
-                                            <h3 className="text-2xl font-bold text-center flex-1">📊 지출 패턴 비교 결과</h3>
-                                            <button
-                                                onClick={() => setShowComparisonModal(false)}
-                                                className="text-gray-500 hover:text-gray-700 text-2xl font-bold ml-4"
-                                            >
-                                                ×
-                                            </button>
-                                        </div>
-                                        
-                                        {/* 전체 비교 */}
-                                        <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg mb-6">
-                                            <div className="grid grid-cols-2 gap-4 text-center">
-                                                <div>
-                                                    <p className="text-sm text-gray-600 mb-1">내 지출 총액</p>
-                                                    <p className="text-2xl font-bold text-blue-600">{expenseComparison.userTotal.toLocaleString()}만원</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm text-gray-600 mb-1">통계청 평균 (2024년)</p>
-                                                    <p className="text-2xl font-bold text-purple-600">{expenseComparison.statTotal.toLocaleString()}만원</p>
-                                                </div>
-                                            </div>
-                                            
-                                            <div className="text-center mt-4">
-                                                {expenseComparison.userTotal > expenseComparison.statTotal ? (
-                                                    <p className="text-red-600 font-semibold">
-                                                        📈 평균보다 {(expenseComparison.userTotal - expenseComparison.statTotal).toLocaleString()}만원 더 지출
-                                                    </p>
-                                                ) : expenseComparison.userTotal < expenseComparison.statTotal ? (
-                                                    <p className="text-green-600 font-semibold">
-                                                        📉 평균보다 {(expenseComparison.statTotal - expenseComparison.userTotal).toLocaleString()}만원 절약
-                                                    </p>
-                                                ) : (
-                                                    <p className="text-gray-600 font-semibold">
-                                                        ✅ 평균과 동일한 수준
-                                                    </p>
-                                                )}
-                                            </div>
-                                        </div>
-                                        
-                                        {/* 항목별 비교 */}
-                                        <div className="space-y-3">
-                                            <h4 className="text-lg font-bold mb-3">항목별 상세 비교</h4>
-                                            
-                                            {Object.entries({
-                                                food: '🍽️ 식비',
-                                                communication: '📱 통신비', 
-                                                utilities: '💡 공과금',
-                                                medical: '🏥 의료비',
-                                                hobby: '🎯 취미·여가비',
-                                                vehicle: '🚗 차량유지비',
-                                                etc: '📦 기타'
-                                            }).map(([key, label]) => {
-                                                const userAmount = parseInt(expenseComparison.user[key]) || 0;
-                                                const statAmount = expenseComparison.stat[key];
-                                                const difference = userAmount - statAmount;
-                                                const percentage = statAmount > 0 ? Math.round((difference / statAmount) * 100) : 0;
-                                                
-                                                return (
-                                                    <div key={key} className="border rounded-lg p-4">
-                                                        <div className="flex justify-between items-center mb-2">
-                                                            <span className="font-semibold">{label}</span>
-                                                            <span className={`text-sm font-bold ${
-                                                                difference > 0 ? 'text-red-600' : 
-                                                                difference < 0 ? 'text-green-600' : 'text-gray-600'
-                                                            }`}>
-                                                                {difference > 0 ? `+${difference}만원` : 
-                                                                 difference < 0 ? `${difference}만원` : '±0만원'}
-                                                                {percentage !== 0 && ` (${percentage > 0 ? '+' : ''}${percentage}%)`}
-                                                            </span>
-                                                        </div>
-                                                        <div className="flex justify-between text-sm">
-                                                            <span>내 지출: <strong>{userAmount.toLocaleString()}만원</strong></span>
-                                                            <span>평균: <strong>{statAmount.toLocaleString()}만원</strong></span>
-                                                        </div>
-                                                        
-                                                        {/* 비교 바 */}
-                                                        <div className="mt-2 bg-gray-200 rounded-full h-2 relative">
-                                                            <div 
-                                                                className="bg-purple-400 h-2 rounded-full" 
-                                                                style={{width: `${Math.min(100, (statAmount / Math.max(userAmount, statAmount)) * 100)}%`}}
-                                                            ></div>
-                                                            <div 
-                                                                className="bg-blue-500 h-2 rounded-full absolute top-0" 
-                                                                style={{width: `${Math.min(100, (userAmount / Math.max(userAmount, statAmount)) * 100)}%`}}
-                                                            ></div>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                        
-                                        <div className="text-xs text-gray-500 mt-4 p-3 bg-gray-50 rounded">
-                                            📊 기준: 통계청 2024년 가계동향조사 (전국 평균)
-                                        </div>
-                                        
-                                        <div className="flex gap-3 mt-6">
-                                            <button
-                                                onClick={() => setShowComparisonModal(false)}
-                                                className="flex-1 px-4 py-3 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600"
-                                            >
-                                                확인
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
                             
                         </div>
                     </div>
