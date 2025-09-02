@@ -14096,9 +14096,29 @@
             const [showGuestConfirmModal, setShowGuestConfirmModal] = useState(false);
             const [showSaveResultSignupModal, setShowSaveResultSignupModal] = useState(false);
             const [notifications, setNotifications] = useState([]);
+            const [showNotificationModal, setShowNotificationModal] = useState(false);
+            const [notificationContent, setNotificationContent] = useState({ title: '', message: '', type: 'info' });
 
-            // 알림 표시 함수
-            const showNotification = (message, type = 'info') => {
+            // 통합 알림 표시 함수
+            const showNotification = (messageOrTitle, messageOrType = 'info', typeOverride = null) => {
+                // 두 가지 방식 모두 지원: 
+                // 1) showNotification(message, type)
+                // 2) showNotification(title, message, type)
+                let title, message, type;
+                
+                if (typeOverride !== null) {
+                    // 3개 매개변수: showNotification(title, message, type)
+                    title = messageOrTitle;
+                    message = messageOrType;
+                    type = typeOverride;
+                } else {
+                    // 2개 매개변수: showNotification(message, type)
+                    title = '';
+                    message = messageOrTitle;
+                    type = messageOrType;
+                }
+
+                // 토스트 알림 방식
                 const notification = {
                     id: Date.now(),
                     message,
@@ -14111,6 +14131,12 @@
                 setTimeout(() => {
                     setNotifications(prev => prev.filter(n => n.id !== notification.id));
                 }, 3000);
+
+                // 모달 방식도 지원 (title이 있는 경우)
+                if (title) {
+                    setNotificationContent({ title, message, type });
+                    setShowNotificationModal(true);
+                }
             };
 
             // Auth 상태 변화 처리
@@ -14195,11 +14221,7 @@
                 };
             }, [currentUser, isGuest, lastActivity]);
             
-            // 통합 알림 모달 함수
-            const showNotification = (title, message, type = 'info') => {
-                setNotificationContent({ title, message, type });
-                setShowNotificationModal(true);
-            };
+            // 통합 알림 모달 함수 (중복 제거됨 - 기존 showNotification 사용)
 
             // 입력값 검증 함수들
             const validateUserInput = {
