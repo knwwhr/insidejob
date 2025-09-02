@@ -101,6 +101,69 @@ CREATE TABLE IF NOT EXISTS user_profiles (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
+-- ==============================================  
+-- 1.5. 콘텐츠 신고 시스템
+-- ==============================================
+
+-- 신고 관리 테이블
+CREATE TABLE IF NOT EXISTS content_reports (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    
+    -- 신고자 정보
+    reporter_id UUID REFERENCES user_profiles(id) ON DELETE SET NULL,
+    reporter_ip TEXT, -- 익명 신고를 위한 IP 추적
+    
+    -- 신고 대상 정보 (다형성 처리)
+    target_type TEXT NOT NULL CHECK (target_type IN ('post', 'comment', 'expert_service', 'user_profile')),
+    target_id UUID NOT NULL, -- 신고 대상의 ID
+    target_title TEXT, -- 신고 대상 제목 (참조용)
+    target_author_id UUID REFERENCES user_profiles(id) ON DELETE SET NULL, -- 신고 대상 작성자
+    
+    -- 신고 내용
+    report_category TEXT NOT NULL CHECK (report_category IN (
+        'spam', 'inappropriate_content', 'harassment', 'fake_info', 
+        'copyright_violation', 'adult_content', 'violence', 'other'
+    )),
+    report_reason TEXT NOT NULL, -- 상세 신고 사유
+    additional_info TEXT, -- 추가 정보
+    
+    -- 신고 처리 상태
+    status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'reviewing', 'resolved', 'dismissed')),
+    
+    -- 관리자 처리 정보
+    reviewed_by UUID REFERENCES user_profiles(id) ON DELETE SET NULL,
+    reviewed_at TIMESTAMP WITH TIME ZONE,
+    admin_notes TEXT, -- 관리자 처리 메모
+    action_taken TEXT CHECK (action_taken IN ('none', 'warning', 'content_hidden', 'content_deleted', 'user_suspended')),
+    
+    -- 메타데이터
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    
+    -- 복합 인덱스
+    UNIQUE(target_type, target_id, reporter_id) -- 동일 사용자의 중복 신고 방지
+);
+
+-- 신고 처리 로그 테이블
+CREATE TABLE IF NOT EXISTS report_actions (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    report_id UUID REFERENCES content_reports(id) ON DELETE CASCADE,
+    
+    -- 액션 정보
+    action_type TEXT NOT NULL CHECK (action_type IN (
+        'report_created', 'status_changed', 'content_hidden', 'content_deleted', 
+        'user_warned', 'user_suspended', 'report_dismissed'
+    )),
+    action_by UUID REFERENCES user_profiles(id) ON DELETE SET NULL,
+    action_reason TEXT,
+    
+    -- 이전/이후 상태 (감사 로그)
+    previous_status TEXT,
+    new_status TEXT,
+    
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+);
+
 -- ==============================================
 -- 2. 취업경쟁력 계산 결과 (플랜비 계산 결과 구조 변환)
 -- ==============================================
