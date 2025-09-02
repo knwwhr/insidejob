@@ -13362,219 +13362,217 @@
         };
         
 
-        // 취업경쟁력 진단기 (커리어 멘토링 서비스)
-        // 인사이드잡 취업경쟁력 계산기 (6단계 진단 시스템)
+        // 취업경쟁력 진단기 - 3단계 객관식 진단 시스템
         const CareerCompetitivenessCalculator = ({ savedCalculations = [], onCalculationComplete, setCurrentView, currentUser, showNotification, setAuthMode, setShowSaveResultSignupModal }) => {
             const [calculatorStep, setCalculatorStep] = useState(1);
             const [formData, setFormData] = useState({
-                // 1단계: 기본정보
-                age: '', educationLevel: '', major: '', targetIndustry: '', targetJob: '', currentStatus: '',
-                // 2단계: 스킬역량 
-                technicalSkills: [], certifications: [], languageSkills: [], portfolioProjects: '', portfolioQuality: '',
-                // 3단계: 경험분석
-                internshipExperience: '', projectExperience: '', activityExperience: '', awardHistory: '', leadershipExperience: '',
-                // 4단계: 네트워크
-                industryConnections: '', referenceLetters: '', mentorRelationships: '', socialNetworking: '', professionalCommunity: '',
-                // 5단계: 준비현황
-                resumeQuality: '', coverLetterQuality: '', interviewPreparation: '', applicationCount: '', preparationPeriod: '',
-                // 6단계: 시장분석
-                industryGrowth: '', jobDemand: '', competitionLevel: '', salaryExpectation: '', locationFlexibility: ''
+                // 1단계: 기본자격 평가 (30점)
+                age: '',
+                educationLevel: '',
+                languageLevel: '',
+                certifications: [],
+                // 2단계: 실무역량 평가 (40점)
+                technicalSkills: [],
+                practicalExperience: [],
+                portfolioQuality: '',
+                // 3단계: 시장적합성 + 준비도 (30점)
+                jobDemand: '',
+                applicationStrategy: [],
+                preparationLevel: []
             });
             const [calculatorResult, setCalculatorResult] = useState(null);
-            const [averageData, setAverageData] = useState(null);
             const [isResultSaved, setIsResultSaved] = useState(false);
-            const [showScoreDetail, setShowScoreDetail] = useState(false);
 
-            const handleInputChange = (field, value) => {
-                const cleanValue = value === '' ? '' : value;
-                setFormData({ ...formData, [field]: cleanValue });
+            // 배열 타입 필드 처리 함수
+            const handleArrayChange = (field, value, isChecked) => {
+                const currentArray = formData[field] || [];
+                let newArray;
+                
+                if (isChecked) {
+                    newArray = [...currentArray, value];
+                } else {
+                    newArray = currentArray.filter(item => item !== value);
+                }
+                
+                setFormData({ ...formData, [field]: newArray });
             };
 
-            // 다음 단계로 이동하면서 페이지 상단으로 스크롤
+            // 일반 필드 처리 함수
+            const handleInputChange = (field, value) => {
+                setFormData({ ...formData, [field]: value });
+            };
+
+            // 다음 단계로 이동
             const goToNextStep = (step) => {
                 setCalculatorStep(step);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             };
 
-            // 나이 입력 시 평균 데이터 업데이트
-            useEffect(() => {
-                if (formData.age) {
-                    setAverageData(getAverageDataByAge(parseInt(formData.age)));
-                }
-            }, [formData.age]);
-
-            // 경쟁력 평가 결과 다시 계산
-            useEffect(() => {
-                if (calculatorResult && calculatorStep === 7) {
-                    calculateCareerResults();
-                    setIsResultSaved(false);
-                }
-            }, [formData]);
-
-            const getAverageDataByAge = (age) => {
-                if (age >= 30) return { skillLevel: 85, experienceLevel: 90, networkLevel: 80, preparationLevel: 70, competitionLevel: 60 };
-                if (age >= 25) return { skillLevel: 75, experienceLevel: 70, networkLevel: 65, preparationLevel: 80, competitionLevel: 70 };
-                if (age >= 20) return { skillLevel: 65, experienceLevel: 50, networkLevel: 45, preparationLevel: 85, competitionLevel: 80 };
-                return { skillLevel: 60, experienceLevel: 30, networkLevel: 35, preparationLevel: 90, competitionLevel: 85 };
-            };
-
-            // 점수를 등급으로 변환하는 함수
+            // 점수를 등급으로 변환
             const getGradeFromScore = (score) => {
-                if (score >= 90) return { grade: 'S', color: 'text-purple-600', bg: 'bg-purple-50' };
-                if (score >= 80) return { grade: 'A', color: 'text-blue-600', bg: 'bg-blue-50' };
-                if (score >= 70) return { grade: 'B', color: 'text-green-600', bg: 'bg-green-50' };
-                if (score >= 60) return { grade: 'C', color: 'text-yellow-600', bg: 'bg-yellow-50' };
-                if (score >= 50) return { grade: 'D', color: 'text-orange-600', bg: 'bg-orange-50' };
-                return { grade: 'F', color: 'text-red-600', bg: 'bg-red-50' };
+                if (score >= 90) return { grade: 'S', color: 'text-purple-600', bg: 'bg-purple-50', description: '상위 5% - 즉시 입사 가능' };
+                if (score >= 80) return { grade: 'A', color: 'text-blue-600', bg: 'bg-blue-50', description: '상위 15% - 우수한 경쟁력' };
+                if (score >= 70) return { grade: 'B', color: 'text-green-600', bg: 'bg-green-50', description: '상위 40% - 준수한 수준' };
+                if (score >= 60) return { grade: 'C', color: 'text-yellow-600', bg: 'bg-yellow-50', description: '평균 수준 - 보완 필요' };
+                if (score >= 50) return { grade: 'D', color: 'text-orange-600', bg: 'bg-orange-50', description: '하위권 - 적극적 개선 필요' };
+                return { grade: 'F', color: 'text-red-600', bg: 'bg-red-50', description: '경쟁력 부족 - 전면 재준비' };
             };
-            
-            // 컴포넌트 마운트시 저장된 데이터 확인만 (자동 불러오기 안함)
-            useEffect(() => {
-                const saved = localStorage.getItem('insidejob_calculation_result');
-                if (saved) {
-                    console.log('저장된 계산결과가 있습니다.');
-                }
-            }, []);
 
-            // 취업경쟁력 계산 함수 (6단계 종합 평가)
+            // 취업경쟁력 계산 함수 (총 100점)
             const calculateCareerResults = () => {
-                const age = parseInt(formData.age);
-                
-                // 1단계: 기본정보 점수 (20점)
+                // 1단계: 기본자격 평가 (30점)
                 let basicScore = 0;
-                if (formData.age && formData.educationLevel && formData.major && formData.targetIndustry && formData.targetJob) {
-                    basicScore += 5; // 완전성 점수
-                    // 나이별 가산점
-                    if (age <= 25) basicScore += 15; // 신입 최적 연령
-                    else if (age <= 30) basicScore += 12; // 경력직 시작
-                    else if (age <= 35) basicScore += 8; // 중견급
-                    else basicScore += 5; // 시니어급 경력
-                }
                 
-                // 2단계: 스킬역량 점수 (25점)
+                // 나이 (5점)
+                const age = parseInt(formData.age);
+                if (age >= 22 && age <= 25) basicScore += 5;
+                else if (age >= 26 && age <= 28) basicScore += 4;
+                else if (age >= 29 && age <= 32) basicScore += 3;
+                else if (age >= 33 && age <= 35) basicScore += 2;
+                else if (age >= 36) basicScore += 1;
+
+                // 학력 (10점)
+                const educationScores = {
+                    'high_school': 2,
+                    'college': 4,
+                    'university': 7,
+                    'graduate': 10
+                };
+                basicScore += educationScores[formData.educationLevel] || 0;
+
+                // 어학 수준 (10점)
+                const languageScores = {
+                    'level_0': 0, // 어학시험 미응시
+                    'level_1': 2, // 토익 400-599 / 오픽 IH / 토스 4-5급
+                    'level_2': 5, // 토익 600-799 / 오픽 IM / 토스 6급
+                    'level_3': 7, // 토익 800-899 / 오픽 AL / 토스 7급
+                    'level_4': 10 // 토익 900+ / 오픽 AL+ / 토스 8급+
+                };
+                basicScore += languageScores[formData.languageLevel] || 0;
+
+                // 자격증 보유 (5점)
+                let certificationScore = 0;
+                if (formData.certifications?.includes('basic_cert')) certificationScore += 2; // 컴활1급/정보처리기사
+                if (formData.certifications?.includes('professional_cert')) certificationScore += 2; // 국제공인자격증
+                if (formData.certifications?.includes('industry_cert')) certificationScore += 1; // 업종별 필수자격증
+                basicScore += Math.min(certificationScore, 5);
+
+                // 2단계: 실무역량 평가 (40점)
                 let skillScore = 0;
-                if (formData.technicalSkills && formData.technicalSkills.length > 0) skillScore += 8;
-                if (formData.certifications && formData.certifications.length > 0) skillScore += 6;
-                if (formData.languageSkills && formData.languageSkills.length > 0) skillScore += 6;
-                if (formData.portfolioProjects && formData.portfolioQuality) skillScore += 5;
+
+                // 기술 숙련도 (15점) - 최대 3개까지
+                let techSkillScore = 0;
+                const highValueSkills = ['python', 'java', 'javascript', 'react', 'vue', 'spring', 'django', 'aws', 'docker'];
+                const mediumValueSkills = ['sql', 'mongodb', 'postgresql', 'excel_advanced', 'powerpoint'];
                 
-                // 3단계: 경험분석 점수 (20점)
+                const selectedTechSkills = formData.technicalSkills?.slice(0, 3) || [];
+                selectedTechSkills.forEach(skill => {
+                    if (highValueSkills.includes(skill)) techSkillScore += 3;
+                    else if (mediumValueSkills.includes(skill)) techSkillScore += 2;
+                    else techSkillScore += 1;
+                });
+                skillScore += Math.min(techSkillScore, 15);
+
+                // 실전 경험 (15점)
                 let experienceScore = 0;
-                if (formData.internshipExperience) experienceScore += 6;
-                if (formData.projectExperience) experienceScore += 6;
-                if (formData.activityExperience) experienceScore += 4;
-                if (formData.awardHistory) experienceScore += 2;
-                if (formData.leadershipExperience) experienceScore += 2;
-                
-                // 4단계: 네트워크 점수 (15점)
-                let networkScore = 0;
-                if (formData.industryConnections) networkScore += 5;
-                if (formData.referenceLetters) networkScore += 4;
-                if (formData.mentorRelationships) networkScore += 3;
-                if (formData.socialNetworking) networkScore += 2;
-                if (formData.professionalCommunity) networkScore += 1;
-                
-                // 5단계: 준비현황 점수 (15점)
-                let preparationScore = 0;
-                if (formData.resumeQuality) preparationScore += 4;
-                if (formData.coverLetterQuality) preparationScore += 4;
-                if (formData.interviewPreparation) preparationScore += 3;
-                if (formData.applicationCount) preparationScore += 2;
-                if (formData.preparationPeriod) preparationScore += 2;
-                
-                // 6단계: 시장분석 점수 (15점)
+                if (formData.practicalExperience?.includes('internship_6months')) experienceScore += 5;
+                if (formData.practicalExperience?.includes('bootcamp')) experienceScore += 3;
+                if (formData.practicalExperience?.includes('personal_projects')) experienceScore += 4;
+                if (formData.practicalExperience?.includes('team_leader')) experienceScore += 3;
+                if (formData.practicalExperience?.includes('opensource')) experienceScore += 3;
+                if (formData.practicalExperience?.includes('competition_win')) experienceScore += 2;
+                skillScore += Math.min(experienceScore, 15);
+
+                // 포트폴리오 품질 (10점)
+                const portfolioScores = {
+                    'none': 0,
+                    'basic': 3,
+                    'good': 6,
+                    'excellent': 10
+                };
+                skillScore += portfolioScores[formData.portfolioQuality] || 0;
+
+                // 3단계: 시장적합성 + 준비도 (30점)
                 let marketScore = 0;
-                if (formData.industryGrowth) marketScore += 4;
-                if (formData.jobDemand) marketScore += 4;
-                if (formData.competitionLevel) marketScore += 3;
-                if (formData.salaryExpectation) marketScore += 2;
-                if (formData.locationFlexibility) marketScore += 2;
-                
+
+                // 목표 직종의 채용 수요 (10점)
+                const demandScores = {
+                    'very_low': 2,
+                    'low': 4,
+                    'medium': 6,
+                    'high': 8,
+                    'very_high': 10
+                };
+                marketScore += demandScores[formData.jobDemand] || 0;
+
+                // 지원 전략 유연성 (10점)
+                let strategyScore = 0;
+                if (formData.applicationStrategy?.includes('large_corp_only')) strategyScore += 0;
+                if (formData.applicationStrategy?.includes('medium_corp')) strategyScore += 3;
+                if (formData.applicationStrategy?.includes('startup')) strategyScore += 2;
+                if (formData.applicationStrategy?.includes('location_flexible')) strategyScore += 2;
+                if (formData.applicationStrategy?.includes('work_flexible')) strategyScore += 3;
+                marketScore += Math.min(strategyScore, 10);
+
+                // 취업 준비도 (10점)
+                let preparationScore = 0;
+                if (formData.preparationLevel?.includes('resume_reviewed')) preparationScore += 3;
+                if (formData.preparationLevel?.includes('coverletter_tailored')) preparationScore += 3;
+                if (formData.preparationLevel?.includes('interview_experience')) preparationScore += 2;
+                if (formData.preparationLevel?.includes('mock_interview')) preparationScore += 2;
+                marketScore += Math.min(preparationScore, 10);
+
                 // 종합 점수 계산 (100점 만점)
-                const totalScore = basicScore + skillScore + experienceScore + networkScore + preparationScore + marketScore;
-                
-                // 등급 산정
-                let grade = 'F급';
-                if (totalScore >= 90) grade = 'S급';
-                else if (totalScore >= 80) grade = 'A급';
-                else if (totalScore >= 70) grade = 'B급';
-                else if (totalScore >= 60) grade = 'C급';
-                else if (totalScore >= 50) grade = 'D급';
+                const totalScore = basicScore + skillScore + marketScore;
                 
                 // 취업 성공률 및 예상 기간 계산
-                const successRate = Math.min(95, Math.max(10, totalScore - 5));
-                const expectedJobPeriod = totalScore >= 80 ? 2 : totalScore >= 60 ? 4 : totalScore >= 40 ? 6 : 12;
-                
+                const successRate = Math.min(95, Math.max(10, totalScore));
+                const expectedJobPeriod = totalScore >= 85 ? 1 : totalScore >= 75 ? 2 : totalScore >= 65 ? 3 : totalScore >= 50 ? 6 : 12;
+
                 const result = {
-                    totalScore: totalScore,
-                    grade: grade,
-                    skillScore: skillScore,
-                    experienceScore: experienceScore,
-                    preparationScore: preparationScore,
-                    networkScore: networkScore,
-                    marketScore: marketScore,
-                    basicScore: basicScore,
+                    totalScore,
+                    grade: getGradeFromScore(totalScore).grade,
+                    gradeInfo: getGradeFromScore(totalScore),
+                    basicScore,
+                    skillScore,
+                    marketScore,
                     predictedSuccessRate: successRate,
                     estimatedJobPeriod: expectedJobPeriod,
                     scoreBreakdown: {
-                        basic: { score: basicScore, maxScore: 20, category: '기본정보' },
-                        skill: { score: skillScore, maxScore: 25, category: '스킬역량' },
-                        experience: { score: experienceScore, maxScore: 20, category: '경험분석' },
-                        network: { score: networkScore, maxScore: 15, category: '네트워크' },
-                        preparation: { score: preparationScore, maxScore: 15, category: '준비현황' },
-                        market: { score: marketScore, maxScore: 15, category: '시장분석' }
+                        basic: { score: basicScore, maxScore: 30, category: '기본자격' },
+                        skill: { score: skillScore, maxScore: 40, category: '실무역량' },
+                        market: { score: marketScore, maxScore: 30, category: '시장적합성+준비도' }
                     },
-                    recommendations: generateRecommendations(basicScore, skillScore, experienceScore, networkScore, preparationScore, marketScore),
-                    peerComparison: generatePeerComparison(totalScore, age, formData.educationLevel, formData.targetIndustry)
+                    recommendations: generateRecommendations(basicScore, skillScore, marketScore, totalScore)
                 };
 
                 setCalculatorResult(result);
                 
-                // 세션 생성을 위한 콜백 호출
                 if (onCalculationComplete) {
                     onCalculationComplete(result);
                 }
                 
-                setCalculatorStep(7); // 결과 단계로 이동
+                setCalculatorStep(4); // 결과 단계로 이동
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             };
 
             // 개선 추천사항 생성
-            const generateRecommendations = (basicScore, skillScore, experienceScore, networkScore, preparationScore, marketScore) => {
+            const generateRecommendations = (basicScore, skillScore, marketScore, totalScore) => {
                 const recommendations = [];
                 
-                if (basicScore < 15) recommendations.push('목표 업계와 직무에 대한 구체적인 리서치가 필요합니다');
-                if (skillScore < 20) recommendations.push('직무 관련 기술 스킬 보강과 자격증 취득을 권장합니다');
-                if (experienceScore < 15) recommendations.push('인턴십이나 프로젝트 경험을 늘려보세요');
-                if (networkScore < 10) recommendations.push('업계 선배들과의 네트워킹 활동을 시작해보세요');
-                if (preparationScore < 10) recommendations.push('이력서와 자기소개서 품질 개선이 필요합니다');
-                if (marketScore < 10) recommendations.push('목표 업계의 시장 동향 분석을 더 자세히 해보세요');
+                if (basicScore < 20) recommendations.push('어학점수 향상이나 관련 자격증 취득을 권장합니다');
+                if (skillScore < 25) recommendations.push('실무 프로젝트 경험을 늘리고 포트폴리오를 강화해보세요');
+                if (marketScore < 20) recommendations.push('지원 전략을 다양화하고 면접 준비를 더 철저히 해보세요');
+                
+                if (totalScore >= 80) recommendations.push('우수한 경쟁력을 보유하고 있습니다. 목표 기업에 적극 지원해보세요');
+                else if (totalScore >= 60) recommendations.push('평균 이상의 실력입니다. 부족한 영역을 보완하면 더 좋은 결과를 얻을 수 있습니다');
+                else recommendations.push('기본기 강화가 필요합니다. 단계적으로 역량을 개발해나가세요');
                 
                 return recommendations;
             };
 
-            // 또래 비교 데이터 생성
-            const generatePeerComparison = (totalScore, age, educationLevel, targetIndustry) => {
-                const peerAverage = age <= 25 ? 65 : age <= 30 ? 70 : 75;
-                const industryAverage = targetIndustry === 'tech_development' ? 75 : 
-                                     targetIndustry === 'finance_consulting' ? 78 : 70;
-                
-                return {
-                    myScore: totalScore,
-                    peerAverage: peerAverage,
-                    industryAverage: industryAverage,
-                    percentile: Math.round((totalScore / 100) * 100)
-                };
-            };
-
-            // 점수 상세보기 토글
-            const toggleScoreDetail = () => {
-                setShowScoreDetail(!showScoreDetail);
-            };
-            
-            
             // 계산결과 저장 함수 
-            const saveCalculationResult = () => {
+            const saveCalculationResult = async () => {
                 if (!calculatorResult) return;
                 
                 // 게스트 사용자인 경우 저장용 회원가입 모달 표시
@@ -13583,107 +13581,495 @@
                     return;
                 }
                 
-                // 회원 사용자인 경우 직접 저장
-                const savedResult = {
-                    ...calculatorResult,
-                    formData: formData,
-                    savedAt: new Date().toISOString(),
-                    calculatedAt: new Date().toISOString()
-                };
-                
-                localStorage.setItem('insidejob_calculation_result', JSON.stringify(savedResult));
-                setIsResultSaved(true);
-                
-                showNotification('저장 완료', '진단결과가 저장되었습니다! 💾\n마이페이지에서 언제든 다시 확인할 수 있습니다.', 'success');
-            };
-            
-            // 저장된 진단결과 불러오기 (localStorage)
-            const loadCalculationResult = () => {
-                const saved = localStorage.getItem('insidejob_calculation_result');
-                if (saved) {
-                    try {
-                        const savedData = JSON.parse(saved);
-                        setFormData(savedData.formData);
-                        setCalculatorResult(savedData);
-                        setCalculatorStep(7); // 결과 화면으로 이동
-                        setIsResultSaved(true);
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                        showNotification('불러오기 완료', '저장된 진단결과를 불러왔습니다! 📊', 'success');
-                    } catch (error) {
-                        console.error('저장된 데이터 불러오기 실패:', error);
-                        showNotification('불러오기 실패', '저장된 데이터를 불러오는데 실패했습니다.', 'error');
-                    }
-                } else {
-                    showNotification('저장된 데이터 없음', '아직 저장된 진단결과가 없습니다.', 'info');
+                try {
+                    // 로컬 스토리지에 저장
+                    localStorage.setItem('insidejob_calculation_result', JSON.stringify(calculatorResult));
+                    setIsResultSaved(true);
+                    showNotification('진단 결과가 저장되었습니다!', 'success');
+                } catch (error) {
+                    console.error('결과 저장 실패:', error);
+                    showNotification('저장에 실패했습니다. 다시 시도해주세요.', 'error');
                 }
             };
-            
 
-            // 커뮤니티 이동
-            const joinCommunity = () => {
-                setCurrentView('community');
-            };
-
-
-            // 1단계 렌더링
+            // 1단계: 기본자격 평가 UI
             if (calculatorStep === 1) {
                 return (
-                    <div className="min-h-screen py-8 px-4">
-                        <div className="max-w-2xl mx-auto">
-                            <div className="flex justify-between items-center mb-8">
-                                <button
-                                    onClick={() => setCurrentView('main')}
-                                    className="flex items-center px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-all duration-200 font-medium"
-                                >
-                                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                                    </svg>
-                                    메인으로 돌아가기
-                                </button>
-                                <div className="flex-1"></div>
-                            </div>
-                            <div className="text-center mb-8">
-                                <h1 className="text-3xl font-bold text-gray-800 mb-3">🎯 취업경쟁력 진단</h1>
-                                <p className="text-xl text-gray-600">기본정보를 입력해주세요</p>
-                                <div className="w-full bg-gray-200 rounded-full h-4 mt-6 max-w-md mx-auto">
-                                    <div className="bg-blue-600 h-4 rounded-full" style={{width: '16.67%'}}></div>
+                    <div className="max-w-4xl mx-auto p-6">
+                        <div className="text-center mb-8">
+                            <h2 className="text-3xl font-bold text-gray-900 mb-4">취업경쟁력 진단</h2>
+                            <p className="text-gray-600">3단계 객관식 진단으로 당신의 취업경쟁력을 분석합니다</p>
+                            <div className="mt-4 bg-blue-50 p-4 rounded-lg">
+                                <div className="flex justify-between text-sm text-blue-600 mb-2">
+                                    <span>1단계: 기본자격 평가</span>
+                                    <span>33%</span>
                                 </div>
-                                <p className="text-lg text-gray-500 mt-3">1단계 / 6단계</p>
+                                <div className="w-full bg-blue-200 rounded-full h-2">
+                                    <div className="bg-blue-600 h-2 rounded-full" style={{width: '33%'}}></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="card">
+                            <h3 className="text-xl font-bold text-gray-900 mb-6">기본자격 평가 (30점)</h3>
+                            
+                            {/* 나이 */}
+                            <div className="mb-6">
+                                <label className="block text-lg font-semibold text-gray-700 mb-3">나이 (5점)</label>
+                                <select 
+                                    value={formData.age} 
+                                    onChange={(e) => handleInputChange('age', e.target.value)}
+                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <option value="">나이를 선택하세요</option>
+                                    <option value="22">22-25세 (5점) - 신입 최적</option>
+                                    <option value="26">26-28세 (4점) - 신입/경력 경계</option>
+                                    <option value="29">29-32세 (3점) - 경력직 시작</option>
+                                    <option value="33">33-35세 (2점) - 중견 경력직</option>
+                                    <option value="36">36세 이상 (1점) - 시니어급</option>
+                                </select>
                             </div>
 
-                            <div className="card">
-                                <div className="space-y-6">
-                                    <div className="mb-6">
-                                        <label className="block text-xl font-semibold text-gray-800 mb-3">🎂 나이</label>
-                                        <input
-                                            type="text"
-                                            inputMode="numeric"
-                                            pattern="[0-9]*"
-                                            value={formData.age}
-                                            onChange={(e) => {
-                                                const numValue = e.target.value.replace(/[^0-9]/g, '');
-                                                handleInputChange('age', numValue);
-                                            }}
-                                            className="w-full p-4 border-2 border-gray-200 rounded-lg text-lg"
-                                            placeholder=""
-                                            autoComplete="off"
-                                        />
-                                    </div>
+                            {/* 학력 */}
+                            <div className="mb-6">
+                                <label className="block text-lg font-semibold text-gray-700 mb-3">학력 (10점)</label>
+                                <div className="space-y-3">
+                                    {[
+                                        {value: 'high_school', label: '고등학교 졸업 (2점)', score: 2},
+                                        {value: 'college', label: '전문대학 졸업 (4점)', score: 4},
+                                        {value: 'university', label: '4년제 대학 졸업 (7점)', score: 7},
+                                        {value: 'graduate', label: '대학원 졸업 (10점)', score: 10}
+                                    ].map(option => (
+                                        <label key={option.value} className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="educationLevel"
+                                                value={option.value}
+                                                checked={formData.educationLevel === option.value}
+                                                onChange={(e) => handleInputChange('educationLevel', e.target.value)}
+                                                className="mr-3 w-4 h-4"
+                                            />
+                                            <span className="text-gray-800">{option.label}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
 
-                                    <div>
-                                        <label className="block text-xl font-semibold text-gray-800 mb-3">🎓 최종학력</label>
-                                        <select
-                                            className="w-full p-4 border-2 border-gray-200 rounded-lg text-lg"
-                                            value={formData.educationLevel}
-                                            onChange={(e) => handleInputChange('educationLevel', e.target.value)}
-                                        >
-                                            <option value="">선택해주세요</option>
-                                            <option value="high_school">고등학교 졸업</option>
-                                            <option value="college">전문대 졸업</option>
-                                            <option value="university">4년제 대학 졸업</option>
-                                            <option value="graduate">대학원 이상</option>
-                                        </select>
+                            {/* 어학 수준 */}
+                            <div className="mb-6">
+                                <label className="block text-lg font-semibold text-gray-700 mb-3">어학 수준 (10점)</label>
+                                <div className="space-y-3">
+                                    {[
+                                        {value: 'level_0', label: '어학시험 미응시 (0점)', score: 0},
+                                        {value: 'level_1', label: '토익 400-599점 / 오픽 IH / 토스 4-5급 (2점)', score: 2},
+                                        {value: 'level_2', label: '토익 600-799점 / 오픽 IM / 토스 6급 (5점)', score: 5},
+                                        {value: 'level_3', label: '토익 800-899점 / 오픽 AL / 토스 7급 (7점)', score: 7},
+                                        {value: 'level_4', label: '토익 900점 이상 / 오픽 AL+ / 토스 8급 이상 (10점)', score: 10}
+                                    ].map(option => (
+                                        <label key={option.value} className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="languageLevel"
+                                                value={option.value}
+                                                checked={formData.languageLevel === option.value}
+                                                onChange={(e) => handleInputChange('languageLevel', e.target.value)}
+                                                className="mr-3 w-4 h-4"
+                                            />
+                                            <span className="text-gray-800">{option.label}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* 자격증 */}
+                            <div className="mb-6">
+                                <label className="block text-lg font-semibold text-gray-700 mb-3">자격증 보유 (5점) - 복수선택</label>
+                                <div className="space-y-3">
+                                    {[
+                                        {value: 'basic_cert', label: '컴활 1급/정보처리기사/기사급 (2점)', score: 2},
+                                        {value: 'professional_cert', label: '국제공인 자격증 (PMP/AWS/Google) (2점)', score: 2},
+                                        {value: 'industry_cert', label: '업종별 필수자격증 (1점)', score: 1}
+                                    ].map(option => (
+                                        <label key={option.value} className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                value={option.value}
+                                                checked={formData.certifications?.includes(option.value)}
+                                                onChange={(e) => handleArrayChange('certifications', option.value, e.target.checked)}
+                                                className="mr-3 w-4 h-4"
+                                            />
+                                            <span className="text-gray-800">{option.label}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="flex justify-between items-center mt-8">
+                                <button 
+                                    onClick={() => setCurrentView('home')} 
+                                    className="px-6 py-3 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+                                >
+                                    뒤로가기
+                                </button>
+                                <button 
+                                    onClick={() => goToNextStep(2)}
+                                    disabled={!formData.age || !formData.educationLevel || !formData.languageLevel}
+                                    className="btn-primary disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                >
+                                    2단계로 →
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            // 2단계: 실무역량 평가 UI
+            if (calculatorStep === 2) {
+                return (
+                    <div className="max-w-4xl mx-auto p-6">
+                        <div className="text-center mb-8">
+                            <h2 className="text-3xl font-bold text-gray-900 mb-4">취업경쟁력 진단</h2>
+                            <p className="text-gray-600">실무역량을 평가합니다</p>
+                            <div className="mt-4 bg-blue-50 p-4 rounded-lg">
+                                <div className="flex justify-between text-sm text-blue-600 mb-2">
+                                    <span>2단계: 실무역량 평가</span>
+                                    <span>67%</span>
+                                </div>
+                                <div className="w-full bg-blue-200 rounded-full h-2">
+                                    <div className="bg-blue-600 h-2 rounded-full" style={{width: '67%'}}></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="card">
+                            <h3 className="text-xl font-bold text-gray-900 mb-6">실무역량 평가 (40점)</h3>
+                            
+                            {/* 기술 숙련도 */}
+                            <div className="mb-6">
+                                <label className="block text-lg font-semibold text-gray-700 mb-3">기술 숙련도 (15점) - 최대 3개 선택</label>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {[
+                                        {value: 'python', label: 'Python (3점)', category: 'high'},
+                                        {value: 'java', label: 'Java (3점)', category: 'high'},
+                                        {value: 'javascript', label: 'JavaScript (3점)', category: 'high'},
+                                        {value: 'react', label: 'React (3점)', category: 'high'},
+                                        {value: 'vue', label: 'Vue.js (3점)', category: 'high'},
+                                        {value: 'aws', label: 'AWS (3점)', category: 'high'},
+                                        {value: 'excel_advanced', label: 'Excel 고급 (2점)', category: 'medium'},
+                                        {value: 'powerpoint', label: 'PowerPoint 전문가 (2점)', category: 'medium'},
+                                        {value: 'sql', label: 'SQL (2점)', category: 'medium'}
+                                    ].map(skill => (
+                                        <label key={skill.value} className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                value={skill.value}
+                                                checked={formData.technicalSkills?.includes(skill.value)}
+                                                onChange={(e) => {
+                                                    if (e.target.checked && formData.technicalSkills?.length >= 3) {
+                                                        showNotification('최대 3개까지만 선택 가능합니다', 'warning');
+                                                        return;
+                                                    }
+                                                    handleArrayChange('technicalSkills', skill.value, e.target.checked);
+                                                }}
+                                                className="mr-3 w-4 h-4"
+                                            />
+                                            <span className="text-gray-800">{skill.label}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                                <p className="text-sm text-gray-500 mt-2">선택됨: {formData.technicalSkills?.length || 0}/3</p>
+                            </div>
+
+                            {/* 실전 경험 */}
+                            <div className="mb-6">
+                                <label className="block text-lg font-semibold text-gray-700 mb-3">실전 경험 (15점) - 복수선택</label>
+                                <div className="space-y-3">
+                                    {[
+                                        {value: 'internship_6months', label: '인턴십 경험 6개월 이상 (5점)', score: 5},
+                                        {value: 'bootcamp', label: '부트캠프/직업교육 이수 (3점)', score: 3},
+                                        {value: 'personal_projects', label: '개인 프로젝트 3개 이상 완성 (4점)', score: 4},
+                                        {value: 'team_leader', label: '팀 프로젝트 리더 경험 (3점)', score: 3},
+                                        {value: 'opensource', label: '오픈소스 기여/깃허브 활발 (3점)', score: 3},
+                                        {value: 'competition_win', label: '공모전 입상 경력 (2점)', score: 2}
+                                    ].map(experience => (
+                                        <label key={experience.value} className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                value={experience.value}
+                                                checked={formData.practicalExperience?.includes(experience.value)}
+                                                onChange={(e) => handleArrayChange('practicalExperience', experience.value, e.target.checked)}
+                                                className="mr-3 w-4 h-4"
+                                            />
+                                            <span className="text-gray-800">{experience.label}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* 포트폴리오 품질 */}
+                            <div className="mb-6">
+                                <label className="block text-lg font-semibold text-gray-700 mb-3">포트폴리오 품질 (10점)</label>
+                                <div className="space-y-3">
+                                    {[
+                                        {value: 'none', label: '포트폴리오 없음 (0점)', score: 0},
+                                        {value: 'basic', label: '간단한 작업물 1-2개 (3점)', score: 3},
+                                        {value: 'good', label: '체계적인 포트폴리오 3-5개 (6점)', score: 6},
+                                        {value: 'excellent', label: '전문가 수준 포트폴리오 5개 이상 (10점)', score: 10}
+                                    ].map(portfolio => (
+                                        <label key={portfolio.value} className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="portfolioQuality"
+                                                value={portfolio.value}
+                                                checked={formData.portfolioQuality === portfolio.value}
+                                                onChange={(e) => handleInputChange('portfolioQuality', e.target.value)}
+                                                className="mr-3 w-4 h-4"
+                                            />
+                                            <span className="text-gray-800">{portfolio.label}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="flex justify-between items-center mt-8">
+                                <button 
+                                    onClick={() => goToNextStep(1)} 
+                                    className="px-6 py-3 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+                                >
+                                    ← 1단계로
+                                </button>
+                                <button 
+                                    onClick={() => goToNextStep(3)}
+                                    disabled={!formData.portfolioQuality}
+                                    className="btn-primary disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                >
+                                    3단계로 →
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            // 3단계: 시장적합성 + 준비도 UI
+            if (calculatorStep === 3) {
+                return (
+                    <div className="max-w-4xl mx-auto p-6">
+                        <div className="text-center mb-8">
+                            <h2 className="text-3xl font-bold text-gray-900 mb-4">취업경쟁력 진단</h2>
+                            <p className="text-gray-600">시장적합성과 준비도를 평가합니다</p>
+                            <div className="mt-4 bg-blue-50 p-4 rounded-lg">
+                                <div className="flex justify-between text-sm text-blue-600 mb-2">
+                                    <span>3단계: 시장적합성 + 준비도</span>
+                                    <span>100%</span>
+                                </div>
+                                <div className="w-full bg-blue-200 rounded-full h-2">
+                                    <div className="bg-blue-600 h-2 rounded-full" style={{width: '100%'}}></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="card">
+                            <h3 className="text-xl font-bold text-gray-900 mb-6">시장적합성 + 준비도 (30점)</h3>
+                            
+                            {/* 목표 직종 채용 수요 */}
+                            <div className="mb-6">
+                                <label className="block text-lg font-semibold text-gray-700 mb-3">목표 직종의 채용 수요 (10점)</label>
+                                <div className="space-y-3">
+                                    {[
+                                        {value: 'very_low', label: '매우 낮음 (전문직/특수직군) (2점)', score: 2},
+                                        {value: 'low', label: '낮음 (전통 제조업/정부기관) (4점)', score: 4},
+                                        {value: 'medium', label: '보통 (서비스업/중견기업) (6점)', score: 6},
+                                        {value: 'high', label: '높음 (IT/스타트업/영업직) (8점)', score: 8},
+                                        {value: 'very_high', label: '매우 높음 (개발자/디지털마케팅) (10점)', score: 10}
+                                    ].map(demand => (
+                                        <label key={demand.value} className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="jobDemand"
+                                                value={demand.value}
+                                                checked={formData.jobDemand === demand.value}
+                                                onChange={(e) => handleInputChange('jobDemand', e.target.value)}
+                                                className="mr-3 w-4 h-4"
+                                            />
+                                            <span className="text-gray-800">{demand.label}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* 지원 전략 유연성 */}
+                            <div className="mb-6">
+                                <label className="block text-lg font-semibold text-gray-700 mb-3">지원 전략 유연성 (10점) - 복수선택</label>
+                                <div className="space-y-3">
+                                    {[
+                                        {value: 'large_corp_only', label: '대기업만 지원 (0점)', score: 0},
+                                        {value: 'medium_corp', label: '중견기업도 고려 (3점)', score: 3},
+                                        {value: 'startup', label: '스타트업도 고려 (2점)', score: 2},
+                                        {value: 'location_flexible', label: '지역 제한 없음 (2점)', score: 2},
+                                        {value: 'work_flexible', label: '근무형태 유연 (재택/계약직 포함) (3점)', score: 3}
+                                    ].map(strategy => (
+                                        <label key={strategy.value} className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                value={strategy.value}
+                                                checked={formData.applicationStrategy?.includes(strategy.value)}
+                                                onChange={(e) => handleArrayChange('applicationStrategy', strategy.value, e.target.checked)}
+                                                className="mr-3 w-4 h-4"
+                                            />
+                                            <span className="text-gray-800">{strategy.label}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* 취업 준비도 */}
+                            <div className="mb-6">
+                                <label className="block text-lg font-semibold text-gray-700 mb-3">취업 준비도 (10점) - 복수선택</label>
+                                <div className="space-y-3">
+                                    {[
+                                        {value: 'resume_reviewed', label: '이력서 전문가 검토 완료 (3점)', score: 3},
+                                        {value: 'coverletter_tailored', label: '자기소개서 직종별 맞춤 작성 (3점)', score: 3},
+                                        {value: 'interview_experience', label: '면접 경험 5회 이상 (2점)', score: 2},
+                                        {value: 'mock_interview', label: '모의면접/면접코칭 수강 (2점)', score: 2}
+                                    ].map(preparation => (
+                                        <label key={preparation.value} className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                value={preparation.value}
+                                                checked={formData.preparationLevel?.includes(preparation.value)}
+                                                onChange={(e) => handleArrayChange('preparationLevel', preparation.value, e.target.checked)}
+                                                className="mr-3 w-4 h-4"
+                                            />
+                                            <span className="text-gray-800">{preparation.label}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="flex justify-between items-center mt-8">
+                                <button 
+                                    onClick={() => goToNextStep(2)} 
+                                    className="px-6 py-3 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+                                >
+                                    ← 2단계로
+                                </button>
+                                <button 
+                                    onClick={calculateCareerResults}
+                                    disabled={!formData.jobDemand}
+                                    className="btn-primary disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                >
+                                    진단 완료! →
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            // 4단계: 결과 화면
+            if (calculatorStep === 4 && calculatorResult) {
+                const gradeInfo = calculatorResult.gradeInfo;
+                return (
+                    <div className="max-w-4xl mx-auto p-6">
+                        <div className="text-center mb-8">
+                            <h2 className="text-3xl font-bold text-gray-900 mb-4">🎯 취업경쟁력 진단 결과</h2>
+                            <p className="text-gray-600">당신의 취업경쟁력을 분석했습니다</p>
+                        </div>
+
+                        {/* 종합 등급 */}
+                        <div className={`card text-center mb-6 ${gradeInfo.bg} border-2`}>
+                            <div className={`text-6xl font-bold mb-4 ${gradeInfo.color}`}>
+                                {gradeInfo.grade}급
+                            </div>
+                            <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                                {calculatorResult.totalScore}점 / 100점
+                            </h3>
+                            <p className={`text-lg ${gradeInfo.color} font-semibold`}>
+                                {gradeInfo.description}
+                            </p>
+                            <div className="mt-4 flex justify-center gap-8 text-sm">
+                                <div>
+                                    <span className="text-gray-600">예상 구직기간: </span>
+                                    <span className="font-bold">{calculatorResult.estimatedJobPeriod}개월</span>
+                                </div>
+                                <div>
+                                    <span className="text-gray-600">취업 성공률: </span>
+                                    <span className="font-bold">{calculatorResult.predictedSuccessRate}%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 영역별 점수 */}
+                        <div className="card mb-6">
+                            <h3 className="text-xl font-bold text-gray-900 mb-4">영역별 점수</h3>
+                            <div className="space-y-4">
+                                {Object.entries(calculatorResult.scoreBreakdown).map(([key, breakdown]) => (
+                                    <div key={key} className="flex items-center justify-between">
+                                        <div className="flex-1">
+                                            <div className="flex justify-between mb-1">
+                                                <span className="text-gray-700 font-medium">{breakdown.category}</span>
+                                                <span className="text-gray-900 font-bold">
+                                                    {breakdown.score}/{breakdown.maxScore}점
+                                                </span>
+                                            </div>
+                                            <div className="w-full bg-gray-200 rounded-full h-2">
+                                                <div 
+                                                    className="bg-blue-600 h-2 rounded-full"
+                                                    style={{width: `${(breakdown.score / breakdown.maxScore) * 100}%`}}
+                                                ></div>
+                                            </div>
+                                        </div>
                                     </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* 추천사항 */}
+                        <div className="card mb-6">
+                            <h3 className="text-xl font-bold text-gray-900 mb-4">💡 개선 추천사항</h3>
+                            <ul className="space-y-2">
+                                {calculatorResult.recommendations.map((rec, index) => (
+                                    <li key={index} className="flex items-start">
+                                        <span className="text-blue-600 mr-2">•</span>
+                                        <span className="text-gray-700">{rec}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+
+                        {/* 액션 버튼 */}
+                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                            <button
+                                onClick={saveCalculationResult}
+                                disabled={isResultSaved}
+                                className="btn-primary disabled:bg-gray-400 disabled:cursor-not-allowed"
+                            >
+                                {isResultSaved ? '✓ 저장완료' : '결과 저장'}
+                            </button>
+                            <button
+                                onClick={() => setCurrentView('community')}
+                                className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                            >
+                                커뮤니티에서 정보 공유
+                            </button>
+                            <button
+                                onClick={() => setCurrentView('expertFinder')}
+                                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                            >
+                                현직자 상담 받기
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            return <div>잘못된 단계입니다.</div>;
+        };
+
+        // 게스트 사용자 관리
+        const createGuestUser
 
                                     <div>
                                         <label className="block text-xl font-semibold text-gray-800 mb-3">📚 전공분야</label>
