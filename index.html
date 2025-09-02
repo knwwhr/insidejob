@@ -12190,14 +12190,8 @@
             });
             const [calculatorResult, setCalculatorResult] = useState(null);
             const [averageData, setAverageData] = useState(null);
-            const [showAssetDetail, setShowAssetDetail] = useState(false);
-            const [showInheritanceGuide, setShowInheritanceGuide] = useState(false);
-            const [lifeExpectancy, setLifeExpectancy] = useState(100);
             const [isResultSaved, setIsResultSaved] = useState(false);
-            const [expenseData, setExpenseData] = useState({
-                food: '', communication: '', utilities: '', medical: '', hobby: '', vehicle: '', etc: ''
-            });
-            const [showExpenseModal, setShowExpenseModal] = useState(false);
+            const [showScoreDetail, setShowScoreDetail] = useState(false);
 
             const handleInputChange = (field, value) => {
                 const cleanValue = value === '' ? '' : value;
@@ -12232,37 +12226,23 @@
                 return { skillLevel: 60, experienceLevel: 30, networkLevel: 35, preparationLevel: 90, competitionLevel: 85 };
             };
 
-            const formatResultAmount = (amount) => {
-                if (amount >= 100000000) {
-                    const 억 = Math.floor(amount / 100000000);
-                    const 만 = Math.round((amount % 100000000) / 10000);
-                    if (만 === 0) return `${억}억원`;
-                    return `${억}억 ${만}만원`;
-                }
-                if (amount >= 10000) {
-                    return `${Math.round(amount / 10000)}만원`;
-                }
-                return `${Math.round(amount).toLocaleString()}원`;
+            // 점수를 등급으로 변환하는 함수
+            const getGradeFromScore = (score) => {
+                if (score >= 90) return { grade: 'S', color: 'text-purple-600', bg: 'bg-purple-50' };
+                if (score >= 80) return { grade: 'A', color: 'text-blue-600', bg: 'bg-blue-50' };
+                if (score >= 70) return { grade: 'B', color: 'text-green-600', bg: 'bg-green-50' };
+                if (score >= 60) return { grade: 'C', color: 'text-yellow-600', bg: 'bg-yellow-50' };
+                if (score >= 50) return { grade: 'D', color: 'text-orange-600', bg: 'bg-orange-50' };
+                return { grade: 'F', color: 'text-red-600', bg: 'bg-red-50' };
             };
             
             // 컴포넌트 마운트시 저장된 데이터 확인만 (자동 불러오기 안함)
             useEffect(() => {
                 const saved = localStorage.getItem('insidejob_calculation_result');
                 if (saved) {
-                    // 저장된 데이터가 있다는 것만 확인, 자동 불러오기는 하지 않음
                     console.log('저장된 계산결과가 있습니다.');
                 }
             }, []);
-
-            const formatAmount = (value) => {
-                if (!value || value === '' || value === '0') return '💰 0원';
-                const num = parseInt(value);
-                if (num >= 10000) return `💰 ${(num / 10000).toFixed(1)}억원`;
-                if (num >= 1000) return `💰 ${Math.round(num / 1000)}천만원`;
-                return `💰 ${num.toLocaleString()}만원`;
-            };
-
-            // AmountInput 컴포넌트
 
             // 취업경쟁력 계산 함수 (6단계 종합 평가)
             const calculateCareerResults = () => {
@@ -12395,131 +12375,11 @@
                 };
             };
 
-            const openExpenseModal = () => {
-                setShowExpenseModal(true);
-            };
-
-            const closeExpenseModal = () => {
-                setShowExpenseModal(false);
-            };
-
-            const handleExpenseChange = (field, value) => {
-                setExpenseData({ ...expenseData, [field]: value });
+            // 점수 상세보기 토글
+            const toggleScoreDetail = () => {
+                setShowScoreDetail(!showScoreDetail);
             };
             
-            // 지출 입력 컴포넌트 (AmountInput과 동일한 스타일)
-            const ExpenseInput = ({ label, field, value, placeholder }) => {
-                const formatAmount = (value) => {
-                    if (!value || value === '' || value === '0') return '💰 0원';
-                    const num = parseInt(value);
-                    if (num >= 10000) return `💰 ${(num / 10000).toFixed(1)}억원`;
-                    if (num >= 1000) return `💰 ${Math.round(num / 1000)}천만원`;
-                    return `💰 ${num.toLocaleString()}만원`;
-                };
-
-                const handleInputChange = (e) => {
-                    const inputValue = e.target.value;
-                    const numValue = inputValue.replace(/[^0-9]/g, '');
-                    
-                    // 입력값이 변경된 경우에만 상태 업데이트 (포커스 유지)
-                    if (numValue !== value) {
-                        handleExpenseChange(field, numValue);
-                    }
-                };
-
-                return (
-                    <div>
-                        <label className="block text-base md:text-xl font-semibold text-gray-800 mb-3 break-keep">{label}</label>
-                        <input
-                            type="text"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            value={value}
-                            onChange={handleInputChange}
-                            className="w-full p-3 md:p-4 border-2 border-gray-200 rounded-lg text-base md:text-lg focus:border-blue-500 focus:outline-none"
-                            placeholder={placeholder}
-                            autoComplete="off"
-                        />
-                        <div className="text-green-600 font-semibold text-sm md:text-lg mt-1 break-keep">
-                            {formatAmount(value)}
-                        </div>
-                    </div>
-                );
-            };
-
-            // 2024년 통계청 가계동향조사 데이터 (만원 단위)
-            const getStatKoreaData = () => ({
-                food: 41, // 식료품·비주류음료 41.2만원
-                communication: 14, // 통신비 (정보통신 포함) 14만원 추정
-                utilities: 35, // 주거·수도·광열 35만원
-                medical: 24, // 보건 23.9만원
-                hobby: 31, // 오락·문화 31만원 추정
-                vehicle: 33, // 교통비 33.5만원
-                etc: 20 // 기타 (의류·신발, 가정용품 등) 20만원 추정
-            });
-            
-            const submitExpenseData = async () => {
-                // 통계청 데이터와 비교
-                const statData = getStatKoreaData();
-                const userTotal = Object.values(expenseData).reduce((sum, val) => sum + (parseInt(val) || 0), 0);
-                const statTotal = Object.values(statData).reduce((sum, val) => sum + val, 0);
-                
-                setExpenseComparison({
-                    user: expenseData,
-                    stat: statData,
-                    userTotal: userTotal,
-                    statTotal: statTotal
-                });
-                
-                // 지출내역을 DB에 저장 (회원인 경우)
-                if (currentUser && !currentUser.isGuest && supabase) {
-                    try {
-                        // 먼저 현재 사용자의 최신 계산 결과 ID를 찾기
-                        const { data: calculationData, error: calcError } = await supabase
-                            .from('career_calculations')
-                            .select('id')
-                            .eq('user_id', currentUser.id)
-                            .order('created_at', { ascending: false })
-                            .limit(1);
-                        
-                        if (calcError) {
-                            console.error('계산 데이터 조회 실패:', calcError);
-                        } else if (calculationData && calculationData.length > 0) {
-                            // 지출내역을 career_calculations 테이블에 저장
-                            const expensePayload = {
-                                calculation_id: calculationData[0].id,
-                                food_expenses: parseInt(expenseData.food) || 0,
-                                communication_expenses: parseInt(expenseData.communication) || 0,
-                                utilities_expenses: parseInt(expenseData.utilities) || 0,
-                                living_expenses: parseInt(expenseData.etc) || 0, // 기타를 활동비로 매핑
-                                medical_expenses: parseInt(expenseData.medical) || 0,
-                                leisure_expenses: parseInt(expenseData.hobby) || 0, // 취미·여가를 여가비로 매핑
-                                transportation_expenses: parseInt(expenseData.vehicle) || 0,
-                                miscellaneous_expenses: 0,
-                                created_at: new Date().toISOString()
-                            };
-                            
-                            const { error: expenseError } = await supabase
-                                .from('career_calculations')
-                                .upsert(expensePayload);
-                            
-                            if (expenseError) {
-                                console.error('지출내역 저장 실패:', expenseError);
-                            } else {
-                                console.log('지출내역 DB 저장 성공');
-                            }
-                        }
-                    } catch (error) {
-                        console.error('지출내역 저장 처리 실패:', error);
-                    }
-                }
-                
-                setShowExpenseModal(false);
-                setShowComparisonModal(true);
-            };
-            
-            const [expenseComparison, setExpenseComparison] = useState(null);
-            const [showComparisonModal, setShowComparisonModal] = useState(false);
             
             // 계산결과 저장 함수 
             const saveCalculationResult = () => {
@@ -12535,18 +12395,17 @@
                 const savedResult = {
                     ...calculatorResult,
                     formData: formData,
-                    lifeExpectancy: lifeExpectancy,
                     savedAt: new Date().toISOString(),
-                    calculatedAt: new Date().toISOString()  // 마이페이지 호환성을 위해 추가
+                    calculatedAt: new Date().toISOString()
                 };
                 
                 localStorage.setItem('insidejob_calculation_result', JSON.stringify(savedResult));
                 setIsResultSaved(true);
                 
-                showNotification('저장 완료', '계산결과가 저장되었습니다! 💾\n언제든 다시 확인할 수 있습니다.', 'success');
+                showNotification('저장 완료', '진단결과가 저장되었습니다! 💾\n마이페이지에서 언제든 다시 확인할 수 있습니다.', 'success');
             };
             
-            // 저장된 계산결과 불러오기 (localStorage)
+            // 저장된 진단결과 불러오기 (localStorage)
             const loadCalculationResult = () => {
                 const saved = localStorage.getItem('insidejob_calculation_result');
                 if (saved) {
@@ -12554,58 +12413,24 @@
                         const savedData = JSON.parse(saved);
                         setFormData(savedData.formData);
                         setCalculatorResult(savedData);
-                        setLifeExpectancy(savedData.lifeExpectancy);
-                        setCalculatorStep(4);
+                        setCalculatorStep(7); // 결과 화면으로 이동
                         setIsResultSaved(true);
                         window.scrollTo({ top: 0, behavior: 'smooth' });
-                        showNotification('불러오기 완료', '저장된 계산결과를 불러왔습니다! 📊', 'success');
+                        showNotification('불러오기 완료', '저장된 진단결과를 불러왔습니다! 📊', 'success');
                     } catch (error) {
                         console.error('저장된 데이터 불러오기 실패:', error);
                         showNotification('불러오기 실패', '저장된 데이터를 불러오는데 실패했습니다.', 'error');
                     }
                 } else {
-                    showNotification('저장된 데이터 없음', '아직 저장된 계산결과가 없습니다.', 'info');
+                    showNotification('저장된 데이터 없음', '아직 저장된 진단결과가 없습니다.', 'info');
                 }
             };
             
 
-            // 추가 필수 함수들
-            const [activeTab, setActiveTab] = useState('expense');
-
+            // 커뮤니티 이동
             const joinCommunity = () => {
-                showNotification('커뮤니티 출시 예정', '커뮤니티 기능이 곧 출시됩니다! 🎉\n비슷한 고민을 가진 분들과 소통할 수 있어요.', 'info');
+                setCurrentView('community');
             };
-
-            // 기대수명 변경 시 결과 재계산
-            const recalculateWithLifeExpectancy = () => {
-                if (calculatorResult && lifeExpectancy) {
-                    const yearsToLive = lifeExpectancy - parseInt(formData.age);
-                    const monthlyAmount = calculatorResult.assetBreakdown?.availableAssets ? 
-                        Math.floor(calculatorResult.assetBreakdown.availableAssets / yearsToLive / 12) : 0;
-                    
-                    const totalMonthlyAvailable = monthlyAmount + (calculatorResult.monthlyPension || 0) + 
-                        (calculatorResult.monthlyOtherIncome || 0) - (calculatorResult.monthlyHousingCost || 0) - 
-                        (calculatorResult.monthlyLoanInterest || 0) - (calculatorResult.monthlyPropertyTax || 0);
-                    
-                    const updatedResult = {
-                        ...calculatorResult,
-                        yearsToLive: yearsToLive,
-                        monthlyAmount: monthlyAmount,
-                        totalMonthlyAvailable: totalMonthlyAvailable,
-                        totalDailyAvailable: Math.floor(totalMonthlyAvailable / 30),
-                        safetyLevel: totalMonthlyAvailable >= 2500000 ? '안전' : totalMonthlyAvailable >= 1800000 ? '보통' : '주의'
-                    };
-                    
-                    setCalculatorResult(updatedResult);
-                }
-            };
-
-            // 기대수명이 변경될 때마다 재계산
-            useEffect(() => {
-                if (calculatorResult && calculatorStep === 4) {
-                    recalculateWithLifeExpectancy();
-                }
-            }, [lifeExpectancy]);
 
 
             // 1단계 렌더링
