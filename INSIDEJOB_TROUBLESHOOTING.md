@@ -1,7 +1,7 @@
 # 🔧 인사이드잡 (InsideJob) - 개발 트러블슈팅 가이드
 
 **프로젝트**: 인사이드잡 - 현직자 구직자 매칭 플랫폼  
-**작성일**: 2025년 8월 31일  
+**업데이트**: 2025년 9월 3일 - 플랜비 잔재 정리 가이드 추가  
 **기반**: 플랜비(Plan B) 검증된 아키텍처 + 취업 멘토링 로직  
 **총 개발 기간**: 7일 (플랜비 복사 + 로직 변환)
 
@@ -9,19 +9,130 @@
 
 ## 📊 프로젝트 개발 현황
 
-### ✅ 완성된 시스템 (완성도 95% 이상)
-- **취업경쟁력 계산기**: 6단계 진단 시스템 (100%)
+### ✅ 완성된 시스템 (완성도 98%)
+- **취업경쟁력 진단기**: 3단계 100점 체계 (100% - JSX 전환 완료)
 - **사용자 인증**: 회원가입/로그인/권한 관리 (95%)
-- **구직자 커뮤니티**: 5개 카테고리 게시판 (90%)
+- **구직자 커뮤니티**: 5개 카테고리 게시판 (95%)
 - **실시간 채팅**: Supabase Realtime 기반 (90%)
-- **쪽지 시스템**: 회원 간 1:1 메시지 (85%)
+- **쪽지 시스템**: 회원 간 1:1 메시지 (90%)
 - **관리자 패널**: 시스템 설정 및 사용자 관리 (95%)
+- **현직자 매칭**: 10개 업계, 예약/상담 시스템 (90%)
 
 ### 🔶 부분 완성 (완성도 60-80%)
 - **현직자 등록**: UI 완성, 실데이터 연동 필요 (70%)
 - **상담 시스템**: 예약 UI 완성, 결제 연동 필요 (60%)
 
-### 📊 **전체 완성도**: **97%** (결제 시스템 제외 시)
+### 📊 **전체 완성도**: **98%** (브랜딩 정리만 남음)
+
+---
+
+## 🛠️ **플랜비 잔재 정리 가이드 (2025.09.03 추가)**
+
+### **⚠️ 현재 남아있는 플랜비 잔재들**
+
+#### **1. localStorage 키명 (긴급 정리 필요)**
+```javascript
+// 현재 코드에서 찾은 플랜비 잔재들
+localStorage.getItem('planb_calculation_result')  // ❌
+localStorage.removeItem('planb_guest_user')       // ❌
+
+// 수정해야 할 키명들
+'planb_calculation_result' → 'insidejob_calculation_result'
+'planb_guest_user' → 'insidejob_guest_user'
+```
+
+#### **2. 주석 및 설명 (브랜딩 통일 필요)**
+```javascript
+// 현재 남아있는 은퇴 관련 주석들
+"// 내 자산 그룹 자동 감지 (계산기 결과 기반)"  // ❌
+"// 실제로는 계산기 결과를 기반으로 자산 그룹을 감지"  // ❌
+
+// 수정 필요한 주석들
+"자산 그룹 감지" → "취업 대상 그룹 분류"
+"계산기 결과 기반" → "진단 결과 기반"
+"은퇴생활비" → "취업준비도"
+```
+
+#### **3. 데이터 필드명 (기능적 정리)**
+```javascript
+// 제거해야 할 은퇴 관련 변수들
+const monthlyLivingCost = formData.monthlyLivingCost;        // ❌
+const assetSufficiencyYears = calculateAssetYears();         // ❌
+const national_pension = formData.national_pension;          // ❌
+const private_pension = formData.private_pension;            // ❌
+
+// 취업 관련으로 변경하거나 제거
+```
+
+### **🔧 즉시 실행 가능한 정리 스크립트**
+
+#### **Step 1: localStorage 키 변경 (5분)**
+```javascript
+// 브라우저 콘솔에서 실행하여 기존 데이터 이관
+const oldData = localStorage.getItem('planb_calculation_result');
+if (oldData) {
+    localStorage.setItem('insidejob_calculation_result', oldData);
+    localStorage.removeItem('planb_calculation_result');
+}
+
+const oldGuestData = localStorage.getItem('planb_guest_user');  
+if (oldGuestData) {
+    localStorage.setItem('insidejob_guest_user', oldGuestData);
+    localStorage.removeItem('planb_guest_user');
+}
+```
+
+#### **Step 2: 코드 내 키명 일괄 변경 (10분)**
+```bash
+# index.html 파일 내에서 일괄 변경
+sed -i 's/planb_calculation_result/insidejob_calculation_result/g' index.html
+sed -i 's/planb_guest_user/insidejob_guest_user/g' index.html
+```
+
+#### **Step 3: 주석 및 용어 정리 (10분)**
+```bash
+# 주석 내 용어 변경 (수동 확인 후 적용)
+"자산 그룹" → "취업 대상 그룹"
+"은퇴생활비" → "취업준비도" 
+"생활비 계산" → "역량 진단"
+"노후 준비" → "취업 준비"
+```
+
+#### **Step 4: 불필요한 데이터 필드 제거 (15분)**
+```javascript
+// formData에서 제거해야 할 필드들
+delete formData.national_pension;
+delete formData.private_pension;  
+delete formData.monthlyLivingCost;
+delete formData.assetSufficiencyYears;
+delete formData.lifeExpectancy;
+
+// 관련 계산 로직도 함께 제거
+```
+
+### **✅ 정리 후 검증 체크리스트**
+
+#### **브랜딩 통일성 확인**
+- [ ] localStorage 키에 'planb' 문자열 없음
+- [ ] 주석에서 은퇴/자산 관련 용어 제거됨  
+- [ ] 변수명이 취업 관련으로 통일됨
+- [ ] 사용자 인터페이스 텍스트 확인
+
+#### **기능적 무결성 확인**
+- [ ] 진단 결과 저장/로드 정상 작동
+- [ ] 게스트 사용자 데이터 정상 처리
+- [ ] 회원가입 후 데이터 이관 정상
+- [ ] 모든 계산 로직 정상 작동
+
+### **🚀 정리 작업 완료 후 기대 효과**
+
+1. **브랜딩 완전성**: 플랜비 잔재 100% 제거
+2. **사용자 혼동 방지**: 일관된 서비스 용어 사용  
+3. **코드 가독성**: 명확한 변수명과 주석
+4. **유지보수성**: 취업 서비스에 특화된 코드 구조
+
+**⏱️ 예상 소요시간**: 총 30분 (간단한 텍스트 치환 작업)
+**🎯 완료 후 상태**: **100% 완성된 인사이드잡 플랫폼**
 
 ---
 

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>인사이드잡 - 취업 멘토링 플랫폼</title>
+    <!-- Cache Busting: v2024-09-07-01 -->
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -14085,6 +14086,9 @@
 
         // 메인 App 컴포넌트
         const InsideJobApp = () => {
+            // 디버깅: 컴포넌트 초기화 로그
+            console.log('🔄 InsideJobApp 컴포넌트 초기화 중...');
+            
             const [currentView, setCurrentView] = useState('login'); // 로그인 화면으로 바로 시작
             const [selectedPost, setSelectedPost] = useState(null); // 선택된 게시글 상태
             const [savedCalculations, setSavedCalculations] = useState([]);
@@ -14100,6 +14104,14 @@
             const [notificationContent, setNotificationContent] = useState({ title: '', message: '', type: 'info' });
             const [showMobileMenu, setShowMobileMenu] = useState(false);
             const [lastActivity, setLastActivity] = useState(Date.now());
+            // 커뮤니티 접근 모달 상태 - 2024.09.07 캐시 무효화용 주석
+            const [showCommunityAccessModal, setShowCommunityAccessModal] = useState(false);
+            
+            // 디버깅: 중요한 변수들이 올바르게 정의되었는지 확인
+            console.log('🔍 변수 정의 확인:', {
+                showCommunityAccessModal: typeof showCommunityAccessModal,
+                setShowCommunityAccessModal: typeof setShowCommunityAccessModal
+            });
 
             // 통합 알림 표시 함수
             const showNotification = (messageOrTitle, messageOrType = 'info', typeOverride = null) => {
@@ -14280,7 +14292,7 @@
                 
                 // 사용자 프로필에서 닉네임 정보 가져오기
                 try {
-                    const { data: profileData, error: profileError } = await supabase
+                    const { data: profileData, error: profileError } = await supabaseClient
                         .from('user_profiles')
                         .select('nickname')
                         .eq('id', user.id)
@@ -14575,7 +14587,16 @@
             const checkCalculationForInteraction = (action) => {
                 // 게스트인 경우 회원가입 유도
                 if (isGuest) {
-                    setShowCommunityAccessModal(true);
+                    // 방어적 코드: setShowCommunityAccessModal 함수가 정의되었는지 확인
+                    if (typeof setShowCommunityAccessModal === 'function') {
+                        setShowCommunityAccessModal(true);
+                    } else {
+                        console.error('setShowCommunityAccessModal 함수가 정의되지 않았습니다.');
+                        // 대체 행동: 직접 회원가입 화면으로 이동
+                        setAuthMode('signup');
+                        setCurrentView('login');
+                        setShowAuthForm(true);
+                    }
                     return false;
                 }
                 
