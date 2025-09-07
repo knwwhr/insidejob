@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>인사이드잡 - 취업 멘토링 플랫폼</title>
-    <!-- Cache Busting: v2024-09-07-02 -->
+    <!-- Cache Busting: v2024-09-07-03 -->
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -14105,6 +14105,8 @@
             const [showCommunityAccessModal, setShowCommunityAccessModal] = useState(false);
             // 계산 필수 모달 상태
             const [showCalculationRequiredModal, setShowCalculationRequiredModal] = useState(false);
+            // 회원가입 유도 모달 상태
+            const [showSignupModal, setShowSignupModal] = useState(false);
 
             // 통합 알림 표시 함수
             const showNotification = (messageOrTitle, messageOrType = 'info', typeOverride = null) => {
