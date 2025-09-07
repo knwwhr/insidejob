@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>인사이드잡 - 취업 멘토링 플랫폼</title>
-    <!-- Cache Busting: v2024-09-07-01 -->
+    <!-- Cache Busting: v2024-09-07-02 -->
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -14086,9 +14086,6 @@
 
         // 메인 App 컴포넌트
         const InsideJobApp = () => {
-            // 디버깅: 컴포넌트 초기화 로그
-            console.log('🔄 InsideJobApp 컴포넌트 초기화 중...');
-            
             const [currentView, setCurrentView] = useState('login'); // 로그인 화면으로 바로 시작
             const [selectedPost, setSelectedPost] = useState(null); // 선택된 게시글 상태
             const [savedCalculations, setSavedCalculations] = useState([]);
@@ -14104,14 +14101,10 @@
             const [notificationContent, setNotificationContent] = useState({ title: '', message: '', type: 'info' });
             const [showMobileMenu, setShowMobileMenu] = useState(false);
             const [lastActivity, setLastActivity] = useState(Date.now());
-            // 커뮤니티 접근 모달 상태 - 2024.09.07 캐시 무효화용 주석
+            // 커뮤니티 접근 모달 상태
             const [showCommunityAccessModal, setShowCommunityAccessModal] = useState(false);
-            
-            // 디버깅: 중요한 변수들이 올바르게 정의되었는지 확인
-            console.log('🔍 변수 정의 확인:', {
-                showCommunityAccessModal: typeof showCommunityAccessModal,
-                setShowCommunityAccessModal: typeof setShowCommunityAccessModal
-            });
+            // 계산 필수 모달 상태
+            const [showCalculationRequiredModal, setShowCalculationRequiredModal] = useState(false);
 
             // 통합 알림 표시 함수
             const showNotification = (messageOrTitle, messageOrType = 'info', typeOverride = null) => {
@@ -14265,11 +14258,7 @@
                 }
             };
             
-            // 컴포넌트 마운트시 인증 상태 확인
-            useEffect(() => {
-                initializeApp();
-            }, []);
-
+            // 앱 초기화 함수
             const initializeApp = async () => {
                 try {
                     // 게스트 데이터 초기화 (일회성 사용)
@@ -14284,6 +14273,11 @@
                     console.error('앱 초기화 오류:', error);
                 }
             };
+            
+            // 컴포넌트 마운트시 인증 상태 확인
+            useEffect(() => {
+                initializeApp();
+            }, []);
             
             // 인증 성공 핸들러
             const handleAuthSuccess = async (user) => {
