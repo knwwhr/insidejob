@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>인사이드잡 - 취업 멘토링 플랫폼</title>
-    <!-- Cache Busting: v2024-09-07-03 -->
+    <!-- Cache Busting: v2024-09-07-04 -->
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -13641,17 +13641,21 @@
                                         {value: 'university', label: '4년제 대학 졸업 (7점)', score: 7},
                                         {value: 'graduate', label: '대학원 졸업 (10점)', score: 10}
                                     ].map(option => (
-                                        <label key={option.value} className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                        <div key={option.value} className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+                                             onClick={() => handleInputChange('educationLevel', option.value)}>
                                             <input
                                                 type="radio"
                                                 name="educationLevel"
                                                 value={option.value}
                                                 checked={formData.educationLevel === option.value}
-                                                onChange={(e) => handleInputChange('educationLevel', e.target.value)}
-                                                className="mr-3 w-4 h-4"
+                                                onChange={(e) => {
+                                                    e.stopPropagation();
+                                                    handleInputChange('educationLevel', e.target.value);
+                                                }}
+                                                className="mr-3 w-4 h-4 pointer-events-none"
                                             />
                                             <span className="text-gray-800">{option.label}</span>
-                                        </label>
+                                        </div>
                                     ))}
                                 </div>
                             </div>
@@ -13667,17 +13671,21 @@
                                         {value: 'level_3', label: '토익 800-899점 / 오픽 AL / 토스 7급 (7점)', score: 7},
                                         {value: 'level_4', label: '토익 900점 이상 / 오픽 AL+ / 토스 8급 이상 (10점)', score: 10}
                                     ].map(option => (
-                                        <label key={option.value} className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                        <div key={option.value} className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+                                             onClick={() => handleInputChange('languageLevel', option.value)}>
                                             <input
                                                 type="radio"
                                                 name="languageLevel"
                                                 value={option.value}
                                                 checked={formData.languageLevel === option.value}
-                                                onChange={(e) => handleInputChange('languageLevel', e.target.value)}
-                                                className="mr-3 w-4 h-4"
+                                                onChange={(e) => {
+                                                    e.stopPropagation();
+                                                    handleInputChange('languageLevel', e.target.value);
+                                                }}
+                                                className="mr-3 w-4 h-4 pointer-events-none"
                                             />
                                             <span className="text-gray-800">{option.label}</span>
-                                        </label>
+                                        </div>
                                     ))}
                                 </div>
                             </div>
@@ -13818,17 +13826,21 @@
                                         {value: 'good', label: '체계적인 포트폴리오 3-5개 (6점)', score: 6},
                                         {value: 'excellent', label: '전문가 수준 포트폴리오 5개 이상 (10점)', score: 10}
                                     ].map(portfolio => (
-                                        <label key={portfolio.value} className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                        <div key={portfolio.value} className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+                                             onClick={() => handleInputChange('portfolioQuality', portfolio.value)}>
                                             <input
                                                 type="radio"
                                                 name="portfolioQuality"
                                                 value={portfolio.value}
                                                 checked={formData.portfolioQuality === portfolio.value}
-                                                onChange={(e) => handleInputChange('portfolioQuality', e.target.value)}
-                                                className="mr-3 w-4 h-4"
+                                                onChange={(e) => {
+                                                    e.stopPropagation();
+                                                    handleInputChange('portfolioQuality', e.target.value);
+                                                }}
+                                                className="mr-3 w-4 h-4 pointer-events-none"
                                             />
                                             <span className="text-gray-800">{portfolio.label}</span>
-                                        </label>
+                                        </div>
                                     ))}
                                 </div>
                             </div>
@@ -13885,17 +13897,21 @@
                                         {value: 'high', label: '높음 (IT/스타트업/영업직) (8점)', score: 8},
                                         {value: 'very_high', label: '매우 높음 (개발자/디지털마케팅) (10점)', score: 10}
                                     ].map(demand => (
-                                        <label key={demand.value} className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                        <div key={demand.value} className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+                                             onClick={() => handleInputChange('jobDemand', demand.value)}>
                                             <input
                                                 type="radio"
                                                 name="jobDemand"
                                                 value={demand.value}
                                                 checked={formData.jobDemand === demand.value}
-                                                onChange={(e) => handleInputChange('jobDemand', e.target.value)}
-                                                className="mr-3 w-4 h-4"
+                                                onChange={(e) => {
+                                                    e.stopPropagation();
+                                                    handleInputChange('jobDemand', e.target.value);
+                                                }}
+                                                className="mr-3 w-4 h-4 pointer-events-none"
                                             />
                                             <span className="text-gray-800">{demand.label}</span>
-                                        </label>
+                                        </div>
                                     ))}
                                 </div>
                             </div>
