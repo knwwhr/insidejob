@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>인사이드잡 - 취업 멘토링 플랫폼</title>
-    <!-- Cache Busting: v2024-09-07-04 -->
+    <!-- Cache Busting: v2024-09-07-05 -->
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -13699,16 +13699,20 @@
                                         {value: 'professional_cert', label: '국제공인 자격증 (PMP/AWS/Google) (2점)', score: 2},
                                         {value: 'industry_cert', label: '업종별 필수자격증 (1점)', score: 1}
                                     ].map(option => (
-                                        <label key={option.value} className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                        <div key={option.value} className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+                                             onClick={() => handleArrayChange('certifications', option.value, !formData.certifications?.includes(option.value))}>
                                             <input
                                                 type="checkbox"
                                                 value={option.value}
                                                 checked={formData.certifications?.includes(option.value)}
-                                                onChange={(e) => handleArrayChange('certifications', option.value, e.target.checked)}
-                                                className="mr-3 w-4 h-4"
+                                                onChange={(e) => {
+                                                    e.stopPropagation();
+                                                    handleArrayChange('certifications', option.value, e.target.checked);
+                                                }}
+                                                className="mr-3 w-4 h-4 pointer-events-none"
                                             />
                                             <span className="text-gray-800">{option.label}</span>
-                                        </label>
+                                        </div>
                                     ))}
                                 </div>
                             </div>
@@ -13769,22 +13773,31 @@
                                         {value: 'powerpoint', label: 'PowerPoint 전문가 (2점)', category: 'medium'},
                                         {value: 'sql', label: 'SQL (2점)', category: 'medium'}
                                     ].map(skill => (
-                                        <label key={skill.value} className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                        <div key={skill.value} className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+                                             onClick={() => {
+                                                 const isChecked = !formData.technicalSkills?.includes(skill.value);
+                                                 if (isChecked && formData.technicalSkills?.length >= 3) {
+                                                     showNotification('최대 3개까지만 선택 가능합니다', 'warning');
+                                                     return;
+                                                 }
+                                                 handleArrayChange('technicalSkills', skill.value, isChecked);
+                                             }}>
                                             <input
                                                 type="checkbox"
                                                 value={skill.value}
                                                 checked={formData.technicalSkills?.includes(skill.value)}
                                                 onChange={(e) => {
+                                                    e.stopPropagation();
                                                     if (e.target.checked && formData.technicalSkills?.length >= 3) {
                                                         showNotification('최대 3개까지만 선택 가능합니다', 'warning');
                                                         return;
                                                     }
                                                     handleArrayChange('technicalSkills', skill.value, e.target.checked);
                                                 }}
-                                                className="mr-3 w-4 h-4"
+                                                className="mr-3 w-4 h-4 pointer-events-none"
                                             />
                                             <span className="text-gray-800">{skill.label}</span>
-                                        </label>
+                                        </div>
                                     ))}
                                 </div>
                                 <p className="text-sm text-gray-500 mt-2">선택됨: {formData.technicalSkills?.length || 0}/3</p>
@@ -13802,16 +13815,20 @@
                                         {value: 'opensource', label: '오픈소스 기여/깃허브 활발 (3점)', score: 3},
                                         {value: 'competition_win', label: '공모전 입상 경력 (2점)', score: 2}
                                     ].map(experience => (
-                                        <label key={experience.value} className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                        <div key={experience.value} className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+                                             onClick={() => handleArrayChange('practicalExperience', experience.value, !formData.practicalExperience?.includes(experience.value))}>
                                             <input
                                                 type="checkbox"
                                                 value={experience.value}
                                                 checked={formData.practicalExperience?.includes(experience.value)}
-                                                onChange={(e) => handleArrayChange('practicalExperience', experience.value, e.target.checked)}
-                                                className="mr-3 w-4 h-4"
+                                                onChange={(e) => {
+                                                    e.stopPropagation();
+                                                    handleArrayChange('practicalExperience', experience.value, e.target.checked);
+                                                }}
+                                                className="mr-3 w-4 h-4 pointer-events-none"
                                             />
                                             <span className="text-gray-800">{experience.label}</span>
-                                        </label>
+                                        </div>
                                     ))}
                                 </div>
                             </div>
@@ -13927,16 +13944,20 @@
                                         {value: 'location_flexible', label: '지역 제한 없음 (2점)', score: 2},
                                         {value: 'work_flexible', label: '근무형태 유연 (재택/계약직 포함) (3점)', score: 3}
                                     ].map(strategy => (
-                                        <label key={strategy.value} className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                        <div key={strategy.value} className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+                                             onClick={() => handleArrayChange('applicationStrategy', strategy.value, !formData.applicationStrategy?.includes(strategy.value))}>
                                             <input
                                                 type="checkbox"
                                                 value={strategy.value}
                                                 checked={formData.applicationStrategy?.includes(strategy.value)}
-                                                onChange={(e) => handleArrayChange('applicationStrategy', strategy.value, e.target.checked)}
-                                                className="mr-3 w-4 h-4"
+                                                onChange={(e) => {
+                                                    e.stopPropagation();
+                                                    handleArrayChange('applicationStrategy', strategy.value, e.target.checked);
+                                                }}
+                                                className="mr-3 w-4 h-4 pointer-events-none"
                                             />
                                             <span className="text-gray-800">{strategy.label}</span>
-                                        </label>
+                                        </div>
                                     ))}
                                 </div>
                             </div>
@@ -13951,16 +13972,20 @@
                                         {value: 'interview_experience', label: '면접 경험 5회 이상 (2점)', score: 2},
                                         {value: 'mock_interview', label: '모의면접/면접코칭 수강 (2점)', score: 2}
                                     ].map(preparation => (
-                                        <label key={preparation.value} className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                        <div key={preparation.value} className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+                                             onClick={() => handleArrayChange('preparationLevel', preparation.value, !formData.preparationLevel?.includes(preparation.value))}>
                                             <input
                                                 type="checkbox"
                                                 value={preparation.value}
                                                 checked={formData.preparationLevel?.includes(preparation.value)}
-                                                onChange={(e) => handleArrayChange('preparationLevel', preparation.value, e.target.checked)}
-                                                className="mr-3 w-4 h-4"
+                                                onChange={(e) => {
+                                                    e.stopPropagation();
+                                                    handleArrayChange('preparationLevel', preparation.value, e.target.checked);
+                                                }}
+                                                className="mr-3 w-4 h-4 pointer-events-none"
                                             />
                                             <span className="text-gray-800">{preparation.label}</span>
-                                        </label>
+                                        </div>
                                     ))}
                                 </div>
                             </div>
