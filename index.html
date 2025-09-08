@@ -12377,80 +12377,459 @@
             );
         };
 
-        // 현직자 찾기 컴포넌트 - 취업 멘토링 전용
+        // 🛒 쿠팡식 현직자 찾기 컴포넌트 - 쇼핑하듯 편리한 UX
         const ExpertFinderComponent = ({ currentUser, isAdminUser, setShowSignupModal }) => {
-            const [activeCategory, setActiveCategory] = useState('tech_development');
-            const [showBookingModal, setShowBookingModal] = useState(false);
-            const [selectedExpert, setSelectedExpert] = useState(null);
-            const [showWriteModal, setShowWriteModal] = useState(false);
-            const [isExpert, setIsExpert] = useState(false);
-            
-            // 🔍 검색 및 필터링 상태
+            // 🔍 검색 및 필터 상태
             const [searchKeyword, setSearchKeyword] = useState('');
-            const [searchFilters, setSearchFilters] = useState({
-                minExperience: 0,
-                maxPrice: 500000,
-                minRating: 0,
-                sortBy: 'rating', // rating, price, experience, reviews
-                showAdvancedFilters: false
+            const [selectedFilters, setSelectedFilters] = useState({
+                job: [], // 직무 태그
+                company: [], // 회사 유형 태그  
+                level: [], // 경력 수준 태그
+                price: [20000, 100000], // 가격 범위
+                rating: 0 // 최소 평점
             });
-            const [searchLoading, setSearchLoading] = useState(false);
-            const [searchDebounceTimer, setSearchDebounceTimer] = useState(null);
-
-            // 전문가 여부 확인 (관리자는 모든 권한 보유)
-            useEffect(() => {
-                const checkExpertStatus = async () => {
-                    if (!currentUser) {
-                        setIsExpert(false);
-                        return;
-                    }
-
-                    // 관리자는 모든 전문가 권한 보유
-                    if (isAdminUser && isAdminUser(currentUser)) {
-                        setIsExpert(true);
-                        return;
-                    }
-
-                    try {
-                        const { data: expertProfile } = await supabase
-                            .from('experts')
-                            .select('is_verified, is_active')
-                            .eq('user_id', currentUser.id)
-                            .single();
-
-                        setIsExpert(expertProfile?.is_verified === true && expertProfile?.is_active === true);
-                    } catch (error) {
-                        setIsExpert(false);
-                    }
-                };
-
-                checkExpertStatus();
-            }, [currentUser]);
-
-            // 글쓰기 완료 후 새로고침
-            const handleWriteSuccess = () => {
-                // 필요시 전문가 목록 새로고침 로직 추가
-                console.log('전문가 글 작성 완료');
-            };
+            const [sortBy, setSortBy] = useState('popular'); // popular, price_low, price_high, rating, latest
+            const [viewMode, setViewMode] = useState('grid'); // grid, list
+            const [showFilters, setShowFilters] = useState(false);
+            const [loading, setLoading] = useState(false);
             
-            // 현직자 멘토 업계별 카테고리 정의
-            const expertCategories = {
-                'tech_development': {
-                    name: 'IT/개발',
-                    icon: '💻',
-                    color: 'from-blue-500 to-indigo-500',
-                    bgColor: 'from-blue-50 to-indigo-50',
-                    description: '개발자, 엔지니어, IT 전문가'
+            // 🏷️ 태그 정의 (쿠팡의 카테고리처럼)
+            const jobTags = [
+                { id: 'development', name: '개발', icon: '💻', color: 'bg-blue-100 text-blue-700' },
+                { id: 'marketing', name: '마케팅', icon: '📊', color: 'bg-purple-100 text-purple-700' },
+                { id: 'sales', name: '영업', icon: '🤝', color: 'bg-green-100 text-green-700' },
+                { id: 'design', name: '디자인', icon: '🎨', color: 'bg-pink-100 text-pink-700' },
+                { id: 'planning', name: '기획', icon: '📋', color: 'bg-indigo-100 text-indigo-700' },
+                { id: 'hr', name: '인사', icon: '👥', color: 'bg-orange-100 text-orange-700' },
+                { id: 'finance', name: '금융', icon: '💰', color: 'bg-yellow-100 text-yellow-700' },
+                { id: 'consulting', name: '컨설팅', icon: '🧠', color: 'bg-gray-100 text-gray-700' }
+            ];
+            
+            const companyTags = [
+                { id: 'big_corp', name: '대기업', icon: '🏢', desc: '삼성/LG/현대/SK...' },
+                { id: 'startup', name: '스타트업', icon: '🚀', desc: '100명 이하 벤처' },
+                { id: 'foreign', name: '외국계', icon: '🌏', desc: 'Google/Apple/MS...' },
+                { id: 'unicorn', name: '유니콘', icon: '🦄', desc: '토스/배민/당근/쿠팡...' },
+                { id: 'public', name: '공기업', icon: '🏛️', desc: '공공기관/공기업' }
+            ];
+            
+            const levelTags = [
+                { id: 'junior', name: '주니어', desc: '1-3년차', icon: '🌱' },
+                { id: 'senior', name: '시니어', desc: '4-7년차', icon: '⭐' },  
+                { id: 'lead', name: '리드', desc: '8년차+', icon: '👑' }
+            ];
+
+            // 🛍️ 쇼핑몰식 샘플 현직자 데이터 (나중에 실제 DB 연동)
+            const [experts, setExperts] = useState([
+                {
+                    id: 1,
+                    name: '김개발',
+                    title: '시니어 백엔드 개발자',
+                    company: '토스',
+                    avatar: '👨‍💻',
+                    rating: 4.9,
+                    reviewCount: 127,
+                    responseRate: 98,
+                    experience: '7년차',
+                    price: 80000,
+                    tags: ['development', 'unicorn', 'senior'],
+                    specialties: ['Spring', 'AWS', '시스템 설계'],
+                    intro: '토스에서 7년간 백엔드 개발하며 월간 거래액 1조원 시스템 구축했어요. 개발 커리어 고민 언제든 환영!',
+                    available: true,
+                    nextAvailable: '오늘 오후 2시',
+                    badge: '인기'
                 },
-                'finance_consulting': {
-                    name: '금융/컨설팅',
-                    icon: '💰',
-                    color: 'from-green-500 to-emerald-500',
-                    bgColor: 'from-green-50 to-emerald-50',
-                    description: '금융권, 컨설팅 현직자'
+                {
+                    id: 2, 
+                    name: '이마케터',
+                    title: '시니어 퍼포먼스 마케터',
+                    company: '배달의민족',
+                    avatar: '👩‍💼',
+                    rating: 4.8,
+                    reviewCount: 89,
+                    responseRate: 95,
+                    experience: '5년차', 
+                    price: 65000,
+                    tags: ['marketing', 'unicorn', 'senior'],
+                    specialties: ['퍼포먼스 마케팅', 'GA4', '광고 운영'],
+                    intro: '배민에서 월 1억 광고비 운영하며 ROAS 400% 달성한 노하우 공유드려요!',
+                    available: true,
+                    nextAvailable: '내일 오전 10시',
+                    badge: '신규'
                 },
-                'marketing_planning': {
-                    name: '마케팅/기획',
+                {
+                    id: 3,
+                    name: '박기획',
+                    title: '서비스 기획 매니저', 
+                    company: '삼성전자',
+                    avatar: '👨‍💼',
+                    rating: 4.7,
+                    reviewCount: 156,
+                    responseRate: 92,
+                    experience: '6년차',
+                    price: 70000,
+                    tags: ['planning', 'big_corp', 'senior'],
+                    specialties: ['서비스 기획', 'UX 설계', '데이터 분석'],
+                    intro: '삼성 갤럭시 앱 서비스 기획 담당. PM 커리어 쌓고 싶은 분들께 실무 노하우 전수!',
+                    available: false,
+                    nextAvailable: '모레 오후 3시',
+                    badge: null
+                },
+                {
+                    id: 4,
+                    name: '최디자인',
+                    title: 'UX 디자인 리드',
+                    company: '카카오',
+                    avatar: '👩‍🎨',  
+                    rating: 5.0,
+                    reviewCount: 203,
+                    responseRate: 99,
+                    experience: '8년차',
+                    price: 90000,
+                    tags: ['design', 'unicorn', 'lead'],
+                    specialties: ['UX/UI', '디자인 시스템', '사용자 리서치'],
+                    intro: '카카오톡 UX 디자인 8년. 포트폴리오 리뷰부터 실무 프로세스까지 상세 가이드!',
+                    available: true,
+                    nextAvailable: '오늘 저녁 7시',
+                    badge: '베스트'
+                }
+            ]);
+
+            // 📱 모바일 대응
+            const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+            
+            useEffect(() => {
+                const handleResize = () => setIsMobile(window.innerWidth < 768);
+                window.addEventListener('resize', handleResize);
+                return () => window.removeEventListener('resize', handleResize);
+            }, []);
+
+            // 🔍 필터링 및 검색 로직
+            const filteredExperts = experts.filter(expert => {
+                // 검색 키워드 필터링
+                if (searchKeyword) {
+                    const keyword = searchKeyword.toLowerCase();
+                    const matchName = expert.name.toLowerCase().includes(keyword);
+                    const matchTitle = expert.title.toLowerCase().includes(keyword);
+                    const matchCompany = expert.company.toLowerCase().includes(keyword);
+                    const matchSpecialties = expert.specialties.some(s => s.toLowerCase().includes(keyword));
+                    if (!matchName && !matchTitle && !matchCompany && !matchSpecialties) return false;
+                }
+                
+                // 직무 태그 필터링
+                if (selectedFilters.job.length > 0) {
+                    if (!expert.tags.some(tag => selectedFilters.job.includes(tag))) return false;
+                }
+                
+                // 회사 유형 필터링  
+                if (selectedFilters.company.length > 0) {
+                    if (!expert.tags.some(tag => selectedFilters.company.includes(tag))) return false;
+                }
+                
+                // 경력 수준 필터링
+                if (selectedFilters.level.length > 0) {
+                    if (!expert.tags.some(tag => selectedFilters.level.includes(tag))) return false;
+                }
+                
+                // 가격 범위 필터링
+                if (expert.price < selectedFilters.price[0] || expert.price > selectedFilters.price[1]) return false;
+                
+                // 평점 필터링
+                if (expert.rating < selectedFilters.rating) return false;
+                
+                return true;
+            });
+
+            // 🔄 정렬 로직
+            const sortedExperts = [...filteredExperts].sort((a, b) => {
+                switch(sortBy) {
+                    case 'price_low': return a.price - b.price;
+                    case 'price_high': return b.price - a.price;
+                    case 'rating': return b.rating - a.rating;
+                    case 'latest': return b.id - a.id; // 최신 등록순
+                    case 'popular':
+                    default:
+                        // 인기순: 배지 우선, 평점x리뷰수 조합
+                        const scoreA = (a.badge === '베스트' ? 1000 : a.badge === '인기' ? 500 : a.badge === '신규' ? 100 : 0) + (a.rating * a.reviewCount);
+                        const scoreB = (b.badge === '베스트' ? 1000 : b.badge === '인기' ? 500 : b.badge === '신규' ? 100 : 0) + (b.rating * b.reviewCount);
+                        return scoreB - scoreA;
+                }
+            });
+
+            // 🏷️ 태그 토글 함수
+            const toggleFilter = (category, tagId) => {
+                setSelectedFilters(prev => ({
+                    ...prev,
+                    [category]: prev[category].includes(tagId) 
+                        ? prev[category].filter(id => id !== tagId)
+                        : [...prev[category], tagId]
+                }));
+            };
+
+            // 🧹 필터 초기화
+            const clearFilters = () => {
+                setSelectedFilters({
+                    job: [],
+                    company: [],
+                    level: [],
+                    price: [20000, 100000],
+                    rating: 0
+                });
+                setSearchKeyword('');
+            };
+
+            // 📞 상담 신청 (임시)
+            const handleConsultation = (expert) => {
+                if (!currentUser || currentUser.isGuest) {
+                    setShowSignupModal(true);
+                    return;
+                }
+                alert(`${expert.name}님과의 상담을 신청합니다!\n💰 ${expert.price.toLocaleString()}원/60분\n📅 ${expert.nextAvailable} 예약 가능`);
+            };
+
+            // 🛒 쿠팡식 현직자 찾기 UI 렌더링
+            return (
+                <div className="max-w-7xl mx-auto px-4 py-6">
+                    {/* 🔍 쿠팡식 검색바 */}
+                    <div className="mb-6">
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span className="text-gray-400 text-xl">🔍</span>
+                            </div>
+                            <input
+                                type="text"
+                                value={searchKeyword}
+                                onChange={(e) => setSearchKeyword(e.target.value)}
+                                placeholder="원하는 현직자를 검색해보세요 (예: 카카오 개발자, 토스 마케터)"
+                                className="w-full pl-12 pr-4 py-4 text-lg border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none"
+                            />
+                        </div>
+                        <div className="flex flex-wrap gap-2 mt-3">
+                            <span className="text-sm text-gray-500">인기 검색:</span>
+                            {['토스 개발자', '카카오 마케터', '삼성 기획자', '네이버 디자이너'].map(keyword => (
+                                <button
+                                    key={keyword}
+                                    onClick={() => setSearchKeyword(keyword)}
+                                    className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                                >
+                                    #{keyword}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* 🏷️ 쿠팡식 필터 태그들 */}
+                    <div className="mb-6 space-y-4">
+                        {/* 직무 필터 */}
+                        <div>
+                            <h3 className="text-sm font-semibold text-gray-700 mb-2">💼 직무</h3>
+                            <div className="flex flex-wrap gap-2">
+                                {jobTags.map(tag => (
+                                    <button
+                                        key={tag.id}
+                                        onClick={() => toggleFilter('job', tag.id)}
+                                        className={`px-3 py-2 rounded-full text-sm font-medium transition-all ${
+                                            selectedFilters.job.includes(tag.id)
+                                                ? 'bg-blue-600 text-white shadow-md'
+                                                : `${tag.color} hover:scale-105`
+                                        }`}
+                                    >
+                                        {tag.icon} {tag.name}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* 회사 유형 필터 */}
+                        <div>
+                            <h3 className="text-sm font-semibold text-gray-700 mb-2">🏢 회사 유형</h3>
+                            <div className="flex flex-wrap gap-2">
+                                {companyTags.map(tag => (
+                                    <button
+                                        key={tag.id}
+                                        onClick={() => toggleFilter('company', tag.id)}
+                                        className={`px-3 py-2 rounded-full text-sm font-medium transition-all ${
+                                            selectedFilters.company.includes(tag.id)
+                                                ? 'bg-orange-600 text-white shadow-md'
+                                                : 'bg-orange-100 text-orange-700 hover:scale-105'
+                                        }`}
+                                    >
+                                        {tag.icon} {tag.name}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* 경력 수준 필터 */}
+                        <div>
+                            <h3 className="text-sm font-semibold text-gray-700 mb-2">📈 경력 수준</h3>
+                            <div className="flex flex-wrap gap-2">
+                                {levelTags.map(tag => (
+                                    <button
+                                        key={tag.id}
+                                        onClick={() => toggleFilter('level', tag.id)}
+                                        className={`px-3 py-2 rounded-full text-sm font-medium transition-all ${
+                                            selectedFilters.level.includes(tag.id)
+                                                ? 'bg-green-600 text-white shadow-md'
+                                                : 'bg-green-100 text-green-700 hover:scale-105'
+                                        }`}
+                                    >
+                                        {tag.icon} {tag.name}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 🔧 정렬 및 필터 컨트롤 */}
+                    <div className="flex items-center justify-between mb-6 p-4 bg-gray-50 rounded-xl">
+                        <div className="flex items-center space-x-4">
+                            <span className="text-sm font-medium text-gray-600">
+                                총 {sortedExperts.length}명의 현직자
+                            </span>
+                            {(selectedFilters.job.length > 0 || selectedFilters.company.length > 0 || selectedFilters.level.length > 0) && (
+                                <button
+                                    onClick={clearFilters}
+                                    className="text-sm text-blue-600 hover:text-blue-800 underline"
+                                >
+                                    필터 초기화
+                                </button>
+                            )}
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <span className="text-sm text-gray-600">정렬:</span>
+                            <select
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value)}
+                                className="text-sm border border-gray-200 rounded-lg px-3 py-1 focus:outline-none focus:border-blue-500"
+                            >
+                                <option value="popular">인기순</option>
+                                <option value="price_low">낮은 가격순</option>
+                                <option value="price_high">높은 가격순</option>
+                                <option value="rating">평점순</option>
+                                <option value="latest">최신순</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* 🛍️ 쿠팡식 현직자 그리드 */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {sortedExperts.map(expert => (
+                            <div key={expert.id} className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100">
+                                {/* 배지 */}
+                                {expert.badge && (
+                                    <div className="absolute top-3 left-3 z-10">
+                                        <span className={`px-2 py-1 text-xs font-bold rounded-full ${
+                                            expert.badge === '베스트' ? 'bg-red-500 text-white' :
+                                            expert.badge === '인기' ? 'bg-orange-500 text-white' :
+                                            'bg-blue-500 text-white'
+                                        }`}>
+                                            {expert.badge}
+                                        </span>
+                                    </div>
+                                )}
+
+                                <div className="p-6">
+                                    {/* 프로필 헤더 */}
+                                    <div className="flex items-start mb-4">
+                                        <div className="text-4xl mr-3">{expert.avatar}</div>
+                                        <div className="flex-1">
+                                            <h3 className="font-bold text-lg text-gray-900">{expert.name}</h3>
+                                            <p className="text-sm text-gray-600 mb-1">{expert.title}</p>
+                                            <p className="text-sm font-medium text-blue-600">{expert.company} • {expert.experience}</p>
+                                        </div>
+                                    </div>
+
+                                    {/* 평점 및 리뷰 */}
+                                    <div className="flex items-center mb-3">
+                                        <div className="flex items-center mr-4">
+                                            <span className="text-yellow-400">⭐</span>
+                                            <span className="text-sm font-semibold ml-1">{expert.rating}</span>
+                                            <span className="text-xs text-gray-500 ml-1">({expert.reviewCount})</span>
+                                        </div>
+                                        <div className="text-xs text-green-600">
+                                            응답률 {expert.responseRate}%
+                                        </div>
+                                    </div>
+
+                                    {/* 전문 분야 태그 */}
+                                    <div className="flex flex-wrap gap-1 mb-3">
+                                        {expert.specialties.slice(0, 3).map(specialty => (
+                                            <span key={specialty} className="px-2 py-1 bg-gray-100 text-xs text-gray-600 rounded-full">
+                                                {specialty}
+                                            </span>
+                                        ))}
+                                    </div>
+
+                                    {/* 소개글 */}
+                                    <p className="text-sm text-gray-700 mb-4 line-clamp-2">{expert.intro}</p>
+
+                                    {/* 가격 및 예약 가능 시간 */}
+                                    <div className="border-t pt-4">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <div>
+                                                <span className="text-lg font-bold text-gray-900">
+                                                    {expert.price.toLocaleString()}원
+                                                </span>
+                                                <span className="text-xs text-gray-500">/60분</span>
+                                            </div>
+                                            <div className="text-xs text-gray-500">
+                                                {expert.available ? (
+                                                    <span className="text-green-600">● 예약 가능</span>
+                                                ) : (
+                                                    <span className="text-orange-600">● 대기 중</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="text-xs text-gray-500 mb-3">
+                                            다음 예약: {expert.nextAvailable}
+                                        </div>
+                                        <button
+                                            onClick={() => handleConsultation(expert)}
+                                            className={`w-full py-3 rounded-lg font-semibold transition-all ${
+                                                expert.available 
+                                                    ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg'
+                                                    : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                                            }`}
+                                            disabled={!expert.available}
+                                        >
+                                            {expert.available ? '🚀 바로 상담하기' : '⏰ 대기 예약'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* 결과 없음 */}
+                    {sortedExperts.length === 0 && (
+                        <div className="text-center py-16">
+                            <div className="text-6xl mb-4">🤷‍♀️</div>
+                            <h3 className="text-xl font-semibold text-gray-700 mb-2">원하는 현직자를 찾을 수 없어요</h3>
+                            <p className="text-gray-500 mb-6">다른 키워드나 필터로 다시 검색해보세요</p>
+                            <button
+                                onClick={clearFilters}
+                                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                            >
+                                전체 현직자 보기
+                            </button>
+                        </div>
+                    )}
+
+                    {/* 하단 안내 */}
+                    <div className="mt-12 bg-blue-50 p-6 rounded-xl">
+                        <h4 className="font-bold text-gray-800 mb-3">💡 인사이드잡 현직자 찾기 Tip!</h4>
+                        <div className="text-sm text-gray-600 space-y-2">
+                            <p>• <strong>구체적으로 검색:</strong> "토스 백엔드 개발자", "네이버 UX 디자이너" 처럼 구체적으로 검색하면 더 정확해요</p>
+                            <p>• <strong>다양한 필터 활용:</strong> 직무 + 회사유형 + 경력수준을 조합해서 원하는 현직자를 찾아보세요</p>
+                            <p>• <strong>평점 4.5+ 추천:</strong> 높은 평점의 현직자일수록 만족도가 높아요</p>
+                            <p>• <strong>응답률 90%+ 추천:</strong> 빠른 응답을 원한다면 응답률이 높은 현직자를 선택하세요</p>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
                     icon: '📊',
                     color: 'from-purple-500 to-pink-500',
                     bgColor: 'from-purple-50 to-pink-50',
