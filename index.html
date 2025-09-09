@@ -7447,7 +7447,7 @@
             return (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-xl w-full max-w-4xl h-[80vh] flex flex-col shadow-xl">
-                        {/* 헤더 */}
+                        헤더
                         <div className="p-4 border-b border-gray-200 bg-blue-50 rounded-t-xl">
                             <div className="flex justify-between items-center">
                                 <div>
@@ -8171,7 +8171,7 @@
             return (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
                     <div className="bg-white rounded-2xl max-w-lg w-full">
-                        {/* 헤더 */}
+                        헤더
                         <div className="p-6 border-b border-gray-200">
                             <div className="flex justify-between items-center">
                                 <h2 className="text-xl font-bold text-gray-900">
@@ -9613,7 +9613,7 @@
             return (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                        {/* 헤더 */}
+                        헤더
                         <div className="sticky top-0 bg-white border-b p-4 flex items-center justify-between">
                             <h2 className="text-lg font-bold">📝 서비스 게시하기</h2>
                             <button
@@ -12091,7 +12091,7 @@
             return (
                 <div className="max-w-4xl mx-auto">
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        {/* 헤더 */}
+                        헤더
                         <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-8 text-white">
                             <div className="flex justify-between items-center">
                                 <div>
@@ -13185,16 +13185,18 @@
         // ⚠️ ORIGINAL ExpertFinderComponent CODE DISABLED
         // The following massive JSX block was causing parsing errors
         // TODO: Refactor this component to properly structure hooks and return statements
-        /*
-        const ExpertFinderComponent_DISABLED = ({ currentUser, isAdminUser, setShowSignupModal }) => {
-        // Original code was here but contained thousands of lines with JSX parsing issues
-        // The component structure was broken with hooks called outside component functions
-        // This needs complete refactoring to fix the React component architecture
+        </script>
+        <!-- DISABLED ExpertFinderComponent - JSX parsing issues -->
+        <!--
+        const ExpertFinderComponent_DISABLED = function() {
+        // Original component code disabled to prevent Babel parsing errors
+        // Contains JSX syntax that causes parsing issues when inside JS comments
+        // Solution: Convert to HTML comments or fix component structure
         return (
                 <div className="space-y-6">
                     전문가 목록 섹션
                     <div className={`bg-gradient-to-r ${currentCategory.bgColor} p-6 rounded-lg`}>
-                        {/* 헤더 */}
+                        헤더
                         <div className="mb-6">
                             <div className="text-center mb-4">
                                 <h3 className="text-lg md:text-xl font-bold text-gray-800 no-break-korean">
@@ -13202,9 +13204,9 @@
                                 </h3>
                             </div>
 
-                            {/* 🔍 검색 및 필터 섹션 */}
+                            검색 및 필터 섹션
                             <div className="bg-white p-4 rounded-lg shadow-sm border space-y-4">
-                                {/* 검색 바 */}
+                                검색 바
                                 <div className="relative">
                                     <div className="relative">
                                         <input
@@ -13528,7 +13530,8 @@
                     )}
                 </div>
             );
-        */
+        -->
+        <script type="text/babel">
 
         // 게시글 상세 페이지 컴포넌트
         const PostDetailPage = ({ post, setCurrentView, currentUser, checkCalculationForInteraction, isAdminUser }) => {
