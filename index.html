@@ -13158,6 +13158,7 @@
                 return experts;
             };
 
+            // ExpertFinderComponent 메인 렌더링 로직
             const currentExperts = getFilteredAndSortedExperts();
             const currentCategory = expertCategories[activeCategory];
 
@@ -13176,6 +13177,7 @@
                 );
             }
 
+            // ExpertFinderComponent 메인 JSX 반환
             return (
                 <div className="space-y-6">
                     {/* 전문가 목록 섹션 */}
