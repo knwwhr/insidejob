@@ -12830,59 +12830,60 @@
             );
         };
 
-            // 현직자 멘토 데이터 상태 관리
-            const [expertData, setExpertData] = useState({});
-            const [loading, setLoading] = useState(true);
-            
-            // 실제 전문가 데이터 로드
-            useEffect(() => {
-                loadExpertData();
-            }, []);
+        // ⚠️ 임시: 현재 구조상 ExpertFinderComponent 외부에 선언된 hooks들
+        // TODO: 이 부분을 ExpertFinderComponent 내부로 이동 필요
+        // 현재는 파싱 에러 방지를 위해 제거
+        // const [expertData, setExpertData] = useState({});
+        // const [loading, setLoading] = useState(true);
+        // useEffect(() => { loadExpertData(); }, []);
 
-            const loadExpertData = async () => {
-                try {
-                    setLoading(true);
-                    
-                    // professionals 테이블에서 승인된 전문가 데이터 조회
-                    const { data: experts, error } = await supabase
-                        .from('professionals')
-                        .select(`
-                            id, name, title, company, specialties, 
-                            hourly_rate, experience_years, bio,
-                            rating_average, review_count, response_rate,
-                            industry, category, profile_image_url,
-                            is_active, approved_at
-                        `)
-                        .eq('is_approved', true)
-                        .eq('is_active', true)
-                        .order('rating_average', { ascending: false });
+        // TODO: ExpertFinderComponent 내부로 이동 필요한 함수들
+        /*
+        const loadExpertData = async () => {
+            try {
+                setLoading(true);
+                
+                // professionals 테이블에서 승인된 전문가 데이터 조회
+                const { data: experts, error } = await supabase
+                    .from('professionals')
+                    .select(`
+                        id, name, title, company, specialties, 
+                        hourly_rate, experience_years, bio,
+                        rating_average, review_count, response_rate,
+                        industry, category, profile_image_url,
+                        is_active, approved_at
+                    `)
+                    .eq('is_approved', true)
+                    .eq('is_active', true)
+                    .order('rating_average', { ascending: false });
 
-                    if (error) {
-                        console.error('전문가 데이터 로드 오류:', error);
-                        // 오류 시 모의데이터 사용
-                        // 실제 전문가 데이터 로드 (현재는 빈 객체로 시작)
-                        setExpertData({});
-                        return;
-                    }
-
-                    // 카테고리별 전문가 데이터 분류
-                    const categorizedExperts = {
-                        'tech_development': experts.filter(e => e.category === 'tech_development'),
-                        'finance_consulting': experts.filter(e => e.category === 'finance_consulting'), 
-                        'marketing_strategy': experts.filter(e => e.category === 'marketing_strategy')
-                    };
-
-                    // 실제 데이터가 로드될 때까지는 빈 카테고리로 표시
-                    // Supabase 연동 후 실제 전문가 데이터가 여기에 표시됩니다.
-
-                    setExpertData(categorizedExperts);
-                } catch (error) {
-                    console.error('전문가 데이터 로드 실패:', error);
+                if (error) {
+                    console.error('전문가 데이터 로드 오류:', error);
+                    // 오류 시 모의데이터 사용
+                    // 실제 전문가 데이터 로드 (현재는 빈 객체로 시작)
                     setExpertData({});
-                } finally {
-                    setLoading(false);
+                    return;
                 }
-            };
+
+                // 카테고리별 전문가 데이터 분류
+                const categorizedExperts = {
+                    'tech_development': experts.filter(e => e.category === 'tech_development'),
+                    'finance_consulting': experts.filter(e => e.category === 'finance_consulting'), 
+                    'marketing_strategy': experts.filter(e => e.category === 'marketing_strategy')
+                };
+
+                // 실제 데이터가 로드될 때까지는 빈 카테고리로 표시
+                // Supabase 연동 후 실제 전문가 데이터가 여기에 표시됩니다.
+
+                setExpertData(categorizedExperts);
+            } catch (error) {
+                console.error('전문가 데이터 로드 실패:', error);
+                setExpertData({});
+            } finally {
+                setLoading(false);
+            }
+        };
+        */
 
             // 모의데이터 반환 함수 (폴백용)
             /* TODO: 실제 Supabase 연동 후 제거 예정
