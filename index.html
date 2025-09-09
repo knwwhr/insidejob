@@ -13004,9 +13004,9 @@
                 ]
             }); */
 
-            // 전문가 데이터 로드
-            useEffect(() => {
-                const loadExperts = async () => {
+            // 전문가 데이터 로드 - 함수 외부에서 호출되어 주석 처리 (React hooks 오류 해결)
+            // useEffect(() => {
+                // const loadExperts = async () => {
                     try {
                         setLoading(true);
                         
@@ -13073,8 +13073,8 @@
                     }
                 };
 
-                loadExperts();
-            }, []);
+                // loadExperts();
+            // }, []);  -- 함수 밖에서 호출되어 주석 처리 완료
 
             // 🔍 검색 디바운싱 함수
             const handleSearchInput = (value) => {
