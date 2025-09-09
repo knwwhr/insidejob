@@ -13159,9 +13159,9 @@
                 return experts;
             };
 
-            // ExpertFinderComponent 메인 렌더링 로직
-            const currentExperts = getFilteredAndSortedExperts();
-            const currentCategory = expertCategories[activeCategory];
+            // ExpertFinderComponent 메인 렌더링 로직 - 함수 외부 이동됨
+            // const currentExperts = getFilteredAndSortedExperts();
+            // const currentCategory = expertCategories[activeCategory];
 
         // TODO: ExpertFinderComponent 리팩토링 필요 - 현재 함수 밖에 있는 코드들
         /*
@@ -13180,15 +13180,7 @@
             );
         }
 
-        // ExpertFinderComponent 메인 JSX 반환 - 임시 수정
-        return (
-            <div className="text-center p-8 bg-gray-50 rounded-lg">
-                <h3 className="text-lg font-semibold mb-4">🔧 현직자 찾기 서비스</h3>
-                <p className="text-gray-600 mb-4">현재 컴포넌트 구조를 리팩토링하고 있습니다.</p>
-                <p className="text-sm text-gray-500">잠시 후 다시 시도해주세요.</p>
-            </div>
-        );
-        }; // End of ExpertFinderComponent - Temporary fix applied
+        // 함수 외부에 있던 return 문 제거됨 - 구문 오류 해결
 
         // ⚠️ ORIGINAL ExpertFinderComponent CODE DISABLED
         // The following massive JSX block was causing parsing errors
@@ -13537,7 +13529,6 @@
                 </div>
             );
         */
-        }; // End of ExpertFinderComponent
 
         // 게시글 상세 페이지 컴포넌트
         const PostDetailPage = ({ post, setCurrentView, currentUser, checkCalculationForInteraction, isAdminUser }) => {
