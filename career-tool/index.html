@@ -1,0 +1,1694 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InsideJob - 통합 커리어 진단 플랫폼</title>
+    <meta name="description" content="커리어 진단 → 경쟁력 계산 → 자기소개서 작성을 하나의 플랫폼에서 해결하세요.">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- Supabase CDN -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+    <!-- Chart.js (RIASEC 레이더 차트) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+
+    <!-- html2canvas + jsPDF (PDF 다운로드) -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --primary-deeper: #1d4ed8;
+            --secondary: #8b5cf6;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --dark: #0f172a;
+            --dark-mid: #1e293b;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-700: #334155;
+            --gray-900: #1e293b;
+            --ease: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Malgun Gothic', sans-serif;
+            background-color: var(--gray-50);
+            line-height: 1.6;
+        }
+
+        /* 페이지 섹션 기본 스타일 - z-index 레이어링 */
+        .page-section {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.4s var(--ease), visibility 0.4s var(--ease);
+            z-index: 1;
+        }
+
+        .page-section.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* 랜딩 페이지 */
+        .hero-section {
+            background: linear-gradient(135deg, var(--dark) 0%, var(--dark-mid) 50%, var(--gray-700) 100%);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            text-align: center;
+            overflow-y: auto;
+            z-index: 10;
+        }
+
+        .hero-section.active {
+            z-index: 50;
+        }
+
+        /* 배경 그라데이션 효과 */
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%);
+            z-index: 0;
+        }
+
+        /* 모든 히어로 컨텐츠를 배경 위로 */
+        .hero-section > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-logo {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 1.2rem auto;
+            display: block;
+            filter: brightness(0) invert(1) drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3)) drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
+            animation: logoFadeIn 0.8s var(--ease);
+        }
+
+        @keyframes logoFadeIn {
+            from { opacity: 0; transform: scale(0.9) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .hero-brand {
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            opacity: 0.7;
+            margin-bottom: 1rem;
+        }
+
+        .hero-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 0.6rem;
+            text-align: center;
+            line-height: 1.3;
+            animation: heroSlideUp 0.6s var(--ease) 0.2s both;
+        }
+
+        .hero-tagline {
+            font-size: 1.05rem;
+            opacity: 0.85;
+            margin-bottom: 2rem;
+            text-align: center;
+            max-width: 480px;
+            line-height: 1.7;
+            animation: heroSlideUp 0.6s var(--ease) 0.35s both;
+        }
+
+        @keyframes heroSlideUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .value-points {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 2.4rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            animation: heroSlideUp 0.6s var(--ease) 0.5s both;
+        }
+
+        .value-point {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255,255,255,0.08);
+            padding: 1rem 1.2rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            min-width: 140px;
+            transition: background 0.3s var(--ease);
+        }
+
+        .value-point:hover {
+            background: rgba(255,255,255,0.12);
+        }
+
+        .value-point i {
+            font-size: 1.4rem;
+            color: var(--primary);
+        }
+
+        .value-point span {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .cta-button {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 1rem 2.8rem;
+            border-radius: 40px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+            transition: all 0.3s var(--ease);
+            position: relative;
+            overflow: hidden;
+            animation: heroSlideUp 0.6s var(--ease) 0.65s both;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(59, 130, 246, 0.6);
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-deeper) 100%);
+        }
+
+        .cta-button:active {
+            transform: translateY(-1px);
+        }
+
+        .privacy-notice {
+            margin-top: 1.2rem;
+            font-size: 0.75rem;
+            opacity: 0.6;
+            animation: heroSlideUp 0.6s var(--ease) 0.75s both;
+        }
+
+        /* 개인정보 동의 모달 */
+        .privacy-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .privacy-modal-overlay.active {
+            display: flex;
+        }
+
+        .privacy-modal {
+            background: white;
+            border-radius: 20px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 20px 20px 0 0;
+            text-align: center;
+        }
+
+        .modal-header h2 {
+            font-size: 1.35rem;
+            font-weight: 700;
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .consent-content {
+            background: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 1.5rem;
+            font-size: 0.81rem;
+            line-height: 1.8;
+        }
+
+        .consent-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .consent-section h3 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #3b82f6;
+            margin-bottom: 0.5rem;
+        }
+
+        .consent-section p, .consent-section ul {
+            color: #64748b;
+            font-size: 0.765rem;
+        }
+
+        .consent-section ul {
+            padding-left: 1.5rem;
+            list-style-type: disc;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .form-group input[type="email"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .form-group input[type="email"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .help-text {
+            font-size: 0.765rem;
+            color: #64748b;
+            margin-top: 0.5rem;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            font-weight: 500;
+            color: #374151;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn-submit {
+            flex: 1;
+            padding: 1rem;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            line-height: 1.4;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        }
+
+        .btn-submit:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-cancel {
+            flex: 1;
+            padding: 1rem;
+            background: white;
+            color: #64748b;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-cancel:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+        }
+
+        /* 서비스 카드 섹션 */
+        .service-cards-section {
+            padding: 3rem 1rem;
+            background: linear-gradient(180deg, var(--gray-50) 0%, white 100%);
+            overflow-y: auto;
+            z-index: 20;
+        }
+
+        .service-cards-section.active {
+            z-index: 60;
+        }
+
+        .service-cards-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .service-cards-header h2 {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--dark);
+            margin-bottom: 0.6rem;
+        }
+
+        .service-cards-header p {
+            font-size: 1.05rem;
+            color: var(--gray-500);
+        }
+
+        .service-cards-grid {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            padding: 0 1rem;
+        }
+
+        .service-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem 1.8rem;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+            transition: all 0.4s var(--ease);
+            cursor: pointer;
+            text-align: center;
+            border: 1px solid var(--gray-200);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .service-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary);
+            transform: scaleX(0);
+            transition: transform 0.4s var(--ease);
+        }
+
+        .service-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .service-card:nth-child(1)::before { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+        .service-card:nth-child(2)::before { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+        .service-card:nth-child(3)::before { background: linear-gradient(90deg, #22c55e, #4ade80); }
+
+        .service-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+            border-color: transparent;
+        }
+
+        .service-card-step {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            margin-bottom: 1rem;
+        }
+
+        .service-card:nth-child(1) .service-card-step { background: #eff6ff; color: #3b82f6; }
+        .service-card:nth-child(2) .service-card-step { background: #f5f3ff; color: #8b5cf6; }
+        .service-card:nth-child(3) .service-card-step { background: #f0fdf4; color: #22c55e; }
+
+        .service-card-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .service-card:nth-child(1) .service-card-icon {
+            background: linear-gradient(135deg, #3b82f6, #60a5fa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .service-card:nth-child(2) .service-card-icon {
+            background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .service-card:nth-child(3) .service-card-icon {
+            background: linear-gradient(135deg, #22c55e, #4ade80);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .service-card h3 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 0.6rem;
+        }
+
+        .service-card p {
+            font-size: 0.92rem;
+            color: var(--gray-500);
+            line-height: 1.6;
+            margin-bottom: 1.2rem;
+        }
+
+        .service-card-features {
+            text-align: left;
+            margin-bottom: 1.5rem;
+            list-style: none;
+            padding: 0;
+        }
+
+        .service-card-features li {
+            color: var(--gray-500);
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .service-card-button {
+            width: 100%;
+            padding: 0.8rem 1.5rem;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            font-size: 0.92rem;
+            cursor: pointer;
+            transition: all 0.3s var(--ease);
+        }
+
+        .service-card:nth-child(1) .service-card-button {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+        }
+
+        .service-card:nth-child(2) .service-card-button {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+        }
+
+        .service-card:nth-child(3) .service-card-button {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+        }
+
+        .service-card-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            filter: brightness(1.05);
+        }
+
+        /* 서비스 실행 섹션 */
+        .service-iframe-section {
+            z-index: 30;
+        }
+
+        .service-iframe-section.active {
+            z-index: 70;
+        }
+
+        .service-iframe-section iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* 홈 버튼 (서비스 실행 중에만 표시) */
+        .back-to-services-btn {
+            position: fixed;
+            top: 1.2rem;
+            left: 1.2rem;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            color: white;
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s var(--ease);
+        }
+
+        .back-to-services-btn.visible {
+            display: flex;
+        }
+
+        .back-to-services-btn:hover {
+            background: rgba(15, 23, 42, 0.95);
+            transform: scale(1.08);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .back-to-services-btn i {
+            font-size: 1.1rem;
+        }
+
+        /* 푸터 */
+        .footer {
+            padding: 1.5rem 1rem;
+            text-align: center;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .footer p {
+            color: var(--gray-400);
+            font-size: 0.8rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .footer .company-name {
+            font-weight: 600;
+            color: var(--gray-500);
+            font-size: 0.85rem;
+        }
+
+        /* 통합 리포트 프로그레스 & 버튼 */
+        .report-progress-container {
+            max-width: 600px;
+            margin: 2.5rem auto 0;
+            padding: 1.5rem 2rem;
+            background: linear-gradient(135deg, #f5f3ff 0%, #eff6ff 100%);
+            border-radius: 16px;
+            border: 1px solid rgba(139, 92, 246, 0.15);
+            text-align: center;
+        }
+
+        .report-progress-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 1rem;
+        }
+
+        .report-progress-steps {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .report-progress-step {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.82rem;
+            color: var(--gray-400);
+        }
+
+        .report-progress-step.completed {
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .report-progress-step i {
+            font-size: 0.9rem;
+        }
+
+        .report-btn {
+            background: linear-gradient(135deg, var(--secondary) 0%, #6d28d9 100%);
+            color: white;
+            padding: 0.85rem 2.5rem;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(139, 92, 246, 0.3);
+            transition: all 0.3s var(--ease);
+            display: none;
+        }
+
+        .report-btn.visible {
+            display: inline-block;
+        }
+
+        .report-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4);
+        }
+
+        .report-btn:disabled {
+            background: var(--gray-200);
+            color: var(--gray-400);
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        /* 통합 리포트 섹션 */
+        .report-section {
+            padding: 2rem 1rem;
+            background: var(--gray-50);
+            overflow-y: auto;
+            z-index: 35;
+        }
+
+        .report-section.active {
+            z-index: 75;
+        }
+
+        .report-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .report-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--gray-200);
+        }
+
+        .report-card h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .report-bar {
+            height: 20px;
+            background: var(--gray-100);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .report-bar-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 1s var(--ease);
+        }
+
+        .action-plan-card {
+            border-left: 4px solid var(--primary);
+            padding: 1rem 1.5rem;
+            background: var(--gray-50);
+            border-radius: 0 12px 12px 0;
+            margin-bottom: 0.75rem;
+            transition: border-color 0.3s var(--ease);
+        }
+
+        .action-plan-card:hover {
+            border-left-color: var(--secondary);
+        }
+
+        .action-plan-card h4 {
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 0.3rem;
+        }
+
+        .action-plan-card p {
+            font-size: 0.88rem;
+            color: var(--gray-500);
+            line-height: 1.6;
+        }
+
+        /* 반응형 */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 1.6rem;
+            }
+
+            .hero-tagline {
+                font-size: 0.92rem;
+            }
+
+            .value-points {
+                flex-direction: column;
+                gap: 0.6rem;
+            }
+
+            .value-point {
+                padding: 0.8rem 1rem;
+                min-width: auto;
+            }
+
+            .service-cards-section {
+                padding: 2rem 0.75rem;
+            }
+
+            .service-cards-header h2 {
+                font-size: 1.5rem;
+            }
+
+            .service-cards-header p {
+                font-size: 0.92rem;
+            }
+
+            .service-cards-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .service-card {
+                padding: 1.5rem 1.2rem;
+            }
+
+            .service-card h3 {
+                font-size: 1.2rem;
+            }
+
+            .service-card-icon {
+                font-size: 2.4rem;
+            }
+
+            .report-progress-container {
+                margin: 2rem 0.5rem 0;
+                padding: 1.2rem 1rem;
+            }
+
+            .report-progress-steps {
+                gap: 1rem;
+            }
+
+            .report-card {
+                padding: 1.5rem 1.2rem;
+            }
+
+            .back-to-services-btn {
+                width: 44px;
+                height: 44px;
+                top: 1rem;
+                left: 1rem;
+            }
+
+            .privacy-modal {
+                border-radius: 16px;
+            }
+
+            .modal-header {
+                padding: 1.5rem;
+                border-radius: 16px 16px 0 0;
+            }
+
+            .modal-body {
+                padding: 1.5rem;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .hero-title {
+                font-size: 1.4rem;
+            }
+
+            .service-cards-grid {
+                padding: 0 0.5rem;
+            }
+
+            .report-progress-steps {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- insidejob 통합 네비게이션 바 -->
+    <div id="ij-top-bar" style="position:fixed;top:0;left:0;right:0;z-index:9999;background:linear-gradient(135deg,#1e40af,#3b82f6);color:white;padding:8px 16px;display:flex;align-items:center;justify-content:space-between;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,0.15);">
+        <a href="../index.html" style="color:white;text-decoration:none;display:flex;align-items:center;gap:8px;font-weight:600;">
+            ← 인사이드잡 메인으로
+        </a>
+        <div style="display:flex;align-items:center;gap:12px;">
+            <span style="opacity:0.8;font-size:12px;">커리어 도구</span>
+            <span id="ij-auth-status" style="font-size:12px;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:10px;"></span>
+        </div>
+    </div>
+    <div style="height:40px;"></div>
+    <script>
+    (function() {
+        var SUPABASE_URL = 'https://upsedttmnulbmarhawyj.supabase.co';
+        var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVwc2VkdHRtbnVsYm1hcmhhd3lqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0NDk5MzIsImV4cCI6MjA3MjAyNTkzMn0.j7QuXCFfIytrBvCsIQl0bt9EuVYScIzZWGTR3tVZdUs';
+        function checkAuth() {
+            var el = document.getElementById('ij-auth-status');
+            if (!el) return;
+            try {
+                if (typeof supabase !== 'undefined') {
+                    var client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                    client.auth.getUser().then(function(res) {
+                        if (res.data && res.data.user) {
+                            el.textContent = res.data.user.email;
+                            el.style.background = 'rgba(34,197,94,0.3)';
+                        } else {
+                            el.textContent = '비로그인';
+                        }
+                    });
+                } else {
+                    el.textContent = '비로그인';
+                }
+            } catch(e) { el.textContent = '비로그인'; }
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() { setTimeout(checkAuth, 500); });
+        } else {
+            setTimeout(checkAuth, 500);
+        }
+    })();
+    </script>
+
+
+    <!-- 1. 랜딩 페이지 (히어로 섹션) -->
+    <section id="hero-section" class="page-section hero-section">
+        <!-- 로고 -->
+        <img src="logo.png" alt="InsideJob Logo" class="hero-logo" />
+
+        <!-- 서비스 소개 -->
+        <h1 class="hero-title">인사이드잡</h1>
+        <p class="hero-tagline" style="margin-bottom: 0.8rem;">
+            취업 준비의 모든 것, All in One!<br>
+            커리어진단, 경쟁력 분석, 자기소개서 작성
+        </p>
+
+        <!-- 3가지 핵심 가치 -->
+        <div class="value-points">
+            <div class="value-point">
+                <i class="fas fa-chart-line"></i>
+                <span>316개 직무 맞춤 진단</span>
+            </div>
+            <div class="value-point">
+                <i class="fas fa-trophy"></i>
+                <span>데이터 기반 경쟁력 분석</span>
+            </div>
+            <div class="value-point">
+                <i class="fas fa-rocket"></i>
+                <span>실행 가능한 가이드</span>
+            </div>
+        </div>
+
+        <!-- CTA 버튼 -->
+        <button id="start-service-btn" class="cta-button" onclick="showConsentModal()">
+            ✨ 무료로 시작하기
+        </button>
+
+        <p class="privacy-notice" style="margin-top: 0.8rem;">
+            💾 회원가입 없이 바로 이용 가능
+        </p>
+    </section>
+
+    <!-- 2. 개인정보 동의 모달 -->
+    <div id="privacy-modal" class="privacy-modal-overlay">
+        <div class="privacy-modal">
+            <div class="modal-header">
+                <h2>개인정보 수집·이용 동의</h2>
+            </div>
+            <div class="modal-body">
+                <!-- 동의서 내용 -->
+                <div class="consent-content">
+                    <div class="consent-section">
+                        <h3>1. 수집·이용 목적</h3>
+                        <ul>
+                            <li>커리어 진단 결과 제공</li>
+                            <li>취업 경쟁력 분석 및 맞춤형 추천</li>
+                            <li>자기소개서 작성 가이드 제공</li>
+                            <li>서비스 개선 및 통계 분석</li>
+                        </ul>
+                    </div>
+
+                    <div class="consent-section">
+                        <h3>2. 수집하는 개인정보 항목 (모두 필수)</h3>
+                        <ul>
+                            <li>이메일 주소 (동의 증명용)</li>
+                            <li>동의 여부 및 동의 시각</li>
+                            <li>진단 과정에서 입력하는 모든 데이터 (기기에만 저장, 서버 전송 안 함)</li>
+                            <li>진단 및 분석 결과 데이터 (기기에만 저장, 서버 전송 안 함)</li>
+                        </ul>
+                        <p style="margin-top: 0.5rem; font-size: 0.765rem; color: #64748b;">
+                            ※ 진단 및 분석 과정에서 입력하신 모든 데이터와 결과는 귀하의 기기에만 저장되며, 서버로 전송되지 않습니다.
+                            서버에 저장되는 정보는 이메일과 동의 기록뿐입니다.
+                        </p>
+                    </div>
+
+                    <div class="consent-section">
+                        <h3>3. 개인정보의 보유 및 이용기간</h3>
+                        <ul>
+                            <li>이메일 및 동의 기록: 1년 보관</li>
+                            <li>진단 결과 데이터: 기기 데이터 삭제 시까지 (로컬 저장)</li>
+                        </ul>
+                    </div>
+
+                    <div class="consent-section">
+                        <h3>4. 개인정보의 처리 및 보관</h3>
+                        <ul>
+                            <li><strong>이메일·동의 기록:</strong> Supabase 데이터베이스 (암호화 전송/저장)</li>
+                            <li><strong>진단 결과 데이터:</strong> 귀하의 기기 내부 저장소 (서버 전송 없음)</li>
+                            <li><strong>제3자 제공:</strong> 개인정보를 제3자에게 제공하지 않음</li>
+                        </ul>
+                    </div>
+
+                    <div class="consent-section">
+                        <h3>5. 동의를 거부할 권리 및 불이익</h3>
+                        <ul>
+                            <li>위 개인정보 수집·이용에 대한 동의를 거부할 수 있습니다</li>
+                            <li>다만, 동의 거부 시 서비스 이용이 제한됩니다</li>
+                        </ul>
+                    </div>
+
+                    <div class="consent-section">
+                        <h3>6. 문의</h3>
+                        <p>openconnect.team@gmail.com | (주)오픈커넥트</p>
+                    </div>
+                </div>
+
+                <!-- 이메일 입력 -->
+                <div class="form-group">
+                    <label for="consent-email">이메일 (동의 기록 저장용) *</label>
+                    <input
+                        type="email"
+                        id="consent-email"
+                        placeholder="example@email.com"
+                        required
+                    />
+                    <p class="help-text">
+                        개인정보보호법에 따라 동의 기록 증명을 위해 이메일이 필요합니다.
+                        <strong>서버에는 이메일, 동의 여부, 동의 시각만 저장됩니다.</strong>
+                        서비스 이용 정보는 귀하의 기기에만 저장되며 서버로 전송되지 않습니다.
+                    </p>
+                </div>
+
+                <!-- 동의 체크박스 -->
+                <div class="checkbox-group">
+                    <input type="checkbox" id="consent-checkbox" required />
+                    <label for="consent-checkbox">[필수] 개인정보 수집·이용 동의</label>
+                </div>
+
+                <!-- 버튼 -->
+                <div class="modal-buttons">
+                    <button class="btn-cancel" onclick="hideConsentModal()">취소</button>
+                    <button class="btn-submit" id="submit-consent-btn" onclick="submitConsent()">동의</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. 서비스 카드 섹션 -->
+    <section id="service-cards-section" class="page-section service-cards-section">
+        <div class="service-cards-header">
+            <h2>원하는 서비스를 선택하세요</h2>
+            <p>3가지 서비스를 모두 이용하실 수 있습니다</p>
+        </div>
+
+        <div class="service-cards-grid">
+            <!-- 카드 1: 커리어 진단 -->
+            <div class="service-card" onclick="loadService('diagnosis')">
+                <div class="service-card-step">Step 1</div>
+                <div class="service-card-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h3>커리어 진단</h3>
+                <p>강점 발견 → 직무 매칭 → 준비 가이드</p>
+                <ul class="service-card-features">
+                    <li>✓ 6가지 RIASEC 성향 분석</li>
+                    <li>✓ 316개 직무 맞춤 추천</li>
+                    <li>✓ 실행 가능한 커리어 로드맵</li>
+                </ul>
+                <button class="service-card-button">진단 시작하기</button>
+            </div>
+
+            <!-- 카드 2: 경쟁력 계산 -->
+            <div class="service-card" onclick="loadService('calculator')">
+                <div class="service-card-step">Step 2</div>
+                <div class="service-card-icon">
+                    <i class="fas fa-calculator"></i>
+                </div>
+                <h3>경쟁력 계산</h3>
+                <p>나의 취업 경쟁력 점수 확인</p>
+                <ul class="service-card-features">
+                    <li>✓ 3단계 100점 만점 평가</li>
+                    <li>✓ 직무별 맞춤 경쟁력 분석</li>
+                    <li>✓ 부족한 역량 개선 가이드</li>
+                </ul>
+                <button class="service-card-button">계산 시작하기</button>
+            </div>
+
+            <!-- 카드 3: 자기소개서 -->
+            <div class="service-card" onclick="loadService('toolkit')">
+                <div class="service-card-step">Step 3</div>
+                <div class="service-card-icon">
+                    <i class="fas fa-pen-fancy"></i>
+                </div>
+                <h3>자기소개서 툴킷</h3>
+                <p>체계적인 자소서 작성 도구</p>
+                <ul class="service-card-features">
+                    <li>✓ 경험 체계화 가이드</li>
+                    <li>✓ 강점별 사례 정리</li>
+                    <li>✓ 파일로 저장 및 내보내기</li>
+                </ul>
+                <button class="service-card-button">작성 시작하기</button>
+            </div>
+        </div>
+
+        <!-- 통합 리포트 프로그레스 -->
+        <div class="report-progress-container" id="report-progress">
+            <div class="report-progress-title">통합 리포트</div>
+            <div class="report-progress-steps">
+                <span class="report-progress-step" id="report-step-diagnosis">
+                    <i class="far fa-circle"></i> 커리어 진단
+                </span>
+                <span class="report-progress-step" id="report-step-calculator">
+                    <i class="far fa-circle"></i> 경쟁력 계산
+                </span>
+            </div>
+            <button id="show-report-btn" class="report-btn" onclick="showIntegratedReport()" disabled>
+                <i class="fas fa-file-alt" style="margin-right:0.5rem;"></i>두 서비스 완료 시 리포트 생성
+            </button>
+        </div>
+
+        <!-- 푸터 (서비스 카드 섹션 내부) -->
+        <footer class="footer" style="margin-top: 4rem;">
+            <p class="company-name">&copy; 2025 OpenConnect Co., Ltd.<br>All rights reserved.</p>
+            <p>Powered by (주)오픈커넥트</p>
+        </footer>
+    </section>
+
+    <!-- 4. 서비스 실행 섹션 (iframe) -->
+    <section id="service-iframe-section" class="page-section service-iframe-section">
+        <iframe id="service-iframe" src="" title="InsideJob Service"></iframe>
+    </section>
+
+    <!-- 5. 통합 리포트 섹션 -->
+    <section id="report-section" class="page-section report-section">
+        <div class="report-container" id="report-content">
+            <!-- 동적으로 생성됨 -->
+        </div>
+    </section>
+
+    <!-- 홈 버튼 (floating) -->
+    <button id="back-to-services-btn" class="back-to-services-btn" onclick="backToServices()" title="서비스 선택으로 돌아가기">
+        <i class="fas fa-home"></i>
+    </button>
+
+    <script>
+    (function() {
+        // ===================================
+        // Supabase 클라이언트 초기화
+        // ===================================
+        const SUPABASE_URL = 'https://lpdnamuecwgowdwqxugg.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwZG5hbXVlY3dnb3dkd3F4dWdnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIzNjAwMzUsImV4cCI6MjA4NzkzNjAzNX0.lVj1vrrw9Uv_0xqckmFo8PvsK38neJ4yh0XgyxX00_g';
+
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // ===================================
+        // 페이지 로드 시 동의 여부 확인
+        // ===================================
+        window.addEventListener('DOMContentLoaded', function() {
+            checkConsentStatus();
+            setupHistoryNavigation();
+        });
+
+        function checkConsentStatus() {
+            const consent = localStorage.getItem('insideJobConsent');
+
+            if (consent) {
+                // 동의 기록이 있으면 바로 서비스 카드 섹션으로 이동
+                showServiceCards();
+            } else {
+                // 동의 기록이 없으면 랜딩 페이지 표시
+                showSection('hero-section');
+            }
+        }
+
+        // ===================================
+        // 섹션 전환 함수
+        // ===================================
+        function showSection(sectionId) {
+            // 모든 섹션 숨김
+            document.querySelectorAll('.page-section').forEach(section => {
+                section.classList.remove('active');
+            });
+
+            // 선택한 섹션만 표시
+            document.getElementById(sectionId).classList.add('active');
+
+            // 페이지 상단으로 스크롤
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ===================================
+        // 개인정보 동의 모달 관련
+        // ===================================
+        function showConsentModal() {
+            document.getElementById('privacy-modal').classList.add('active');
+        }
+
+        function hideConsentModal() {
+            document.getElementById('privacy-modal').classList.remove('active');
+        }
+
+        async function submitConsent() {
+            const email = document.getElementById('consent-email').value.trim();
+            const checkbox = document.getElementById('consent-checkbox').checked;
+
+            // 유효성 검사
+            if (!email) {
+                alert('이메일을 입력해주세요.');
+                return;
+            }
+
+            if (!validateEmail(email)) {
+                alert('올바른 이메일 형식을 입력해주세요.');
+                return;
+            }
+
+            if (!checkbox) {
+                alert('개인정보 수집·이용에 동의해주세요.');
+                return;
+            }
+
+            // 버튼 비활성화
+            const submitBtn = document.getElementById('submit-consent-btn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '처리 중...';
+
+            try {
+                // 1. Supabase에 동의 기록 저장 (법적 의무)
+                if (supabaseClient) {
+                    const { data, error } = await supabaseClient
+                        .from('consent_records')
+                        .insert({
+                            email: email,
+                            agreed: true,
+                            consent_version: '1.0'
+                        })
+                        .select();
+
+                    if (error) {
+                        console.error('Supabase 저장 실패 상세:', {
+                            message: error.message,
+                            details: error.details,
+                            hint: error.hint,
+                            code: error.code
+                        });
+                        // Supabase 저장 실패해도 서비스는 계속 이용 가능
+                        console.warn('동의 기록은 localStorage에만 저장됩니다.');
+                    } else {
+                        console.log('Supabase 저장 성공:', data);
+                    }
+                } else {
+                    console.warn('Supabase가 초기화되지 않았습니다. localStorage에만 저장됩니다.');
+                }
+
+                // 2. localStorage에 저장 (재방문 시 모달 스킵용)
+                localStorage.setItem('insideJobConsent', JSON.stringify({
+                    email: email,
+                    agreed: true,
+                    timestamp: new Date().toISOString(),
+                    version: '1.0'
+                }));
+
+                // 3. 모달 닫고 서비스 카드 섹션으로 이동
+                hideConsentModal();
+                showServiceCards();
+
+            } catch (error) {
+                console.error('동의 제출 오류:', error);
+                alert('오류가 발생했습니다. 다시 시도해주세요.');
+            } finally {
+                // 버튼 다시 활성화
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '동의';
+            }
+        }
+
+        // 이메일 유효성 검사
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        // ===================================
+        // 통합 리포트 버튼 상태 관리
+        // ===================================
+        function updateReportButton() {
+            var reportBtn = document.getElementById('show-report-btn');
+            if (!reportBtn) return;
+
+            var hasDiagnosis = !!localStorage.getItem('insidejob_diagnosis_result');
+            var hasCalculator = !!localStorage.getItem('insidejob_calculation_result');
+
+            // 프로그레스 스텝 업데이트
+            var stepDiag = document.getElementById('report-step-diagnosis');
+            var stepCalc = document.getElementById('report-step-calculator');
+            if (stepDiag) {
+                if (hasDiagnosis) {
+                    stepDiag.classList.add('completed');
+                    stepDiag.innerHTML = '<i class="fas fa-check-circle"></i> 커리어 진단';
+                } else {
+                    stepDiag.classList.remove('completed');
+                    stepDiag.innerHTML = '<i class="far fa-circle"></i> 커리어 진단';
+                }
+            }
+            if (stepCalc) {
+                if (hasCalculator) {
+                    stepCalc.classList.add('completed');
+                    stepCalc.innerHTML = '<i class="fas fa-check-circle"></i> 경쟁력 계산';
+                } else {
+                    stepCalc.classList.remove('completed');
+                    stepCalc.innerHTML = '<i class="far fa-circle"></i> 경쟁력 계산';
+                }
+            }
+
+            // 버튼 상태 업데이트
+            if (hasDiagnosis && hasCalculator) {
+                reportBtn.classList.add('visible');
+                reportBtn.disabled = false;
+                reportBtn.innerHTML = '<i class="fas fa-file-alt" style="margin-right:0.5rem;"></i>통합 리포트 보기';
+            } else {
+                reportBtn.classList.remove('visible');
+                reportBtn.disabled = true;
+                reportBtn.innerHTML = '<i class="fas fa-file-alt" style="margin-right:0.5rem;"></i>두 서비스 완료 시 리포트 생성';
+            }
+        }
+
+        // ===================================
+        // 서비스 카드 섹션 표시
+        // ===================================
+        function showServiceCards() {
+            showSection('service-cards-section');
+            updateReportButton();
+        }
+
+        // ===================================
+        // 서비스 로드 (iframe)
+        // ===================================
+        function loadService(serviceName) {
+            const serviceUrls = {
+                'diagnosis': 'diagnosis.html',
+                'calculator': 'calculator.html',
+                'toolkit': 'toolkit.html'
+            };
+
+            const iframe = document.getElementById('service-iframe');
+            iframe.src = serviceUrls[serviceName];
+
+            showSection('service-iframe-section');
+
+            // 뒤로가기 버튼 표시
+            document.getElementById('back-to-services-btn').classList.add('visible');
+
+            // 히스토리에 추가
+            history.pushState({ page: 'service', serviceName: serviceName }, '', `#${serviceName}`);
+        }
+
+        // ===================================
+        // 서비스에서 뒤로가기
+        // ===================================
+        function backToServices() {
+            // iframe src 제거 (메모리 절약)
+            document.getElementById('service-iframe').src = '';
+
+            // 뒤로가기 버튼 숨김
+            document.getElementById('back-to-services-btn').classList.remove('visible');
+
+            // 서비스 카드 섹션으로 이동
+            showServiceCards();
+
+            // URL 해시 제거
+            history.pushState({ page: 'services' }, '', window.location.pathname);
+        }
+
+        // ===================================
+        // 히스토리 네비게이션 설정
+        // ===================================
+        function setupHistoryNavigation() {
+            // 초기 상태 설정
+            history.replaceState({ page: 'initial' }, '', location.href);
+
+            // popstate 이벤트 리스너 (뒤로가기/앞으로가기)
+            window.addEventListener('popstate', function(event) {
+                if (event.state) {
+                    if (event.state.page === 'service') {
+                        // 서비스 페이지로 복원
+                        loadService(event.state.serviceName);
+                    } else {
+                        // 서비스 선택 화면으로
+                        backToServices();
+                    }
+                } else {
+                    // 상태가 없으면 서비스 선택 화면으로
+                    backToServices();
+                }
+            });
+
+            // iframe에서 postMessage로 전달되는 요청 처리
+            window.addEventListener('message', function(event) {
+                // 보안: 같은 origin에서만 메시지 수신
+                if (event.origin !== window.location.origin) return;
+
+                if (event.data && event.data.action === 'backToServices') {
+                    backToServices();
+                }
+                if (event.data && event.data.action === 'diagnosisComplete') {
+                    updateReportButton();
+                }
+                if (event.data && event.data.action === 'calculatorComplete') {
+                    updateReportButton();
+                }
+            });
+        }
+
+        // ===================================
+        // 디버그: 동의 기록 삭제 (개발용)
+        // ===================================
+        function resetConsent() {
+            localStorage.removeItem('insideJobConsent');
+            location.reload();
+        }
+
+        // 콘솔에서 resetConsent() 호출하면 동의 기록 삭제 가능
+        console.log('디버그: resetConsent() 호출하면 동의 기록이 삭제됩니다.');
+
+        // ===================================
+        // 통합 리포트
+        // ===================================
+        function showIntegratedReport() {
+            var diagData = null;
+            var calcData = null;
+            try {
+                diagData = JSON.parse(localStorage.getItem('insidejob_diagnosis_result'));
+                calcData = JSON.parse(localStorage.getItem('insidejob_calculation_result'));
+            } catch(e) {}
+
+            if (!diagData && !calcData) {
+                alert('리포트를 생성하려면 최소 1개 이상의 서비스를 완료해주세요.');
+                return;
+            }
+
+            var container = document.getElementById('report-content');
+            var html = '';
+
+            // 리포트 헤더
+            html += '<div style="text-align:center;margin-bottom:2rem;">';
+            html += '<h2 style="font-size:2rem;font-weight:700;color:#1e293b;margin-bottom:0.5rem;">통합 취업 경쟁력 리포트</h2>';
+            html += '<p style="color:#64748b;">InsideJob 분석 결과 종합</p>';
+            html += '<button onclick="backFromReport()" style="margin-top:1rem;background:#64748b;color:white;border:none;padding:0.5rem 1.5rem;border-radius:20px;cursor:pointer;font-size:0.9rem;">← 돌아가기</button>';
+            html += '</div>';
+
+            // 1. 추천 직무 & 이유 (진단 데이터)
+            if (diagData && diagData.topJobs && diagData.topJobs.length > 0) {
+                html += '<div class="report-card">';
+                html += '<h3><i class="fas fa-briefcase" style="color:#3b82f6;"></i> 추천 직무 TOP 5</h3>';
+                var topJobs = diagData.topJobs.slice(0, 5);
+                topJobs.forEach(function(job, i) {
+                    var rawScore = job.score || 0;
+                    var pct = rawScore > 1 ? Math.round(rawScore) : Math.round(rawScore * 100);
+                    html += '<div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.75rem;">';
+                    html += '<span style="background:#3b82f6;color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0;">' + (i+1) + '</span>';
+                    html += '<div style="flex:1;">';
+                    html += '<div style="display:flex;justify-content:space-between;margin-bottom:0.3rem;"><strong>' + (job.title || job.jobId) + '</strong><span style="color:#3b82f6;font-weight:600;">' + pct + '%</span></div>';
+                    html += '<div class="report-bar"><div class="report-bar-fill" style="width:' + Math.min(pct, 100) + '%;background:linear-gradient(90deg,#3b82f6,#8b5cf6);"></div></div>';
+                    html += '</div></div>';
+                });
+                html += '</div>';
+            }
+
+            // 2. RIASEC 6축 분석 (진단 데이터)
+            if (diagData && diagData.riasecScores) {
+                html += '<div class="report-card">';
+                html += '<h3><i class="fas fa-chart-radar" style="color:#8b5cf6;"></i> RIASEC 성향 분석</h3>';
+                html += '<div style="max-width:400px;margin:0 auto;"><canvas id="report-radar-chart"></canvas></div>';
+                var riasecInfo = {
+                    R: { label: '현실형(R)', desc: '실용적이고 손으로 직접 만드는 것을 좋아합니다. 도구나 기계를 다루는 데 능숙하며 구체적인 결과물을 만들어내는 일에서 만족감을 느낍니다.', jobs: '엔지니어, 기술자, 건축가' },
+                    I: { label: '탐구형(I)', desc: '분석적이고 지적 호기심이 강합니다. 복잡한 문제를 논리적으로 풀어가는 것을 즐기며 데이터와 근거 기반의 사고를 선호합니다.', jobs: '연구원, 데이터 분석가, 컨설턴트' },
+                    A: { label: '예술형(A)', desc: '창의적이고 자유로운 표현을 중시합니다. 새로운 아이디어를 구상하고 독창적인 방식으로 문제를 해결하는 것을 좋아합니다.', jobs: '디자이너, 콘텐츠 크리에이터, 기획자' },
+                    S: { label: '사회형(S)', desc: '사람들과 함께하는 것을 좋아하고 타인을 돕는 데 보람을 느낍니다. 소통 능력이 뛰어나며 협업 환경에서 빛을 발합니다.', jobs: 'HR 담당자, 교육자, 상담사' },
+                    E: { label: '진취형(E)', desc: '리더십이 있고 목표 지향적입니다. 새로운 프로젝트를 시작하고 사람들을 이끌며 성과를 만들어내는 것에 동기부여를 받습니다.', jobs: '경영자, 영업 관리자, 프로젝트 매니저' },
+                    C: { label: '관습형(C)', desc: '체계적이고 꼼꼼합니다. 정해진 절차와 규칙에 따라 정확하게 일을 처리하며, 데이터 관리와 조직화에 강점을 보입니다.', jobs: '회계사, 사무관리자, 품질관리자' }
+                };
+                // 점수 기준 상위 3개 추출
+                var sortedKeys = Object.keys(riasecInfo).sort(function(a, b) {
+                    return (diagData.riasecScores[b] || 0) - (diagData.riasecScores[a] || 0);
+                });
+                var top3 = sortedKeys.slice(0, 3);
+
+                html += '<div style="display:flex;flex-direction:column;gap:0.75rem;margin-top:1rem;">';
+                sortedKeys.forEach(function(k) {
+                    var v = diagData.riasecScores[k] || 0;
+                    var info = riasecInfo[k];
+                    var isTop = top3.indexOf(k) !== -1;
+                    var borderColor = isTop ? '#3b82f6' : '#e2e8f0';
+                    var bgColor = isTop ? '#eff6ff' : '#f8fafc';
+                    var rankBadge = '';
+                    if (top3.indexOf(k) === 0) rankBadge = '<span style="background:#3b82f6;color:white;font-size:0.7rem;padding:2px 8px;border-radius:10px;margin-left:0.5rem;">1위</span>';
+                    else if (top3.indexOf(k) === 1) rankBadge = '<span style="background:#60a5fa;color:white;font-size:0.7rem;padding:2px 8px;border-radius:10px;margin-left:0.5rem;">2위</span>';
+                    else if (top3.indexOf(k) === 2) rankBadge = '<span style="background:#93c5fd;color:white;font-size:0.7rem;padding:2px 8px;border-radius:10px;margin-left:0.5rem;">3위</span>';
+                    html += '<div style="padding:0.75rem 1rem;background:' + bgColor + ';border-radius:10px;border-left:4px solid ' + borderColor + ';">';
+                    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem;">';
+                    html += '<div style="font-weight:700;color:#1e293b;">' + info.label + rankBadge + '</div>';
+                    html += '<div style="font-size:1.25rem;font-weight:700;color:#3b82f6;">' + v + '점</div>';
+                    html += '</div>';
+                    html += '<div style="font-size:0.85rem;color:#475569;line-height:1.5;margin-bottom:0.3rem;">' + info.desc + '</div>';
+                    html += '<div style="font-size:0.8rem;color:#94a3b8;">관련 직무: ' + info.jobs + '</div>';
+                    html += '</div>';
+                });
+                html += '</div></div>';
+            }
+
+            // 3. 경쟁력 점수 (계산기 데이터)
+            if (calcData) {
+                html += '<div class="report-card">';
+                html += '<h3><i class="fas fa-trophy" style="color:#f59e0b;"></i> 취업 경쟁력 점수</h3>';
+                html += '<div style="text-align:center;margin-bottom:1.5rem;">';
+                if (calcData.gradeInfo) {
+                    html += '<div style="font-size:1.75rem;font-weight:700;">' + (calcData.gradeInfo.grade || '') + '</div>';
+                    html += '<div style="font-size:0.9rem;color:#64748b;">' + (calcData.gradeInfo.description || '') + '</div>';
+                }
+                html += '<div style="font-size:1.5rem;font-weight:700;color:#1e293b;margin-top:0.5rem;">' + (calcData.totalScore || 0) + '점 / 100점</div>';
+                html += '</div>';
+
+                if (calcData.scoreBreakdown) {
+                    var colors = {'기본정보':'#3b82f6','직무별역량':'#8b5cf6','시장수용도':'#22c55e'};
+                    Object.keys(calcData.scoreBreakdown).forEach(function(key) {
+                        var bd = calcData.scoreBreakdown[key];
+                        var pct = Math.round((bd.score / bd.max) * 100);
+                        html += '<div style="margin-bottom:1rem;">';
+                        html += '<div style="display:flex;justify-content:space-between;margin-bottom:0.3rem;"><strong>' + key + '</strong><span>' + bd.score + '/' + bd.max + '점</span></div>';
+                        html += '<div class="report-bar"><div class="report-bar-fill" style="width:' + pct + '%;background:' + (colors[key]||'#3b82f6') + ';"></div></div>';
+                        html += '</div>';
+                    });
+                }
+                html += '</div>';
+            }
+
+            // 4. 액션 플랜 (계산기 recommendations)
+            if (calcData && calcData.skillRecommendations && calcData.skillRecommendations.length > 0) {
+                html += '<div class="report-card">';
+                html += '<h3><i class="fas fa-rocket" style="color:#22c55e;"></i> 액션 플랜</h3>';
+                calcData.skillRecommendations.forEach(function(rec) {
+                    html += '<div class="action-plan-card">';
+                    html += '<h4>' + rec.title + '</h4>';
+                    html += '<p>' + rec.content + '</p>';
+                    html += '</div>';
+                });
+                html += '<div style="text-align:center;margin-top:1.5rem;padding:1.25rem;background:linear-gradient(135deg,#eff6ff,#f0f9ff);border-radius:12px;border:1px solid #bfdbfe;">';
+                html += '<p style="font-size:0.9rem;color:#1e40af;margin-bottom:0.75rem;font-weight:500;">전문가의 도움이 필요하신가요?</p>';
+                html += '<a href="https://insidejob.kr" target="_blank" rel="noopener noreferrer" style="display:inline-block;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:white;text-decoration:none;padding:0.7rem 1.5rem;border-radius:25px;font-size:0.95rem;font-weight:600;box-shadow:0 4px 12px rgba(37,99,235,0.3);transition:transform 0.2s,box-shadow 0.2s;" onmouseover="this.style.transform=\'translateY(-2px)\';this.style.boxShadow=\'0 6px 16px rgba(37,99,235,0.4)\'" onmouseout="this.style.transform=\'translateY(0)\';this.style.boxShadow=\'0 4px 12px rgba(37,99,235,0.3)\'"><i class="fas fa-user-tie" style="margin-right:0.5rem;"></i>맞춤형 취업 컨설팅 받기</a>';
+                html += '</div>';
+                html += '</div>';
+            }
+
+            // PDF 다운로드 버튼
+            html += '<div style="text-align:center;margin:2rem 0;">';
+            html += '<button onclick="downloadReportPDF()" style="background:linear-gradient(135deg,#3b82f6,#2563eb);color:white;border:none;padding:0.75rem 2rem;border-radius:30px;font-size:1rem;font-weight:600;cursor:pointer;box-shadow:0 4px 12px rgba(59,130,246,0.3);"><i class="fas fa-file-pdf" style="margin-right:0.5rem;"></i>PDF 다운로드</button>';
+            html += '</div>';
+
+            // 푸터
+            html += '<footer class="footer" style="margin-top:2rem;"><p class="company-name">&copy; 2025 OpenConnect Co., Ltd.</p></footer>';
+
+            container.innerHTML = html;
+            showSection('report-section');
+
+            // RIASEC 레이더 차트 렌더링
+            if (diagData && diagData.riasecScores) {
+                setTimeout(function() { renderReportRadarChart(diagData.riasecScores); }, 100);
+            }
+        }
+
+        function renderReportRadarChart(scores) {
+            var canvas = document.getElementById('report-radar-chart');
+            if (!canvas || !window.Chart) return;
+
+            var labels = ['현실형(R)','탐구형(I)','예술형(A)','사회형(S)','진취형(E)','관습형(C)'];
+            var data = [scores.R||0, scores.I||0, scores.A||0, scores.S||0, scores.E||0, scores.C||0];
+            var maxVal = Math.max.apply(null, data);
+            var chartMax = Math.ceil(maxVal / 5) * 5 || 5;
+
+            new Chart(canvas, {
+                type: 'radar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'RIASEC 점수',
+                        data: data,
+                        backgroundColor: 'rgba(59,130,246,0.2)',
+                        borderColor: '#3b82f6',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#3b82f6',
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: chartMax,
+                            ticks: { stepSize: Math.ceil(chartMax / 5) }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        function backFromReport() {
+            showServiceCards();
+        }
+
+        function downloadReportPDF() {
+            var content = document.getElementById('report-content');
+            if (!content || !window.html2canvas || !window.jspdf) {
+                alert('PDF 라이브러리가 로드되지 않았습니다. 잠시 후 다시 시도해주세요.');
+                return;
+            }
+
+            html2canvas(content, { scale: 2, useCORS: true, logging: false }).then(function(canvas) {
+                var imgData = canvas.toDataURL('image/png');
+                var pdf = new window.jspdf.jsPDF('p', 'mm', 'a4');
+                var pageWidth = pdf.internal.pageSize.getWidth();
+                var pageHeight = pdf.internal.pageSize.getHeight();
+                var imgWidth = pageWidth - 20;
+                var imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                var yOffset = 10;
+                var remainingHeight = imgHeight;
+
+                while (remainingHeight > 0) {
+                    pdf.addImage(imgData, 'PNG', 10, yOffset, imgWidth, imgHeight);
+                    remainingHeight -= (pageHeight - 20);
+                    if (remainingHeight > 0) {
+                        pdf.addPage();
+                        yOffset = -(imgHeight - remainingHeight) + 10;
+                    }
+                }
+
+                pdf.save('InsideJob_통합리포트_' + new Date().toISOString().slice(0,10) + '.pdf');
+            });
+        }
+
+        // HTML onclick에서 호출 가능하도록 전역 등록
+        window.showConsentModal = showConsentModal;
+        window.hideConsentModal = hideConsentModal;
+        window.submitConsent = submitConsent;
+        window.loadService = loadService;
+        window.backToServices = backToServices;
+        window.resetConsent = resetConsent;
+        window.showIntegratedReport = showIntegratedReport;
+        window.backFromReport = backFromReport;
+        window.downloadReportPDF = downloadReportPDF;
+    })();
+    </script>
+</body>
+</html>

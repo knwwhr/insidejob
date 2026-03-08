@@ -15234,6 +15234,19 @@
                                                 <span className="mr-3 text-base">🧮</span>
                                                 취업경쟁력 진단
                                             </button>
+
+                                            {/* 커리어 도구 (openconnect 통합) */}
+                                            <a
+                                                href="career-tool/index.html"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="w-full text-left px-3 py-2 rounded-md transition-colors flex items-center text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600"
+                                                onClick={() => setShowMobileMenu(false)}
+                                            >
+                                                <span className="mr-3 text-base">🛠️</span>
+                                                커리어 도구
+                                                <span className="ml-auto text-xs text-gray-400">↗</span>
+                                            </a>
                                             
                                             {/* 게스트가 아닌 경우에만 표시 */}
                                             {!isGuest && (
