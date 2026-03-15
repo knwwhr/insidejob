@@ -499,9 +499,9 @@
             // 계산 결과 해시 생성 (조작 방지)
             async hashCalculationResult(result) {
                 const dataString = JSON.stringify({
-                    monthlyLivingCost: result.monthlyLivingCost,
+                    targetSalary: result.targetSalary || result.monthlyLivingCost,
                     totalAssets: result.totalAssets,
-                    assetSufficiencyYears: result.assetSufficiencyYears
+                    totalScore: result.totalScore || result.assetSufficiencyYears
                 });
                 
                 const encoder = new TextEncoder();
@@ -554,9 +554,9 @@
                         job_seeker_posts_count: 0
                     };
 
-                    if (supabase) {
+                    if (supabaseClient) {
                         // 서버에 익명 세션 저장
-                        const { data, error } = await supabase
+                        const { data, error } = await supabaseClient
                             .from('anonymous_sessions')
                             .insert([sessionData])
                             .select();
@@ -590,9 +590,9 @@
                     const token = localStorage.getItem(this.tokenKey);
                     if (!token) return null;
 
-                    if (supabase) {
+                    if (supabaseClient) {
                         // 서버에서 세션 조회
-                        const { data, error } = await supabase
+                        const { data, error } = await supabaseClient
                             .from('anonymous_sessions')
                             .select('*')
                             .eq('session_token', token)
@@ -613,7 +613,7 @@
                         }
 
                         // 마지막 활동 시간 업데이트
-                        await supabase
+                        await supabaseClient
                             .from('anonymous_sessions')
                             .update({ last_active: new Date().toISOString() })
                             .eq('session_token', token);
@@ -643,8 +643,8 @@
                 try {
                     const newExpiryDate = new Date(Date.now() + (30 * 24 * 60 * 60 * 1000));
                     
-                    if (supabase) {
-                        await supabase
+                    if (supabaseClient) {
+                        await supabaseClient
                             .from('anonymous_sessions')
                             .update({ 
                                 expires_at: newExpiryDate.toISOString(),
@@ -665,7 +665,7 @@
                 if (!this.currentSession) return;
 
                 try {
-                    if (supabase) {
+                    if (supabaseClient) {
                         const updates = { 
                             last_active: new Date().toISOString()
                         };
@@ -674,7 +674,7 @@
                             updates.job_seeker_posts_count = (this.currentSession.job_seeker_posts_count || 0) + 1;
                         }
 
-                        await supabase
+                        await supabaseClient
                             .from('anonymous_sessions')
                             .update(updates)
                             .eq('session_token', this.currentSession.session_token);
@@ -692,8 +692,8 @@
                 if (!targetToken) return;
 
                 try {
-                    if (supabase) {
-                        await supabase
+                    if (supabaseClient) {
+                        await supabaseClient
                             .from('anonymous_sessions')
                             .delete()
                             .eq('session_token', targetToken);
@@ -909,7 +909,7 @@
                     
                     // 사용자 프로필 생성
                     if (data.user) {
-                        const { error: profileError } = await supabase
+                        const { error: profileError } = await supabaseClient
                             .from('user_profiles')
                             .insert({
                                 id: data.user.id,
@@ -1018,7 +1018,7 @@
             async checkEmail(email) {
                 try {
                     // 기존 user_profiles 테이블에서 이메일 확인
-                    const { data: existingUser, error } = await supabase
+                    const { data: existingUser, error } = await supabaseClient
                         .from('user_profiles')
                         .select('id, email, role, expert_status')
                         .eq('email', email)
@@ -1062,7 +1062,7 @@
                     }
                     
                     // user_profiles에서 추가 정보 가져오기 (role, expert_status 포함)
-                    const { data: profileData, error: profileError } = await supabase
+                    const { data: profileData, error: profileError } = await supabaseClient
                         .from('user_profiles')
                         .select('id, email, nickname, role, expert_status, created_at')
                         .eq('id', user.id)
@@ -1103,7 +1103,7 @@
                 try {
                     if (!this.currentUser) throw new Error('로그인이 필요합니다');
                     
-                    const { error } = await supabase
+                    const { error } = await supabaseClient
                         .from('user_profiles')
                         .update({ nickname: newNickname })
                         .eq('id', this.currentUser.id);
@@ -1173,7 +1173,7 @@
             async handleSocialLoginCallback(user) {
                 try {
                     // 이미 프로필이 있는지 확인
-                    const { data: existingProfile } = await supabase
+                    const { data: existingProfile } = await supabaseClient
                         .from('user_profiles')
                         .select('*')
                         .eq('id', user.id)
@@ -1186,7 +1186,7 @@
                                         user.email?.split('@')[0] || 
                                         `사용자${Math.floor(Math.random() * 1000)}`;
                         
-                        const { error } = await supabase
+                        const { error } = await supabaseClient
                             .from('user_profiles')
                             .insert([{
                                 id: user.id,
@@ -1471,12 +1471,21 @@
             
             // 전문분야 카테고리 데이터
             const categories = {
-                'travel': {
-                    name: '✈️ 여행/취미'
-                },
-                'finance': {
-                    name: '💰 세무/법무'
-                },
+                'it_ict': { name: '💻 IT/개발' },
+                'business_planning': { name: '📋 경영/기획' },
+                'marketing_sales': { name: '📊 마케팅/영업' },
+                'design': { name: '🎨 디자인' },
+                'hr_education': { name: '👥 인사/교육' },
+                'finance_legal': { name: '⚖️ 재무/회계/법무' },
+                'manufacturing': { name: '⚙️ 제조/생산' },
+                'healthcare_bio': { name: '🏥 의료/바이오' },
+                'media_content': { name: '🎬 미디어/콘텐츠' },
+                'finance_insurance': { name: '💰 금융/보험' },
+                'service_support': { name: '🤝 서비스/고객지원' },
+                'public_ngo': { name: '🏛️ 공공/비영리' },
+                'research_development': { name: '🔬 연구/R&D' },
+                'environment_energy': { name: '🌱 환경/에너지' },
+                'transportation_logistics': { name: '🚚 물류/운송' }
             };
             
             // 데이터 업데이트 함수
@@ -1562,7 +1571,7 @@
                     
                     if (currentUser.isGuest) {
                         // 게스트는 이메일로 확인
-                        const { data, error } = await supabase
+                        const { data, error } = await supabaseClient
                             .from('professional_requests')
                             .select('id, status, created_at, email')
                             .eq('email', formData.email)
@@ -1572,7 +1581,7 @@
                         checkError = error;
                     } else {
                         // 회원은 user_id로 확인
-                        const { data, error } = await supabase
+                        const { data, error } = await supabaseClient
                             .from('professional_requests')
                             .select('id, status, created_at')
                             .eq('user_id', currentUser.id)
@@ -1621,7 +1630,7 @@
                     console.log('전문가 등록 요청 저장:', expertRequestData);
 
                     // expert_requests 테이블에 저장
-                    const { data, error } = await supabase
+                    const { data, error } = await supabaseClient
                         .from('professional_requests')
                         .insert([expertRequestData])
                         .select();
@@ -1920,12 +1929,21 @@
             const renderStep2Expertise = () => {
                 // 카테고리 객체 완전 독립 정의
                 const expertCategories = {
-                    'travel': {
-                        name: '✈️ 여행/취미'
-                    },
-                    'finance': {
-                        name: '💰 세무/법무'
-                    },
+                    'it_ict': { name: '💻 IT/개발' },
+                    'business_planning': { name: '📋 경영/기획' },
+                    'marketing_sales': { name: '📊 마케팅/영업' },
+                    'design': { name: '🎨 디자인' },
+                    'hr_education': { name: '👥 인사/교육' },
+                    'finance_legal': { name: '⚖️ 재무/회계/법무' },
+                    'manufacturing': { name: '⚙️ 제조/생산' },
+                    'healthcare_bio': { name: '🏥 의료/바이오' },
+                    'media_content': { name: '🎬 미디어/콘텐츠' },
+                    'finance_insurance': { name: '💰 금융/보험' },
+                    'service_support': { name: '🤝 서비스/고객지원' },
+                    'public_ngo': { name: '🏛️ 공공/비영리' },
+                    'research_development': { name: '🔬 연구/R&D' },
+                    'environment_energy': { name: '🌱 환경/에너지' },
+                    'transportation_logistics': { name: '🚚 물류/운송' }
                 };
                 
                 
@@ -1945,13 +1963,13 @@
                         }, '주요 카테고리 *'),
                         React.createElement('div', {
                             key: 'category-grid',
-                            className: 'grid grid-cols-1 sm:grid-cols-2 gap-3'
+                            className: 'grid grid-cols-2 sm:grid-cols-3 gap-3'
                         }, Object.entries(expertCategories).map(([key, category]) =>
                             React.createElement('label', {
                                 key: key,
-                                className: `flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                                    formData.category === key 
-                                        ? 'border-orange-500 bg-orange-50' 
+                                className: `flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all text-sm ${
+                                    formData.category === key
+                                        ? 'border-orange-500 bg-orange-50'
                                         : 'border-gray-200 hover:border-gray-300'
                                 }`,
                                 onClick: () => {
@@ -2633,7 +2651,7 @@
                     setIsCheckingDuplicate(true);
                     setNicknameError('');
 
-                    const { data, error } = await supabase
+                    const { data, error } = await supabaseClient
                         .from('user_profiles')
                         .select('id')
                         .eq('nickname', nickname.trim())
@@ -2666,7 +2684,7 @@
                 try {
                     setIsSavingNickname(true);
 
-                    const { error } = await supabase
+                    const { error } = await supabaseClient
                         .from('user_profiles')
                         .update({ nickname: newNickname.trim() })
                         .eq('id', currentUser.id);
@@ -2807,7 +2825,7 @@
                     await new Promise(resolve => setTimeout(resolve, 2000));
                     
                     // 실제 구현에서는 다음과 같이 처리:
-                    // const { error } = await supabase
+                    // const { error } = await supabaseClient
                     //     .from('refund_requests')
                     //     .insert({
                     //         payment_id: selectedPayment.id,
@@ -2901,10 +2919,10 @@
                         }
                         
                         // 2. Supabase에서 사용자의 모든 계산 결과 불러오기 (회원인 경우)
-                        if (currentUser && !currentUser.isGuest && supabase) {
+                        if (currentUser && !currentUser.isGuest && supabaseClient) {
                             console.log('🔍 Supabase에서 계산 결과 조회 중...', currentUser.id);
                             try {
-                                const { data, error } = await supabase
+                                const { data, error } = await supabaseClient
                                     .from('career_calculations')
                                     .select('*')
                                     .eq('user_id', currentUser.id)
@@ -2942,11 +2960,11 @@
                                             calculationResult = item.calculation_result || {};
                                         }
                                         
-                                        console.log('✅ 변환된 데이터:', { 
-                                            formData, 
+                                        console.log('✅ 변환된 데이터:', {
+                                            formData,
                                             calculationResult,
                                             totalAssets: calculationResult.totalAssets,
-                                            monthlyLivingCost: calculationResult.monthlyLivingCost 
+                                            targetSalary: calculationResult.targetSalary || calculationResult.monthlyLivingCost
                                         });
                                         
                                         return {
@@ -2973,7 +2991,7 @@
                             console.log('⚠️ Supabase 조회 건너뛰기:', {
                                 hasCurrentUser: !!currentUser,
                                 isGuest: currentUser?.isGuest,
-                                hasSupabase: !!supabase
+                                hasSupabase: !!supabaseClient
                             });
                         }
                         
@@ -3034,7 +3052,7 @@
                     } finally {
                         setLoading(false);
                     }
-                }, [currentUser, supabase]);
+                }, [currentUser, supabaseClient]);
 
             React.useEffect(() => {
                 loadCalculationHistory();
@@ -3059,7 +3077,7 @@
                         }
 
                         // Supabase가 없는 경우 모의 데이터 사용
-                        if (!supabase) {
+                        if (!supabaseClient) {
                             setBookingHistory(bookings);
                             setPaymentHistory(payments);
                             setLoading(false);
@@ -3067,7 +3085,7 @@
                         }
 
                         // 예약 내역 조회 (현직자/구직자 구분)
-                        const bookingQuery = supabase
+                        const bookingQuery = supabaseClient
                             .from('consultation_bookings')
                             .select(`
                                 *,
@@ -3092,7 +3110,7 @@
                         let paymentsData = [];
                         
                         if (bookingIds.length > 0) {
-                            const { data: payments, error: paymentsError } = await supabase
+                            const { data: payments, error: paymentsError } = await supabaseClient
                                 .from('payment_transactions')
                                 .select('*')
                                 .in('booking_id', bookingIds)
@@ -3212,7 +3230,7 @@
             useEffect(() => {
                 const loadExpertStats = async () => {
                     try {
-                        if (!supabase) {
+                        if (!supabaseClient) {
                             // 데모 데이터
                             setStats({
                                 totalConsultations: 8,
@@ -3227,7 +3245,7 @@
                         }
 
                         // 실제 통계 조회
-                        const { data: consultations, error } = await supabase
+                        const { data: consultations, error } = await supabaseClient
                             .from('consultation_bookings')
                             .select('*')
                             .eq('expert_id', currentUser.id);
@@ -3339,7 +3357,7 @@
             const loadRealStatistics = async () => {
                 setStatsLoading(true);
                 try {
-                    if (!supabase) {
+                    if (!supabaseClient) {
                         // Supabase 미연결시 Mock 데이터 사용
                         setStats({
                             totalUsers: 156,
@@ -3364,19 +3382,19 @@
                         settlementsResult
                     ] = await Promise.allSettled([
                         // 전체 회원수
-                        supabase.from('user_profiles').select('id', { count: 'exact', head: true }),
+                        supabaseClient.from('user_profiles').select('id', { count: 'exact', head: true }),
                         // 전문가 수
-                        supabase.from('user_profiles').select('id', { count: 'exact', head: true }).eq('role', 'expert'),
+                        supabaseClient.from('user_profiles').select('id', { count: 'exact', head: true }).eq('role', 'expert'),
                         // 게시글 수
-                        supabase.from('job_seeker_posts').select('id', { count: 'exact', head: true }),
+                        supabaseClient.from('job_seeker_posts').select('id', { count: 'exact', head: true }),
                         // 계산 완료 수
-                        supabase.from('career_calculations').select('id', { count: 'exact', head: true }),
+                        supabaseClient.from('career_calculations').select('id', { count: 'exact', head: true }),
                         // 완료된 상담 거래액
-                        supabase.from('consultation_bookings')
+                        supabaseClient.from('consultation_bookings')
                             .select('payment_amount')
                             .eq('status', 'completed'),
                         // 대기 중인 정산
-                        supabase.from('fee_settlements').select('id', { count: 'exact', head: true }).eq('status', 'pending')
+                        supabaseClient.from('fee_settlements').select('id', { count: 'exact', head: true }).eq('status', 'pending')
                     ]);
 
                     // 안전한 데이터 추출 (오류시 0으로 기본값)
@@ -3644,7 +3662,7 @@
                     setLoading(true);
                     
                     // fee_settlements 테이블에서 정산 내역 조회
-                    const { data: realSettlements, error } = await supabase
+                    const { data: realSettlements, error } = await supabaseClient
                         .from('fee_settlements')
                         .select(`
                             *,
@@ -3727,7 +3745,7 @@
             const approveSettlement = async (settlementId) => {
                 try {
                     // fee_settlements 테이블의 정산 상태를 'paid'로 업데이트
-                    const { error } = await supabase
+                    const { error } = await supabaseClient
                         .from('fee_settlements')
                         .update({ 
                             settlement_status: 'paid',
@@ -3977,9 +3995,9 @@
             const loadExperts = async () => {
                 try {
                     setLoading(true);
-                    if (supabase) {
+                    if (supabaseClient) {
                         // expert_requests 테이블에서 조회 (user_profiles와 조인)
-                        const { data, error } = await supabase
+                        const { data, error } = await supabaseClient
                             .from('professional_requests')
                             .select(`
                                 *,
@@ -4000,7 +4018,7 @@
                                 user_id: 'expert1',
                                 email: 'expert1@example.com',
                                 nickname: '김개발매니저',
-                                expert_type: 'tech_development',
+                                expert_type: 'it_ict',
                                 expert_title: '네이버 • 백엔드 개발팀장',
                                 expert_specialties: ['백엔드개발', '시스템설계', '기술면접'],
                                 expert_credentials: ['컴퓨터공학박사', '정보처리기사', 'AWS 자격증'],
@@ -4019,7 +4037,7 @@
                                 user_id: 'expert2',
                                 email: 'expert2@example.com',
                                 nickname: '박마케팅이사',
-                                expert_type: 'marketing_planning',
+                                expert_type: 'marketing_sales',
                                 expert_title: '카카오 • 마케팅 전략이사',
                                 expert_specialties: ['디지털마케팅', '그로스해킹', '브랜딩'],
                                 expert_credentials: ['경영학석사', 'Google Analytics', 'Facebook Blueprint'],
@@ -4054,9 +4072,9 @@
                     setProcessingId(expertId);
                     const newStatus = action === 'approve' ? 'approved' : 'rejected';
                     
-                    if (supabase) {
+                    if (supabaseClient) {
                         // expert_requests 테이블 상태 업데이트
-                        const { data: requestData, error: requestError } = await supabase
+                        const { data: requestData, error: requestError } = await supabaseClient
                             .from('professional_requests')
                             .update({ 
                                 status: newStatus,
@@ -4072,7 +4090,7 @@
 
                         // 승인된 경우 user_profiles 테이블에 role 업데이트
                         if (action === 'approve' && requestData) {
-                            const { error: profileError } = await supabase
+                            const { error: profileError } = await supabaseClient
                                 .from('user_profiles')
                                 .update({ 
                                     role: 'expert',
@@ -4270,8 +4288,8 @@
             const loadUsers = async () => {
                 try {
                     setLoading(true);
-                    if (supabase) {
-                        const { data, error } = await supabase
+                    if (supabaseClient) {
+                        const { data, error } = await supabaseClient
                             .from('user_profiles')
                             .select('*')
                             .order('created_at', { ascending: false });
@@ -4316,8 +4334,8 @@
                 if (!confirm(`사용자의 역할을 '${newRole}'로 변경하시겠습니까?`)) return;
                 
                 try {
-                    if (supabase) {
-                        const { error } = await supabase
+                    if (supabaseClient) {
+                        const { error } = await supabaseClient
                             .from('user_profiles')
                             .update({ role: newRole })
                             .eq('id', userId);
@@ -4346,8 +4364,8 @@
                     const suspendUntil = suspendDuration === 'permanent' ? null : 
                         new Date(Date.now() + parseInt(suspendDuration) * 24 * 60 * 60 * 1000).toISOString();
                     
-                    if (supabase) {
-                        const { error } = await supabase
+                    if (supabaseClient) {
+                        const { error } = await supabaseClient
                             .from('user_profiles')
                             .update({
                                 account_status: 'suspended',
@@ -4385,8 +4403,8 @@
                 
                 setActionLoading(true);
                 try {
-                    if (supabase) {
-                        const { error } = await supabase
+                    if (supabaseClient) {
+                        const { error } = await supabaseClient
                             .from('user_profiles')
                             .update({
                                 account_status: 'active',
@@ -4421,8 +4439,8 @@
                 
                 setActionLoading(true);
                 try {
-                    if (supabase) {
-                        const { error } = await supabase
+                    if (supabaseClient) {
+                        const { error } = await supabaseClient
                             .from('user_profiles')
                             .update({
                                 account_status: 'deleted',
@@ -4813,7 +4831,7 @@
             const loadReports = async () => {
                 setLoading(true);
                 try {
-                    if (!supabase) {
+                    if (!supabaseClient) {
                         // Demo 데이터
                         setReports([
                             {
@@ -4848,7 +4866,7 @@
                     }
 
                     // 실제 DB 쿼리
-                    const { data, error } = await supabase
+                    const { data, error } = await supabaseClient
                         .from('content_reports')
                         .select(`
                             *,
@@ -4879,8 +4897,8 @@
 
                 setActionLoading(true);
                 try {
-                    if (supabase) {
-                        const { error } = await supabase
+                    if (supabaseClient) {
+                        const { error } = await supabaseClient
                             .from('content_reports')
                             .update({
                                 status: action,
@@ -4893,7 +4911,7 @@
                         if (error) throw error;
 
                         // 액션 로그 생성
-                        await supabase.from('report_actions').insert({
+                        await supabaseClient.from('report_actions').insert({
                             report_id: reportId,
                             action_type: 'status_changed',
                             action_by: currentUser.id,
@@ -5220,7 +5238,7 @@
             const loadSettings = async () => {
                 try {
                     // system_settings 테이블에서 설정 로드
-                    const { data, error } = await supabase
+                    const { data, error } = await supabaseClient
                         .from('system_settings')
                         .select('setting_key, setting_value');
 
@@ -5275,7 +5293,7 @@
                     }
 
                     // Upsert 방식으로 설정 저장
-                    const { error } = await supabase
+                    const { error } = await supabaseClient
                         .from('system_settings')
                         .upsert(updates, { 
                             onConflict: 'setting_key',
@@ -5506,7 +5524,7 @@
             const [expertProfile, setExpertProfile] = useState({
                 name: '',
                 title: '',
-                expertType: 'travel',
+                expertType: 'it_ict',
                 experienceYears: '',
                 bio: '',
                 specialties: [],
@@ -5531,12 +5549,21 @@
 
             // 전문가 카테고리 정의
             const expertCategories = {
-                'tech_development': { name: 'IT/개발', icon: '💻', description: '개발자, 엔지니어, IT 전문가' },
-                'finance_consulting': { name: '금융/컨설팅', icon: '💰', description: '금융권, 컨설팅 현직자' },
-                'marketing_planning': { name: '마케팅/기획', icon: '📊', description: '마케터, 기획자, 전략 담당자' },
-                'manufacturing': { name: '제조/엔지니어링', icon: '⚙️', description: '제조업, 엔지니어링 현직자' },
-                'public_education': { name: '공공/교육', icon: '🏛️', description: '공무원, 교육 분야 종사자' },
-                'others': { name: '기타', icon: '💼', description: '기타 업계 현직자' }
+                'it_ict': { name: 'IT/개발', icon: '💻', description: '개발자, 엔지니어, IT 전문가' },
+                'business_planning': { name: '경영/기획', icon: '📋', description: '경영기획, 전략, 컨설팅 현직자' },
+                'marketing_sales': { name: '마케팅/영업', icon: '📊', description: '마케터, 영업, 세일즈 현직자' },
+                'design': { name: '디자인', icon: '🎨', description: 'UI/UX, 그래픽, 영상 디자이너' },
+                'hr_education': { name: '인사/교육', icon: '👥', description: 'HR, 채용, 교육 담당자' },
+                'finance_legal': { name: '재무/회계/법무', icon: '⚖️', description: '재무, 회계, 법무 현직자' },
+                'manufacturing': { name: '제조/생산', icon: '⚙️', description: '제조업, 생산관리, 품질 현직자' },
+                'healthcare_bio': { name: '의료/바이오', icon: '🏥', description: '의료, 제약, 바이오 현직자' },
+                'media_content': { name: '미디어/콘텐츠', icon: '🎬', description: '콘텐츠, 미디어, 크리에이터' },
+                'finance_insurance': { name: '금융/보험', icon: '💰', description: '금융권, 보험, 투자 현직자' },
+                'service_support': { name: '서비스/고객지원', icon: '🤝', description: '서비스, CS, 경영지원 현직자' },
+                'public_ngo': { name: '공공/비영리', icon: '🏛️', description: '공무원, 공기업, NGO 현직자' },
+                'research_development': { name: '연구/R&D', icon: '🔬', description: '연구원, R&D, 기술개발 현직자' },
+                'environment_energy': { name: '환경/에너지', icon: '🌱', description: '환경, 에너지, ESG 현직자' },
+                'transportation_logistics': { name: '물류/운송', icon: '🚚', description: '물류, 유통, 운송 현직자' }
             };
 
             // 전문가 프로필 업데이트 함수
@@ -5756,15 +5783,14 @@
                         }
 
                         // 전문가 프로필 저장 (검토 대기 상태)
-                        const { data: expertData, error: expertError } = await supabase
+                        const { data: expertData, error: expertError } = await supabaseClient
                             .from('experts')
                             .insert({
                                 email: email,
                                 name: expertProfile.name,
                                 phone: expertProfile.phone,
                                 title: expertProfile.title,
-                                expert_type: expertProfile.category === 'travel' ? 'travel_planner' : 
-                                           expertProfile.category === 'legal' ? 'lawyer' : 'consultant',
+                                expert_type: expertProfile.category,
                                 category: expertProfile.category,
                                 specialties: expertProfile.specialties,
                                 bio: expertProfile.bio,
@@ -5828,7 +5854,7 @@
                 setExpertProfile({
                     name: '',
                     title: '',
-                    expertType: 'travel',
+                    expertType: 'it_ict',
                     experienceYears: '',
                     bio: '',
                     specialties: [],
@@ -6429,7 +6455,7 @@
             const [expertPost, setExpertPost] = useState({
                 title: '',
                 content: '',
-                category: 'travel',
+                category: 'it_ict',
                 consultation_price: '20000',
                 consultation_duration: '30',
                 consultation_types: ['phone'],
@@ -6547,8 +6573,8 @@
                     title: '신입 개발자 취업 준비, 이것만은 꼭 확인하세요!',
                     content: '안녕하세요, IT개발 현직자 김개발자입니다. 신입 개발자로 취업을 준비하시는 분들을 위한 체크리스트를 공유합니다...',
                     topic: 'expert',
-                    expert_category: 'travel',
-                    user_hash: 'expert_kim_travel',
+                    expert_category: 'it_ict',
+                    user_hash: 'expert_kim_dev',
                     expert_badge: '인증 전문가',
                     expert_name: '김개발자',
                     expert_title: 'IT개발 현직자',
@@ -6563,7 +6589,7 @@
                     title: '회계 직무 준비 전략 - 자격증과 실무의 최적 밸런스',
                     content: '회계/세무 현직자 최회계사입니다. 많은 분들이 궁금해하시는 회계 직무 준비 시 자격증과 실무 경험의 최적 밸런스에 대해 설명드리겠습니다...',
                     topic: 'expert',
-                    expert_category: 'legal',
+                    expert_category: 'finance_legal',
                     user_hash: 'expert_choi_tax',
                     expert_badge: '인증 전문가',
                     expert_name: '최회계사',
@@ -6592,9 +6618,9 @@
                 try {
                     if (currentUser) {
                         // Supabase 연결이 있을 때만 사용자 프로필 로드
-                        if (supabase) {
+                        if (supabaseClient) {
                             try {
-                                const { data: profile, error } = await supabase
+                                const { data: profile, error } = await supabaseClient
                                     .from('user_profiles')
                                     .select('*')
                                     .eq('id', currentUser.id)
@@ -6630,8 +6656,8 @@
             const loadPosts = async () => {
                 if (!currentUser) return;
                 try {
-                    if (supabase) {
-                        const { data, error } = await supabase
+                    if (supabaseClient) {
+                        const { data, error } = await supabaseClient
                             .from('job_seeker_posts')
                             .select('*')
                             .eq('category', activeTopic)
@@ -6801,8 +6827,8 @@
                         created_at: new Date().toISOString()
                     };
 
-                    if (supabase) {
-                        const { data, error } = await supabase
+                    if (supabaseClient) {
+                        const { data, error } = await supabaseClient
                             .from('job_seeker_posts')
                             .insert([postData])
                             .select();
@@ -7344,7 +7370,7 @@
                 const initializeChat = async () => {
                     try {
                         // 기존 메시지 로드
-                        const { data, error } = await supabase
+                        const { data, error } = await supabaseClient
                             .from('chat_messages')
                             .select('*')
                             .eq('consultation_id', consultation.id)
@@ -7355,7 +7381,7 @@
                         setConnectionStatus('connected');
 
                         // 실시간 구독 설정
-                        const subscription = supabase
+                        const subscription = supabaseClient
                             .channel(`consultation_${consultation.id}`)
                             .on('postgres_changes', {
                                 event: 'INSERT',
@@ -7414,7 +7440,7 @@
                 };
 
                 try {
-                    const { error } = await supabase
+                    const { error } = await supabaseClient
                         .from('chat_messages')
                         .insert(messageData);
 
@@ -7595,7 +7621,7 @@
                     try {
                         setLoading(true);
                         
-                        const query = supabase
+                        const query = supabaseClient
                             .from('consultation_bookings')
                             .select(`
                                 *,
@@ -7644,7 +7670,7 @@
                     if (rating !== null) updateData.job_seeker_rating = rating;
                     if (review) updateData.job_seeker_feedback = review;
 
-                    const { error: updateError } = await supabase
+                    const { error: updateError } = await supabaseClient
                         .from('consultation_bookings')
                         .update(updateData)
                         .eq('id', bookingId);
@@ -7658,7 +7684,7 @@
                     const expertPayout = totalAmount - platformFee;
 
                     // consultation_bookings 테이블에 정산 정보 업데이트  
-                    const { error: settlementError } = await supabase
+                    const { error: settlementError } = await supabaseClient
                         .from('consultation_bookings')
                         .update({
                             platform_fee: platformFee,
@@ -7669,7 +7695,7 @@
                     if (settlementError) throw settlementError;
 
                     // 3. fee_settlements 테이블에 정산 레코드 생성
-                    const { error: feeSettlementError } = await supabase
+                    const { error: feeSettlementError } = await supabaseClient
                         .from('fee_settlements')
                         .insert({
                             booking_id: bookingId,
@@ -7739,7 +7765,7 @@
                     ];
 
                     // 알림 테이블에 저장 (notifications 테이블이 있다면)
-                    const { error: notificationError } = await supabase
+                    const { error: notificationError } = await supabaseClient
                         .from('notifications')
                         .insert(notifications);
 
@@ -7790,7 +7816,7 @@
                     const chatRoom = await findOrCreateConsultationChatRoom(booking.id);
                     if (chatRoom) {
                         // 현직자용 가이던스
-                        await supabase.from('chat_messages').insert({
+                        await supabaseClient.from('chat_messages').insert({
                             room_id: chatRoom.id,
                             user_id: null, // 시스템 메시지
                             message_text: `${expertGuidance.title}\n\n${expertGuidance.messages.join('\n')}`,
@@ -7798,8 +7824,8 @@
                             created_at: new Date().toISOString()
                         });
 
-                        // 구직자용 가이던스  
-                        await supabase.from('chat_messages').insert({
+                        // 구직자용 가이던스
+                        await supabaseClient.from('chat_messages').insert({
                             room_id: chatRoom.id,
                             user_id: null, // 시스템 메시지
                             message_text: `${jobSeekerGuidance.title}\n\n${jobSeekerGuidance.messages.join('\n')}`,
@@ -7817,7 +7843,7 @@
             const findOrCreateConsultationChatRoom = async (bookingId) => {
                 try {
                     // 기존 채팅방 확인
-                    const { data: existingRoom } = await supabase
+                    const { data: existingRoom } = await supabaseClient
                         .from('chat_rooms')
                         .select('*')
                         .eq('name', `상담 ${bookingId}`)
@@ -7827,7 +7853,7 @@
                     if (existingRoom) return existingRoom;
 
                     // 새 채팅방 생성
-                    const { data: newRoom, error } = await supabase
+                    const { data: newRoom, error } = await supabaseClient
                         .from('chat_rooms')
                         .insert({
                             name: `상담 ${bookingId}`,
@@ -7910,7 +7936,7 @@
             // 예약 상태 업데이트 (일반)
             const updateBookingStatus = async (bookingId, newStatus) => {
                 try {
-                    const { error } = await supabase
+                    const { error } = await supabaseClient
                         .from('consultation_bookings')
                         .update({ 
                             booking_status: newStatus, 
@@ -8310,7 +8336,7 @@
 
             const handleReviewSubmit = async () => {
                 try {
-                    if (!supabase) {
+                    if (!supabaseClient) {
                         console.log('데모 모드: 후기 저장:', review);
                         alert('후기가 등록되었습니다. 감사합니다! (데모 모드)');
                         onClose();
@@ -8318,7 +8344,7 @@
                     }
 
                     // 후기 데이터 저장
-                    const { error: reviewError } = await supabase
+                    const { error: reviewError } = await supabaseClient
                         .from('consultation_bookings')
                         .insert({
                             consultation_id: consultation.id,
@@ -8337,7 +8363,7 @@
                     if (reviewError) throw reviewError;
 
                     // 전문가 평점 업데이트
-                    const { data: reviews, error: avgError } = await supabase
+                    const { data: reviews, error: avgError } = await supabaseClient
                         .from('consultation_bookings')
                         .select('overall_rating')
                         .eq('expert_id', consultation.expert_id);
@@ -8345,7 +8371,7 @@
                     if (!avgError && reviews?.length > 0) {
                         const avgRating = reviews.reduce((sum, r) => sum + r.overall_rating, 0) / reviews.length;
                         
-                        await supabase
+                        await supabaseClient
                             .from('experts')
                             .update({
                                 average_rating: Math.round(avgRating * 10) / 10,
@@ -8355,7 +8381,7 @@
                     }
 
                     // 상담 세션 완료 처리
-                    await supabase
+                    await supabaseClient
                         .from('consultation_bookings')
                         .update({ 
                             status: 'completed',
@@ -8672,7 +8698,7 @@
                     console.log('💳 결제 완료:', paymentResult);
                     
                     // Supabase에 예약 정보 저장
-                    const { error } = await supabase
+                    const { error } = await supabaseClient
                         .from('consultation_bookings')
                         .insert({
                             expert_id: bookingResult.expertId,
@@ -9371,7 +9397,7 @@
             const [formData, setFormData] = useState({
                 title: '',
                 content: '',
-                category: 'tech_development',
+                category: 'it_ict',
                 serviceType: 'video',
                 price: '',
                 duration: '60',
@@ -9385,11 +9411,21 @@
 
             // 카테고리 정의
             const categories = {
-                'tech_development': { name: 'IT/개발', icon: '💻', color: 'blue' },
-                'finance_consulting': { name: '금융/컨설팅', icon: '💰', color: 'green' },
-                'marketing_planning': { name: '마케팅/기획', icon: '📊', color: 'purple' },
-                'manufacturing': { name: '제조/엔지니어링', icon: '⚙️', color: 'orange' },
-                'others': { name: '기타', icon: '💼', color: 'gray' }
+                'it_ict': { name: 'IT/개발', icon: '💻', color: 'blue' },
+                'business_planning': { name: '경영/기획', icon: '📋', color: 'indigo' },
+                'marketing_sales': { name: '마케팅/영업', icon: '📊', color: 'purple' },
+                'design': { name: '디자인', icon: '🎨', color: 'pink' },
+                'hr_education': { name: '인사/교육', icon: '👥', color: 'orange' },
+                'finance_legal': { name: '재무/회계/법무', icon: '⚖️', color: 'amber' },
+                'manufacturing': { name: '제조/생산', icon: '⚙️', color: 'slate' },
+                'healthcare_bio': { name: '의료/바이오', icon: '🏥', color: 'red' },
+                'media_content': { name: '미디어/콘텐츠', icon: '🎬', color: 'violet' },
+                'finance_insurance': { name: '금융/보험', icon: '💰', color: 'green' },
+                'service_support': { name: '서비스/고객지원', icon: '🤝', color: 'teal' },
+                'public_ngo': { name: '공공/비영리', icon: '🏛️', color: 'cyan' },
+                'research_development': { name: '연구/R&D', icon: '🔬', color: 'lime' },
+                'environment_energy': { name: '환경/에너지', icon: '🌱', color: 'emerald' },
+                'transportation_logistics': { name: '물류/운송', icon: '🚚', color: 'gray' }
             };
 
             // 서비스 유형 (상담 방식)
@@ -9432,7 +9468,7 @@
                     setFormData({
                         title: '',
                         content: '',
-                        category: 'tech_development',
+                        category: 'it_ict',
                         serviceType: 'video',
                         price: '',
                         duration: '60',
@@ -9530,7 +9566,7 @@
                         };
                     } else {
                         // 일반 사용자는 전문가 프로필 확인
-                        const { data: profile } = await supabase
+                        const { data: profile } = await supabaseClient
                             .from('experts')
                             .select('*')
                             .eq('user_id', currentUser.id)
@@ -9559,7 +9595,7 @@
                         };
 
                         // job_seeker_posts 테이블에 저장
-                        const { data: expertPost, error: expertError } = await supabase
+                        const { data: expertPost, error: expertError } = await supabaseClient
                             .from('job_seeker_posts')
                             .insert([postData])
                             .select()
@@ -9583,7 +9619,7 @@
                         created_at: new Date().toISOString()
                     };
 
-                    const { error: communityError } = await supabase
+                    const { error: communityError } = await supabaseClient
                         .from('job_seeker_posts')
                         .insert([communityPostData]);
 
@@ -9877,13 +9913,24 @@
                                     <div className="flex flex-wrap gap-2">
                                         {(() => {
                                             const recommendedTags = {
-                                                'tech_development': ['신입', '경력', '면접준비', '기술스택', '포트폴리오', '이력서', '코딩테스트'],
-                                                'finance_consulting': ['금융권', '자격증', 'CPA', 'CFA', '투자', '재무관리', '경제'],
-                                                'marketing_planning': ['브랜딩', '디지털마케팅', '소셜미디어', '광고', '기획', '분석', '전략'],
+                                                'it_ict': ['신입', '경력', '면접준비', '기술스택', '포트폴리오', '이력서', '코딩테스트'],
+                                                'business_planning': ['전략', '기획', '컨설팅', '경영', '사업개발', '분석'],
+                                                'marketing_sales': ['브랜딩', '디지털마케팅', '소셜미디어', '광고', '영업', '세일즈'],
+                                                'design': ['UI/UX', '그래픽', '영상', '포트폴리오', '브랜딩', '모션'],
+                                                'hr_education': ['채용', '인사', '교육', '조직문화', 'HR', '면접관'],
+                                                'finance_legal': ['회계', '재무', '세무', '법무', '감사', '자격증'],
                                                 'manufacturing': ['생산관리', '품질관리', '안전', '공정개선', '기술', '제조업'],
-                                                'others': ['커리어', '취업', '이직', '상담', '멘토링']
+                                                'healthcare_bio': ['의료', '제약', '바이오', '임상', '연구', '헬스케어'],
+                                                'media_content': ['콘텐츠', '미디어', '영상', '편집', '크리에이터', 'PD'],
+                                                'finance_insurance': ['금융권', 'CPA', 'CFA', '투자', '보험', '자산관리'],
+                                                'service_support': ['CS', '고객경험', '서비스', '경영지원', '총무'],
+                                                'public_ngo': ['공무원', '공기업', 'NGO', '정책', '사회공헌'],
+                                                'research_development': ['연구', 'R&D', '기술개발', '논문', '특허'],
+                                                'environment_energy': ['환경', '에너지', 'ESG', '신재생', '지속가능'],
+                                                'transportation_logistics': ['물류', '유통', '운송', '구매', 'SCM'],
+                                                '_default': ['커리어', '취업', '이직', '상담', '멘토링']
                                             };
-                                            return (recommendedTags[formData.category] || recommendedTags.others).map(tag => (
+                                            return (recommendedTags[formData.category] || recommendedTags._default).map(tag => (
                                                 <button
                                                     key={tag}
                                                     type="button"
@@ -10038,7 +10085,7 @@
             const loadChatHistory = async () => {
                 try {
                     setLoading(true);
-                    const { data, error } = await supabase
+                    const { data, error } = await supabaseClient
                         .from('chat_rooms')
                         .select(`
                             *,
@@ -10089,7 +10136,7 @@
             const deleteChatHistory = async (chatRoomId) => {
                 try {
                     // 실제로는 채팅방을 비활성화하거나 사용자 참여만 제거
-                    const { error } = await supabase
+                    const { error } = await supabaseClient
                         .from('chat_participants')
                         .delete()
                         .eq('room_id', chatRoomId)
@@ -10378,7 +10425,7 @@
             // 채팅방 목록 로드
             const loadChatRooms = async () => {
                 try {
-                    const { data, error } = await supabase
+                    const { data, error } = await supabaseClient
                         .from('chat_rooms')
                         .select('*')
                         .eq('is_active', true)
@@ -10402,7 +10449,7 @@
             const joinRoom = async (room) => {
                 try {
                     // 참여자로 추가 (이미 있으면 업데이트)
-                    await supabase
+                    await supabaseClient
                         .from('chat_participants')
                         .upsert({
                             room_id: room.id,
@@ -10423,7 +10470,7 @@
             // 메시지 로드
             const loadMessages = async (roomId) => {
                 try {
-                    const { data, error } = await supabase
+                    const { data, error } = await supabaseClient
                         .from('chat_messages')
                         .select('*')
                         .eq('room_id', roomId)
@@ -10443,7 +10490,7 @@
             // 참여자 로드
             const loadParticipants = async (roomId) => {
                 try {
-                    const { data, error } = await supabase
+                    const { data, error } = await supabaseClient
                         .from('chat_participants')
                         .select(`
                             *,
@@ -10469,7 +10516,7 @@
 
                 try {
                     setSending(true);
-                    const { error } = await supabase
+                    const { error } = await supabaseClient
                         .from('chat_messages')
                         .insert({
                             room_id: selectedRoom.id,
@@ -10502,7 +10549,7 @@
                 }
 
                 // 새 메시지 구독
-                messageSubscription.current = supabase
+                messageSubscription.current = supabaseClient
                     .channel(`chat-${roomId}`)
                     .on('postgres_changes', {
                         event: 'INSERT',
@@ -10710,7 +10757,7 @@
             // 시그널링 메시지 전송 (Supabase 채팅 메시지 이용)
             const sendSignalingMessage = async (signalData) => {
                 try {
-                    await supabase
+                    await supabaseClient
                         .from('chat_messages')
                         .insert({
                             room_id: signalData.roomId,
@@ -10850,7 +10897,7 @@
             const requestExpertConsultation = async () => {
                 try {
                     const roomName = `${currentUser.nickname || currentUser.email}님의 멘토링실`;
-                    const { data, error } = await supabase
+                    const { data, error } = await supabaseClient
                         .from('chat_rooms')
                         .insert({
                             name: roomName,
@@ -11192,10 +11239,10 @@
                                                                                     if (message.file_url) {
                                                                                         // 1. 다운로드 카운트 증가
                                                                                         if (message.file_id) {
-                                                                                            await supabase
+                                                                                            await supabaseClient
                                                                                                 .from('chat_files')
-                                                                                                .update({ 
-                                                                                                    download_count: supabase.sql`download_count + 1` 
+                                                                                                .update({
+                                                                                                    download_count: supabaseClient.sql`download_count + 1`
                                                                                                 })
                                                                                                 .eq('id', message.file_id);
                                                                                         }
@@ -11441,7 +11488,7 @@
                     console.log('💌 쪽지함 로딩 시작...');
                     
                     // 발신/수신 쪽지를 모두 불러와서 대화별로 그룹화
-                    const { data: sentMessages, error: sentError } = await supabase
+                    const { data: sentMessages, error: sentError } = await supabaseClient
                         .from('private_messages')
                         .select(`
                             *,
@@ -11451,7 +11498,7 @@
                         .eq('sender_id', currentUser.id)
                         .order('created_at', { ascending: false });
 
-                    const { data: receivedMessages, error: receivedError } = await supabase
+                    const { data: receivedMessages, error: receivedError } = await supabaseClient
                         .from('private_messages')
                         .select(`
                             *,
@@ -11511,7 +11558,7 @@
             // 특정 대화의 메시지들 로드
             const loadMessages = async (partnerId) => {
                 try {
-                    const { data, error } = await supabase
+                    const { data, error } = await supabaseClient
                         .from('private_messages')
                         .select(`
                             *,
@@ -11531,7 +11578,7 @@
                     );
                     
                     if (unreadMessages?.length > 0) {
-                        const { error: markReadError } = await supabase
+                        const { error: markReadError } = await supabaseClient
                             .from('private_messages')
                             .update({ is_read: true, read_at: new Date().toISOString() })
                             .in('id', unreadMessages.map(msg => msg.id));
@@ -11553,7 +11600,7 @@
                 try {
                     setSending(true);
                     
-                    const { error } = await supabase
+                    const { error } = await supabaseClient
                         .from('private_messages')
                         .insert({
                             sender_id: currentUser.id,
@@ -11602,7 +11649,7 @@
                     setSending(true);
                     
                     // 수신자 확인
-                    const { data: recipientData, error: recipientError } = await supabase
+                    const { data: recipientData, error: recipientError } = await supabaseClient
                         .from('user_profiles')
                         .select('id, nickname, email, role')
                         .eq('email', newRecipientEmail.trim())
@@ -11613,7 +11660,7 @@
                         return;
                     }
                     
-                    const { error } = await supabase
+                    const { error } = await supabaseClient
                         .from('private_messages')
                         .insert({
                             sender_id: currentUser.id,
@@ -12021,7 +12068,7 @@
             const loadAnnouncements = async () => {
                 try {
                     setLoading(true);
-                    const { data, error } = await supabase
+                    const { data, error } = await supabaseClient
                         .from('announcements')
                         .select('*')
                         .eq('is_active', true)
@@ -12042,7 +12089,7 @@
                 if (!currentUser || currentUser.isGuest) return;
                 
                 try {
-                    await supabase
+                    await supabaseClient
                         .from('announcement_views')
                         .upsert({ 
                             announcement_id: announcementId, 
@@ -12072,7 +12119,7 @@
                 
                 if (confirm('정말 이 공지사항을 삭제하시겠습니까?')) {
                     try {
-                        const { error } = await supabase
+                        const { error } = await supabaseClient
                             .from('announcements')
                             .update({ is_active: false })
                             .eq('id', id);
@@ -12279,7 +12326,7 @@
 
                 try {
                     setSubmitting(true);
-                    const { error } = await supabase
+                    const { error } = await supabaseClient
                         .from('announcements')
                         .insert({
                             title: formData.title.trim(),
@@ -12844,7 +12891,7 @@
                 setLoading(true);
                 
                 // professionals 테이블에서 승인된 전문가 데이터 조회
-                const { data: experts, error } = await supabase
+                const { data: experts, error } = await supabaseClient
                     .from('professionals')
                     .select(`
                         id, name, title, company, specialties, 
@@ -12866,11 +12913,11 @@
                 }
 
                 // 카테고리별 전문가 데이터 분류
-                const categorizedExperts = {
-                    'tech_development': experts.filter(e => e.category === 'tech_development'),
-                    'finance_consulting': experts.filter(e => e.category === 'finance_consulting'), 
-                    'marketing_strategy': experts.filter(e => e.category === 'marketing_strategy')
-                };
+                const categorizedExperts = {};
+                const categoryKeys = ['it_ict', 'business_planning', 'marketing_sales', 'design', 'hr_education', 'finance_legal', 'manufacturing', 'healthcare_bio', 'media_content', 'finance_insurance', 'service_support', 'public_ngo', 'research_development', 'environment_energy', 'transportation_logistics'];
+                categoryKeys.forEach(key => {
+                    categorizedExperts[key] = experts.filter(e => e.category === key);
+                });
 
                 // 실제 데이터가 로드될 때까지는 빈 카테고리로 표시
                 // Supabase 연동 후 실제 전문가 데이터가 여기에 표시됩니다.
@@ -13011,14 +13058,14 @@
                     try {
                         setLoading(true);
                         
-                        if (!supabase) {
+                        if (!supabaseClient) {
                             // 데모 모드에서는 기존 데이터 사용
                             setLoading(false);
                             return;
                         }
 
                         // Supabase에서 전문가 데이터 로드
-                        const { data: experts, error } = await supabase
+                        const { data: experts, error } = await supabaseClient
                             .from('experts')
                             .select(`
                                 *,
@@ -13039,12 +13086,17 @@
                         experts?.forEach(expert => {
                             const category = expert.industry?.toLowerCase() || 'tech_development';
                             const mappedCategory = {
-                                'technology': 'tech_development',
-                                'it': 'tech_development',
-                                'finance': 'finance_consulting',
-                                'consulting': 'finance_consulting',
-                                'marketing': 'marketing_planning',
-                                'planning': 'marketing_planning'
+                                'technology': 'it_ict',
+                                'it': 'it_ict',
+                                'tech_development': 'it_ict',
+                                'finance': 'finance_insurance',
+                                'consulting': 'business_planning',
+                                'finance_consulting': 'finance_insurance',
+                                'marketing': 'marketing_sales',
+                                'planning': 'business_planning',
+                                'marketing_planning': 'marketing_sales',
+                                'public_education': 'hr_education',
+                                'others': 'service_support'
                             }[category] || category;
 
                             if (categorizedExperts[mappedCategory]) {
@@ -13532,8 +13584,8 @@
             useEffect(() => {
                 const loadReplies = async () => {
                     try {
-                        if (supabase) {
-                            const { data, error } = await supabase
+                        if (supabaseClient) {
+                            const { data, error } = await supabaseClient
                                 .from('post_comments')
                                 .select('*')
                                 .eq('post_id', post.id)
@@ -13594,8 +13646,8 @@
                                         try {
                                             const newLikesCount = isLiked ? likes - 1 : likes + 1;
                                             
-                                            if (supabase) {
-                                                const { error } = await supabase
+                                            if (supabaseClient) {
+                                                const { error } = await supabaseClient
                                                     .from('job_seeker_posts')
                                                     .update({ likes: newLikesCount })
                                                     .eq('id', post.id);
@@ -13684,8 +13736,8 @@
                                                     created_at: new Date().toISOString()
                                                 };
 
-                                                if (supabase) {
-                                                    const { data, error } = await supabase
+                                                if (supabaseClient) {
+                                                    const { data, error } = await supabaseClient
                                                         .from('post_comments')
                                                         .insert([replyData])
                                                         .select();
@@ -14735,7 +14787,7 @@
                 loadSavedCalculations();
                 
                 // 게스트 데이터 정리
-                localStorage.removeItem('planb_guest_user');
+                localStorage.removeItem('insidejob_guest_user');
                 
                 // 게스트 계산 결과가 있었다면 실제로 DB에 저장
                 if (guestCalculation) {
@@ -14744,7 +14796,7 @@
                         console.log('🔄 게스트 계산 결과 이관 시작...', calculationData.formData?.age);
                         
                         // Supabase에 실제 저장
-                        if (supabase) {
+                        if (supabaseClient) {
                             // 자동 연령대 계산
                             const getAgeGroup = (age) => {
                                 if (age < 25) return '20대';
@@ -14777,7 +14829,7 @@
                                 hasCalculationResult: !!saveData.calculation_result
                             });
                             
-                            const { error } = await supabase
+                            const { error } = await supabaseClient
                                 .from('career_calculations')
                                 .upsert(saveData);
                             
@@ -14870,11 +14922,11 @@
             const handleCalculationComplete = async (calculationResult) => {
                 try {
                     // 계산 결과를 localStorage와 Supabase에 저장
-                    localStorage.setItem('planb_calculation_result', JSON.stringify(calculationResult));
+                    localStorage.setItem('insidejob_calculation_result', JSON.stringify(calculationResult));
                     
                     if (currentUser) {
                         // 회원인 경우 Supabase에도 저장
-                        const { error } = await supabase
+                        const { error } = await supabaseClient
                             .from('career_calculations')
                             .upsert({
                                 user_id: currentUser.id,
@@ -14951,7 +15003,7 @@
                 
                 // 2순위: experts 테이블에서 확인 (백업용)
                 try {
-                    const { data: expertProfile, error } = await supabase
+                    const { data: expertProfile, error } = await supabaseClient
                         .from('experts')
                         .select('id, verification_status')
                         .eq('email', user.email)
@@ -14976,7 +15028,7 @@
                 if (isAdminUser(user)) return true; // 관리자는 전문가 권한 포함
                 
                 try {
-                    const { data: expertProfile } = await supabase
+                    const { data: expertProfile } = await supabaseClient
                         .from('experts')
                         .select('verification_status')
                         .eq('email', user.email)
@@ -15021,7 +15073,7 @@
                 }
                 
                 // 일반 회원인 경우 계산 완료 체크
-                const hasCalculation = localStorage.getItem('planb_calculation_result');
+                const hasCalculation = localStorage.getItem('insidejob_calculation_result');
                 if (!hasCalculation) {
                     setShowCalculationRequiredModal(true);
                     return false;
