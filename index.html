@@ -1558,8 +1558,13 @@
 
                     // 현재 사용자 정보 확인
                     const currentUser = await authManager.getCurrentUser();
-                    if (!currentUser) {
-                        alert('로그인이 필요합니다.');
+                    if (!currentUser || currentUser.isGuest) {
+                        // 입력한 데이터를 localStorage에 임시 저장
+                        const saveData = { ...formData };
+                        delete saveData.uploadedFiles; // 파일은 저장 불가
+                        localStorage.setItem('insidejob_pending_expert_registration', JSON.stringify(saveData));
+
+                        alert('전문가 등록을 위해 회원가입이 필요합니다.\n\n입력하신 정보는 저장되어 있으니,\n회원가입 후 자동으로 신청이 완료됩니다 😊');
                         setCurrentView('login');
                         return;
                     }
@@ -14788,7 +14793,54 @@
                 
                 // 게스트 데이터 정리
                 localStorage.removeItem('insidejob_guest_user');
-                
+
+                // 보류 중인 전문가 등록 신청이 있다면 자동 제출
+                const pendingExpertData = localStorage.getItem('insidejob_pending_expert_registration');
+                if (pendingExpertData) {
+                    try {
+                        const expertFormData = JSON.parse(pendingExpertData);
+                        console.log('🔄 보류 중인 전문가 등록 신청 자동 제출...', expertFormData.name);
+
+                        const expertRequestData = {
+                            user_id: user.id,
+                            name: expertFormData.name,
+                            phone: expertFormData.phone,
+                            email: expertFormData.email,
+                            category: expertFormData.category,
+                            experience_years: expertFormData.experienceYears,
+                            keywords: expertFormData.keywords,
+                            verification_type: expertFormData.verificationType,
+                            business_number: expertFormData.businessNumber || null,
+                            license_type: expertFormData.licenseType || null,
+                            organization: expertFormData.organization || null,
+                            experience_description: expertFormData.experienceDescription || null,
+                            status: 'pending',
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString()
+                        };
+
+                        const { error: expertError } = await supabaseClient
+                            .from('professional_requests')
+                            .insert([expertRequestData]);
+
+                        if (expertError) {
+                            console.error('전문가 등록 자동 제출 오류:', expertError);
+                        } else {
+                            console.log('✅ 전문가 등록 신청 자동 제출 완료');
+                            // 약간의 딜레이 후 알림 (UI 렌더링 후)
+                            setTimeout(() => {
+                                alert('전문가 등록 신청이 자동으로 완료되었습니다! 🎉\n\n' +
+                                      '📋 관리자 검토 후 승인 결과를 알려드리겠습니다.\n' +
+                                      '⏰ 검토 기간: 영업일 기준 3-5일');
+                            }, 500);
+                        }
+                    } catch (expertParseError) {
+                        console.error('전문가 등록 데이터 파싱 오류:', expertParseError);
+                    } finally {
+                        localStorage.removeItem('insidejob_pending_expert_registration');
+                    }
+                }
+
                 // 게스트 계산 결과가 있었다면 실제로 DB에 저장
                 if (guestCalculation) {
                     try {
